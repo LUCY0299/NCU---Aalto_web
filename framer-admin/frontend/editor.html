@@ -188,10 +188,102 @@
 </div>
 
 <script>
-  // ─────────────────────────────────────────
-  // 全域狀態
-  // ─────────────────────────────────────────
   const API_BASE = 'http://localhost:8000';
+
+  // ─────────────────────────────────────────
+  // 展示模式：不需後端即可瀏覽介面
+  // ─────────────────────────────────────────
+  const DEMO_MODE = true;
+
+  const MOCK_PAGES = {
+    "home": {
+      id:1, slug:"home", title:"首頁", is_active:true, parent_slug:null,
+      sections:[
+        { id:1, section_key:"hero", name:"頂部橫幅 (Hero)", section_type:"hero", display_order:1, is_active:true, content_fields:[
+          { id:1,  field_key:"title",    field_value:"培育未來領袖",                              field_type:"text",     locale:"zh-TW", label:"主標題",   hint:null },
+          { id:2,  field_key:"subtitle", field_value:"國立中央大學 × 阿爾托大學 EMBA 在職學位學程", field_type:"text",     locale:"zh-TW", label:"副標題",   hint:null },
+          { id:3,  field_key:"cta_text", field_value:"立即申請",                                  field_type:"text",     locale:"zh-TW", label:"按鈕文字", hint:null },
+          { id:4,  field_key:"title",    field_value:"Cultivating Future Leaders",               field_type:"text",     locale:"en-US", label:"主標題",   hint:null },
+          { id:5,  field_key:"subtitle", field_value:"NCU × Aalto University EMBA Program",     field_type:"text",     locale:"en-US", label:"副標題",   hint:null },
+          { id:6,  field_key:"cta_text", field_value:"Apply Now",                                field_type:"text",     locale:"en-US", label:"按鈕文字", hint:null }
+        ]},
+        { id:2, section_key:"intro", name:"計畫介紹", section_type:"text", display_order:2, is_active:true, content_fields:[
+          { id:7,  field_key:"title",   field_value:"關於本計畫",                                                            field_type:"text",     locale:"zh-TW", label:"區塊標題", hint:null },
+          { id:8,  field_key:"content", field_value:"本學程結合國立中央大學與芬蘭阿爾托大學的師資與資源，培育具國際視野的高階管理人才。", field_type:"textarea", locale:"zh-TW", label:"介紹內文", hint:null },
+          { id:9,  field_key:"title",   field_value:"About the Program",                                                    field_type:"text",     locale:"en-US", label:"區塊標題", hint:null },
+          { id:10, field_key:"content", field_value:"This program combines faculty and resources from NCU and Aalto University to cultivate global business leaders.", field_type:"textarea", locale:"en-US", label:"介紹內文", hint:null }
+        ]},
+        { id:3, section_key:"stats", name:"數據統計", section_type:"card", display_order:3, is_active:true, content_fields:[
+          { id:11, field_key:"stat_1_number", field_value:"300+",   field_type:"text", locale:"zh-TW", label:"數據1 數字", hint:null },
+          { id:12, field_key:"stat_1_label",  field_value:"畢業校友", field_type:"text", locale:"zh-TW", label:"數據1 說明", hint:null },
+          { id:13, field_key:"stat_2_number", field_value:"15+",    field_type:"text", locale:"zh-TW", label:"數據2 數字", hint:null },
+          { id:14, field_key:"stat_2_label",  field_value:"年辦學歷史",field_type:"text", locale:"zh-TW", label:"數據2 說明", hint:null },
+          { id:15, field_key:"stat_3_number", field_value:"Top 1%", field_type:"text", locale:"zh-TW", label:"數據3 數字", hint:null },
+          { id:16, field_key:"stat_3_label",  field_value:"全球排名", field_type:"text", locale:"zh-TW", label:"數據3 說明", hint:null },
+          { id:17, field_key:"stat_1_number", field_value:"300+",         field_type:"text", locale:"en-US", label:"數據1 數字", hint:null },
+          { id:18, field_key:"stat_1_label",  field_value:"Alumni",       field_type:"text", locale:"en-US", label:"數據1 說明", hint:null },
+          { id:19, field_key:"stat_2_number", field_value:"15+",          field_type:"text", locale:"en-US", label:"數據2 數字", hint:null },
+          { id:20, field_key:"stat_2_label",  field_value:"Years History", field_type:"text", locale:"en-US", label:"數據2 說明", hint:null },
+          { id:21, field_key:"stat_3_number", field_value:"Top 1%",       field_type:"text", locale:"en-US", label:"數據3 數字", hint:null },
+          { id:22, field_key:"stat_3_label",  field_value:"Global Ranking",field_type:"text", locale:"en-US", label:"數據3 說明", hint:null }
+        ]}
+      ]
+    },
+    "alumni": {
+      id:7, slug:"alumni", title:"校友分享", is_active:true, parent_slug:"learning",
+      sections:[
+        { id:4, section_key:"alumni-hero", name:"校友分享 頂部", section_type:"hero", display_order:1, is_active:true, content_fields:[
+          { id:23, field_key:"title",    field_value:"校友分享",              field_type:"text", locale:"zh-TW", label:"主標題", hint:null },
+          { id:24, field_key:"subtitle", field_value:"聆聽真實的聲音，感受改變的力量", field_type:"text", locale:"zh-TW", label:"副標題", hint:null },
+          { id:25, field_key:"title",    field_value:"Alumni Stories",        field_type:"text", locale:"en-US", label:"主標題", hint:null },
+          { id:26, field_key:"subtitle", field_value:"Real voices, real transformation", field_type:"text", locale:"en-US", label:"副標題", hint:null }
+        ]},
+        { id:5, section_key:"alumni-list", name:"校友名單與故事", section_type:"json", display_order:2, is_active:true, content_fields:[
+          { id:27, field_key:"section_title", field_value:"他們的故事", field_type:"text", locale:"zh-TW", label:"區塊標題", hint:null },
+          { id:28, field_key:"items", field_value:'[{"name":"王小明","year":"2020","company":"台積電","quote":"這個學程改變了我的視野"},{"name":"李小華","year":"2021","company":"鴻海","quote":"結合芬蘭與台灣的學習體驗無可取代"}]', field_type:"json", locale:"zh-TW", label:"校友列表（JSON）", hint:null },
+          { id:29, field_key:"section_title", field_value:"Their Stories", field_type:"text", locale:"en-US", label:"區塊標題", hint:null },
+          { id:30, field_key:"items", field_value:'[{"name":"Wang Xiaoming","year":"2020","company":"TSMC","quote":"This program changed my perspective"}]', field_type:"json", locale:"en-US", label:"校友列表（JSON）", hint:null }
+        ]}
+      ]
+    },
+    "admission": {
+      id:9, slug:"admission", title:"招生資訊", is_active:true, parent_slug:"courses",
+      sections:[
+        { id:6, section_key:"admission-hero", name:"招生 頂部", section_type:"hero", display_order:1, is_active:true, content_fields:[
+          { id:31, field_key:"title",    field_value:"招生資訊",          field_type:"text", locale:"zh-TW", label:"主標題", hint:null },
+          { id:32, field_key:"subtitle", field_value:"開啟您的國際 EMBA 之旅", field_type:"text", locale:"zh-TW", label:"副標題", hint:null },
+          { id:33, field_key:"title",    field_value:"Admission Information",         field_type:"text", locale:"en-US", label:"主標題", hint:null },
+          { id:34, field_key:"subtitle", field_value:"Begin your international EMBA journey", field_type:"text", locale:"en-US", label:"副標題", hint:null }
+        ]},
+        { id:7, section_key:"admission-requirements", name:"申請資格", section_type:"list", display_order:2, is_active:true, content_fields:[
+          { id:35, field_key:"title",   field_value:"申請資格",                               field_type:"text",     locale:"zh-TW", label:"區塊標題", hint:null },
+          { id:36, field_key:"content", field_value:"• 大學畢業\n• 5年以上工作經驗\n• 具備基本英文能力", field_type:"textarea", locale:"zh-TW", label:"資格說明", hint:null },
+          { id:37, field_key:"title",   field_value:"Requirements",                           field_type:"text",     locale:"en-US", label:"區塊標題", hint:null },
+          { id:38, field_key:"content", field_value:"• Bachelor's degree\n• 5+ years work experience\n• Basic English proficiency", field_type:"textarea", locale:"en-US", label:"資格說明", hint:null }
+        ]}
+      ]
+    },
+    "contact": {
+      id:14, slug:"contact", title:"聯絡方式", is_active:true, parent_slug:null,
+      sections:[
+        { id:8, section_key:"contact-info", name:"聯絡資訊", section_type:"text", display_order:1, is_active:true, content_fields:[
+          { id:39, field_key:"title",   field_value:"聯絡我們",              field_type:"text", locale:"zh-TW", label:"標題", hint:null },
+          { id:40, field_key:"email",   field_value:"emba@cc.ncu.edu.tw",   field_type:"text", locale:"zh-TW", label:"Email", hint:null },
+          { id:41, field_key:"phone",   field_value:"(03) 422-7151 分機 57601", field_type:"text", locale:"zh-TW", label:"電話", hint:null },
+          { id:42, field_key:"address", field_value:"桃園市中壢區中大路 300 號", field_type:"text", locale:"zh-TW", label:"地址", hint:null },
+          { id:43, field_key:"title",   field_value:"Contact Us",            field_type:"text", locale:"en-US", label:"標題", hint:null },
+          { id:44, field_key:"email",   field_value:"emba@cc.ncu.edu.tw",   field_type:"text", locale:"en-US", label:"Email", hint:null },
+          { id:45, field_key:"phone",   field_value:"+886-3-422-7151 ext. 57601", field_type:"text", locale:"en-US", label:"電話", hint:null },
+          { id:46, field_key:"address", field_value:"No. 300, Zhongda Rd., Zhongli Dist., Taoyuan City", field_type:"text", locale:"en-US", label:"地址", hint:null }
+        ]}
+      ]
+    }
+  };
+
+  function getMockPage(slug) {
+    if (MOCK_PAGES[slug]) return JSON.parse(JSON.stringify(MOCK_PAGES[slug])); // deep copy
+    return { id:0, slug, title: slug, is_active:true, parent_slug:null, sections:[] };
+  }
 
   let currentPageSlug = '';
   let currentSectionId = null;
@@ -199,15 +291,22 @@
   let pendingChanges = {};
   let hasUnsavedChanges = false;
 
-  // 從 URL 取得 page 參數
   const urlParams = new URLSearchParams(window.location.search);
   currentPageSlug = urlParams.get('page') || 'home';
 
   // ─── 初始化 ───
   window.addEventListener('DOMContentLoaded', async () => {
-    // 驗證登入 Token
     const token = localStorage.getItem('admin_token');
     if (!token) { window.location.href = 'index.html'; return; }
+
+    if (DEMO_MODE) {
+      const user = JSON.parse(localStorage.getItem('admin_user') || '{"username":"admin"}');
+      document.getElementById('userName').textContent = user.username;
+      document.getElementById('userAvatar').textContent = user.username[0].toUpperCase();
+      highlightNavItem();
+      await loadPageData();
+      return;
+    }
 
     try {
       const res = await fetch(`${API_BASE}/api/v1/auth/me`, {
@@ -233,39 +332,39 @@
     });
   }
 
-  /** 從 API 載入頁面完整資料 */
   async function loadPageData() {
-    const token = localStorage.getItem('admin_token');
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/pages/${currentPageSlug}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+    let pageData;
 
-      if (res.status === 404) {
-        document.getElementById('pageTitle').textContent = `找不到頁面：${currentPageSlug}`;
+    if (DEMO_MODE) {
+      pageData = getMockPage(currentPageSlug);
+    } else {
+      const token = localStorage.getItem('admin_token');
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/pages/${currentPageSlug}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.status === 404) {
+          document.getElementById('pageTitle').textContent = `找不到頁面：${currentPageSlug}`;
+          return;
+        }
+        pageData = await res.json();
+      } catch(e) {
+        showToast('載入失敗，請確認後端服務已啟動', 'error');
         return;
       }
-
-      const pageData = await res.json();
-      window._pageData = pageData;
-
-      // 更新 UI
-      document.getElementById('pageTitle').textContent = `✏️ ${pageData.title}`;
-      document.getElementById('breadcrumbPage').textContent = pageData.title;
-      document.getElementById('pageFullTitle').textContent = pageData.title;
-      document.title = `${pageData.title} — NCU × Aalto EMBA 後台`;
-      document.getElementById('pageStatus').innerHTML = pageData.is_active
-        ? '<span class="badge badge-active">✓ 已啟用</span>'
-        : '<span class="badge badge-inactive">✗ 已停用</span>';
-
-      renderSectionList(pageData.sections);
-
-      // 自動選取第一個區塊
-      if (pageData.sections?.length > 0) selectSection(pageData.sections[0]);
-
-    } catch(e) {
-      showToast('載入失敗，請確認後端服務已啟動', 'error');
     }
+
+    window._pageData = pageData;
+    document.getElementById('pageTitle').textContent = `✏️ ${pageData.title}`;
+    document.getElementById('breadcrumbPage').textContent = pageData.title;
+    document.getElementById('pageFullTitle').textContent = pageData.title;
+    document.title = `${pageData.title} — NCU × Aalto EMBA 後台`;
+    document.getElementById('pageStatus').innerHTML = pageData.is_active
+      ? '<span class="badge badge-active">✓ 已啟用</span>'
+      : '<span class="badge badge-inactive">✗ 已停用</span>';
+
+    renderSectionList(pageData.sections);
+    if (pageData.sections?.length > 0) selectSection(pageData.sections[0]);
   }
 
   /** 渲染左側區塊列表 */
@@ -389,18 +488,37 @@
     }
   }
 
-  /** 儲存目前區塊的所有變更 */
   async function saveCurrentSection() {
     if (!currentSectionId || !Object.keys(pendingChanges).length) {
       showToast('沒有需要儲存的變更', ''); return;
     }
 
-    const token = localStorage.getItem('admin_token');
     const saveBtn = document.getElementById('saveBtn');
     document.getElementById('saveBtnText').textContent = '儲存中...';
     document.getElementById('saveBtnSpinner').style.display = 'inline-block';
     saveBtn.disabled = true;
 
+    if (DEMO_MODE) {
+      await new Promise(r => setTimeout(r, 500));
+      // 更新記憶體內的 mock 資料，讓放棄變更可以正確還原
+      const section = window._pageData?.sections?.find(s => s.id === currentSectionId);
+      if (section) {
+        for (const [key, value] of Object.entries(pendingChanges)) {
+          const field = section.content_fields.find(f => f.field_key === key && f.locale === currentLocale);
+          if (field) field.field_value = value;
+        }
+      }
+      pendingChanges = {};
+      hasUnsavedChanges = false;
+      updateSaveStatus(false);
+      showToast('✅ 儲存成功！（展示模式）', 'success');
+      document.getElementById('saveBtnText').textContent = '💾 儲存';
+      document.getElementById('saveBtnSpinner').style.display = 'none';
+      saveBtn.disabled = false;
+      return;
+    }
+
+    const token = localStorage.getItem('admin_token');
     try {
       const res = await fetch(`${API_BASE}/api/v1/sections/${currentSectionId}/fields`, {
         method: 'PUT',
@@ -413,7 +531,6 @@
         hasUnsavedChanges = false;
         updateSaveStatus(false);
         showToast('✅ 儲存成功！Framer 前台可讀取到最新內容', 'success');
-        // 更新本地資料快取
         await loadPageData();
       } else {
         const err = await res.json();
@@ -449,9 +566,14 @@
     if (sec) { renderFieldEditor(sec); updateSaveStatus(false); }
   }
 
-  /** 刪除區塊 */
   async function deleteSection(sectionId, sectionName) {
     if (!confirm(`確定刪除「${sectionName}」？此操作無法復原。`)) return;
+
+    if (DEMO_MODE) {
+      showToast(`已刪除：${sectionName}（展示模式）`, 'success');
+      return;
+    }
+
     const token = localStorage.getItem('admin_token');
     try {
       const res = await fetch(`${API_BASE}/api/v1/sections/${sectionId}`, {
@@ -478,7 +600,6 @@
 
   function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
-  /** 新增區塊 */
   async function addSection() {
     const name = document.getElementById('newSectionName').value.trim();
     const key  = document.getElementById('newSectionKey').value.trim();
@@ -486,6 +607,12 @@
 
     if (!name || !key) { alert('請填寫名稱和識別碼'); return; }
     if (!/^[a-z0-9-]+$/.test(key)) { alert('識別碼只能含小寫英文、數字、連字號'); return; }
+
+    if (DEMO_MODE) {
+      closeModal();
+      showToast(`✅ 已新增區塊：${name}（展示模式）`, 'success');
+      return;
+    }
 
     const token = localStorage.getItem('admin_token');
     try {
