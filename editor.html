@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>頁面編輯器 — NCU × Aalto EMBA 後台管理</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <style>
+    .editor-layout { display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; }
+    .section-panel { position: sticky; top: 88px; }
+    .unsaved-dot { width:8px; height:8px; border-radius:50%; background:var(--color-warning); display:inline-block; margin-right:4px; }
+  </style>
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- ═══════════ 側邊欄 ═══════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="site-name">NCU × Aalto University</div>
+      <h2>EMBA 後台管理</h2>
+      <span class="admin-badge">Admin Panel</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">主選單</div>
+      <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> 儀表板</a>
+      <div class="nav-section-label" style="margin-top:8px">頁面管理</div>
+      <a href="editor.html?page=home"             class="nav-item" id="nav-home"><span class="nav-icon">🏠</span> 首頁</a>
+      <a href="editor.html?page=about"            class="nav-item" id="nav-about"><span class="nav-icon">🏫</span> 關於 Aalto EMBA</a>
+      <a href="editor.html?page=about-aalto-emba" class="nav-item sub">關於 Aalto EMBA</a>
+      <a href="editor.html?page=about-aalto"      class="nav-item sub">關於阿爾托大學</a>
+      <a href="editor.html?page=about-ncu"        class="nav-item sub">關於中央大學</a>
+      <a href="editor.html?page=learning"         class="nav-item" id="nav-learning"><span class="nav-icon">📖</span> 學習資訊</a>
+      <a href="editor.html?page=alumni"           class="nav-item sub">校友分享</a>
+      <a href="editor.html?page=events"           class="nav-item sub">活動訊息</a>
+      <a href="editor.html?page=courses"          class="nav-item" id="nav-courses"><span class="nav-icon">📚</span> 課程資訊</a>
+      <a href="editor.html?page=admission"        class="nav-item sub">招生資訊</a>
+      <a href="editor.html?page=degree"           class="nav-item sub">學位與修業規定</a>
+      <a href="editor.html?page=application"      class="nav-item sub">申請流程</a>
+      <a href="editor.html?page=tuition"          class="nav-item sub">學費資訊</a>
+      <a href="editor.html?page=faq"              class="nav-item sub">常見問題</a>
+      <a href="editor.html?page=contact"          class="nav-item" id="nav-contact"><span class="nav-icon">📞</span> 聯絡我們</a>
+      <a href="editor.html?page=search"           class="nav-item" id="nav-search"><span class="nav-icon">🔍</span> 搜尋</a>
+      <div class="nav-section-label" style="margin-top:8px">系統</div>
+      <a href="http://localhost:8000/docs" target="_blank" class="nav-item"><span class="nav-icon">📖</span> API 文件</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="userAvatar">A</div>
+        <div><div class="user-name" id="userName">管理員</div><div class="user-role">系統管理員</div></div>
+      </div>
+      <button class="btn-logout" onclick="logout()">🚪 登出</button>
+    </div>
+  </aside>
+
+  <!-- ═══════════ 主內容 ═══════════ -->
+  <div class="main-content">
+
+    <!-- 頂部 Header -->
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="pageTitle">載入中...</div>
+        <div class="topbar-breadcrumb">
+          <a href="dashboard.html" style="color:var(--color-primary);text-decoration:none">主控台</a>
+          <span style="margin:0 6px; color:var(--color-text-muted)">›</span>
+          <span id="breadcrumbPage">頁面編輯</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <!-- Locale 切換 Tab -->
+        <div class="locale-tabs">
+          <button class="locale-tab active" id="tab-zh" onclick="switchLocale('zh-TW')">🇹🇼 繁體中文</button>
+          <button class="locale-tab" id="tab-en" onclick="switchLocale('en-US')">🇺🇸 English</button>
+        </div>
+        <a href="https://crowded-pictogram-488999.framer.app/" target="_blank" class="btn btn-secondary btn-sm">前台預覽 ↗</a>
+      </div>
+    </div>
+
+    <!-- 主內容區 -->
+    <div class="content-area">
+
+      <!-- 頁面資訊卡 -->
+      <div class="card" style="margin-bottom:24px; border-left:4px solid var(--color-primary);">
+        <div class="card-body" style="padding:16px 24px; display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <div style="font-size:13px; color:var(--color-text-muted); margin-bottom:2px">目前編輯頁面</div>
+            <div style="font-size:15px; font-weight:700; color:var(--color-primary)" id="pageFullTitle">—</div>
+          </div>
+          <div id="pageStatus"></div>
+        </div>
+      </div>
+
+      <!-- 編輯器主體：左側區塊列表 + 右側欄位 -->
+      <div class="editor-layout">
+
+        <!-- 左側：區塊列表 -->
+        <div class="section-panel">
+          <div class="card">
+            <div class="card-header">
+              <h3>📦 內容區塊</h3>
+              <button class="btn btn-accent btn-sm" onclick="showAddSectionModal()">＋ 新增</button>
+            </div>
+            <div style="padding:12px;" id="sectionList">
+              <div style="color:var(--color-text-muted); font-size:13px; padding:8px;">載入中...</div>
+            </div>
+          </div>
+          <!-- 操作說明 -->
+          <div style="margin-top:12px; padding:12px 16px; background:rgba(96,42,128,0.04); border-radius:var(--radius-sm); border:1px solid rgba(96,42,128,0.12);">
+            <div style="font-size:12px; color:var(--color-text-muted); line-height:1.8;">
+              💡 <strong>使用說明：</strong><br>
+              1. 點選左側區塊<br>
+              2. 右側填入內容<br>
+              3. 點「儲存」更新 DB<br>
+              4. Framer 前台自動讀取
+            </div>
+          </div>
+        </div>
+
+        <!-- 右側：欄位編輯器 -->
+        <div>
+          <div class="card" id="editorCard">
+            <div class="card-header">
+              <h3 id="editorTitle">← 請選擇左側區塊開始編輯</h3>
+              <div id="editorMeta" style="font-size:12px; color:var(--color-text-muted);"></div>
+            </div>
+            <div class="card-body" id="editorBody">
+              <div style="text-align:center; padding:60px 0; color:var(--color-text-muted);">
+                <div style="font-size:48px; margin-bottom:16px;">📝</div>
+                <div style="font-size:15px; font-weight:600; margin-bottom:8px;">選擇左側的區塊開始編輯</div>
+                <div style="font-size:13px;">每個區塊的中文和英文內容可以分別管理</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /editor-layout -->
+    </div><!-- /content-area -->
+
+    <!-- 底部儲存列（黏著）-->
+    <div class="save-bar" id="saveBar" style="display:none;">
+      <div class="save-status unsaved" id="saveStatus">
+        <span class="unsaved-dot"></span>有未儲存的變更
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <span style="font-size:12px; color:var(--color-text-muted)" id="currentSection"></span>
+        <button class="btn btn-secondary btn-sm" onclick="discardChanges()">放棄</button>
+        <button class="btn btn-primary" onclick="saveCurrentSection()" id="saveBtn">
+          <span id="saveBtnText">💾 儲存</span>
+          <span id="saveBtnSpinner" class="loading-spinner" style="display:none;"></span>
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /admin-layout -->
+
+<!-- Toast 容器 -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- 新增區塊 Modal -->
+<div id="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:white; border-radius:var(--radius-lg); border:2px solid var(--color-border); padding:32px; width:480px; max-width:90vw; box-shadow:var(--shadow-lg);">
+    <h3 style="font-size:18px; font-weight:700; color:var(--color-primary); margin-bottom:20px;">＋ 新增區塊</h3>
+    <div class="form-group">
+      <label>區塊名稱（後台顯示用）</label>
+      <input type="text" id="newSectionName" placeholder="例如：Hero 橫幅、特色介紹">
+    </div>
+    <div class="form-group">
+      <label>區塊識別碼（小寫英文 + 連字號）</label>
+      <input type="text" id="newSectionKey" placeholder="例如：hero, features, cta-section">
+    </div>
+    <div class="form-group">
+      <label>區塊類型</label>
+      <select id="newSectionType">
+        <option value="text">text — 一般文字</option>
+        <option value="hero">hero — 頂部橫幅</option>
+        <option value="list">list — 列表</option>
+        <option value="card">card — 卡片組</option>
+        <option value="image">image — 圖片</option>
+        <option value="json">json — 複雜資料（JSON）</option>
+      </select>
+    </div>
+    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:24px;">
+      <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="addSection()">新增區塊</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─────────────────────────────────────────
+  // 全域狀態
+  // ─────────────────────────────────────────
+  const API_BASE = 'http://localhost:8000';
+
+  let currentPageSlug = '';
+  let currentSectionId = null;
+  let currentLocale = 'zh-TW';
+  let pendingChanges = {};
+  let hasUnsavedChanges = false;
+
+  // 從 URL 取得 page 參數
+  const urlParams = new URLSearchParams(window.location.search);
+  currentPageSlug = urlParams.get('page') || 'home';
+
+  // ─── 初始化 ───
+  window.addEventListener('DOMContentLoaded', async () => {
+    // 驗證登入 Token
+    const token = localStorage.getItem('admin_token');
+    if (!token) { window.location.href = 'index.html'; return; }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) { window.location.href = 'index.html'; return; }
+      const user = await res.json();
+      document.getElementById('userName').textContent = user.username;
+      document.getElementById('userAvatar').textContent = user.username[0].toUpperCase();
+    } catch(e) { /* 繼續執行 */ }
+
+    highlightNavItem();
+    await loadPageData();
+  });
+
+  /** 高亮側邊欄目前頁面 */
+  function highlightNavItem() {
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    const navEl = document.getElementById(`nav-${currentPageSlug}`);
+    if (navEl) navEl.classList.add('active');
+    document.querySelectorAll('.nav-item.sub').forEach(el => {
+      if (el.href && el.href.includes(`page=${currentPageSlug}`)) el.classList.add('active');
+    });
+  }
+
+  /** 從 API 載入頁面完整資料 */
+  async function loadPageData() {
+    const token = localStorage.getItem('admin_token');
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/pages/${currentPageSlug}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.status === 404) {
+        document.getElementById('pageTitle').textContent = `找不到頁面：${currentPageSlug}`;
+        return;
+      }
+
+      const pageData = await res.json();
+      window._pageData = pageData;
+
+      // 更新 UI
+      document.getElementById('pageTitle').textContent = `✏️ ${pageData.title}`;
+      document.getElementById('breadcrumbPage').textContent = pageData.title;
+      document.getElementById('pageFullTitle').textContent = pageData.title;
+      document.title = `${pageData.title} — NCU × Aalto EMBA 後台`;
+      document.getElementById('pageStatus').innerHTML = pageData.is_active
+        ? '<span class="badge badge-active">✓ 已啟用</span>'
+        : '<span class="badge badge-inactive">✗ 已停用</span>';
+
+      renderSectionList(pageData.sections);
+
+      // 自動選取第一個區塊
+      if (pageData.sections?.length > 0) selectSection(pageData.sections[0]);
+
+    } catch(e) {
+      showToast('載入失敗，請確認後端服務已啟動', 'error');
+    }
+  }
+
+  /** 渲染左側區塊列表 */
+  function renderSectionList(sections) {
+    const list = document.getElementById('sectionList');
+    if (!sections?.length) {
+      list.innerHTML = '<div style="color:var(--color-text-muted); font-size:13px; padding:8px;">尚無區塊，點右上角新增</div>';
+      return;
+    }
+    list.innerHTML = sections.sort((a,b) => a.display_order - b.display_order).map(sec => `
+      <div class="section-item" id="sec-item-${sec.id}"
+           onclick='selectSection(${JSON.stringify(sec)})'>
+        <div>
+          <div class="section-item-name">${sec.name}</div>
+          <div class="section-item-type">${sec.section_type} · ${sec.section_key}</div>
+        </div>
+        <button class="btn btn-danger"
+          onclick="event.stopPropagation(); deleteSection(${sec.id}, '${sec.name.replace(/'/g, "\\'")}')">
+          刪除
+        </button>
+      </div>
+    `).join('');
+  }
+
+  /** 選取區塊，顯示編輯欄位 */
+  function selectSection(section) {
+    if (hasUnsavedChanges && !confirm('有未儲存的變更，確定切換嗎？')) return;
+
+    currentSectionId = section.id;
+    pendingChanges = {};
+    hasUnsavedChanges = false;
+
+    document.querySelectorAll('.section-item').forEach(el => el.classList.remove('active'));
+    document.getElementById(`sec-item-${section.id}`)?.classList.add('active');
+
+    document.getElementById('editorTitle').textContent = `✏️ ${section.name}`;
+    document.getElementById('editorMeta').textContent = `類型：${section.section_type} · 識別碼：${section.section_key}`;
+    document.getElementById('currentSection').textContent = `正在編輯：${section.name}`;
+
+    renderFieldEditor(section);
+
+    document.getElementById('saveBar').style.display = 'flex';
+    updateSaveStatus(false);
+  }
+
+  /** 渲染欄位編輯器 */
+  function renderFieldEditor(section) {
+    const body = document.getElementById('editorBody');
+    // 依目前語系過濾欄位
+    const fields = (section.content_fields || []).filter(f => f.locale === currentLocale);
+
+    if (!fields.length) {
+      body.innerHTML = `
+        <div style="text-align:center; padding:40px 0; color:var(--color-text-muted);">
+          <div style="font-size:36px; margin-bottom:12px;">🌐</div>
+          <div style="font-weight:600;">此語系（${currentLocale}）尚無欄位</div>
+          <div style="font-size:12px; margin-top:4px; max-width:300px; margin-left:auto; margin-right:auto;">
+            若需新增欄位定義，請聯繫開發者在 seed.py 中新增，或透過 API 文件手動建立。
+          </div>
+        </div>`;
+      return;
+    }
+
+    body.innerHTML = fields.map(renderField).join('');
+    window._currentSection = section;
+  }
+
+  /** 渲染單一欄位 */
+  function renderField(field) {
+    let inputHtml;
+    const val = escapeHtml(field.field_value || '');
+
+    if (['textarea','richtext'].includes(field.field_type)) {
+      inputHtml = `<textarea id="field-${field.id}" rows="4"
+        placeholder="請輸入 ${field.label || field.field_key}"
+        oninput="markChanged('${field.field_key}', this.value)">${val}</textarea>`;
+    } else if (field.field_type === 'json') {
+      inputHtml = `<textarea id="field-${field.id}" rows="8"
+        style="font-family:monospace; font-size:13px;"
+        placeholder='[{"key":"value"}]'
+        oninput="markChanged('${field.field_key}', this.value)">${val}</textarea>
+        <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px;">⚠️ JSON 格式，請確保語法正確</div>`;
+    } else if (field.field_type === 'image') {
+      inputHtml = `<input type="text" id="field-${field.id}"
+        value="${val}" placeholder="圖片 URL"
+        oninput="markChanged('${field.field_key}', this.value)">
+        ${field.field_value ? `<img src="${field.field_value}" style="max-width:100%;max-height:120px;margin-top:8px;border-radius:6px;border:1px solid #e0e0e0;" onerror="this.style.display='none'">` : ''}`;
+    } else {
+      inputHtml = `<input type="text" id="field-${field.id}"
+        value="${val}" placeholder="請輸入${field.label || field.field_key}"
+        oninput="markChanged('${field.field_key}', this.value)">`;
+    }
+
+    return `
+      <div class="field-group" style="padding-bottom:20px; border-bottom:1px solid var(--color-border-soft); margin-bottom:20px;">
+        <div class="field-label">
+          <span>${field.label || field.field_key}</span>
+          <span class="field-key-badge">${field.field_key}</span>
+        </div>
+        ${inputHtml}
+        ${field.hint ? `<div class="field-hint">💡 ${field.hint}</div>` : ''}
+      </div>`;
+  }
+
+  /** 標記有變更 */
+  function markChanged(fieldKey, value) {
+    pendingChanges[fieldKey] = value;
+    hasUnsavedChanges = true;
+    updateSaveStatus(true);
+  }
+
+  /** 更新儲存狀態提示 */
+  function updateSaveStatus(unsaved) {
+    const el = document.getElementById('saveStatus');
+    if (unsaved) {
+      el.className = 'save-status unsaved';
+      el.innerHTML = '<span class="unsaved-dot"></span>有未儲存的變更';
+    } else {
+      el.className = 'save-status saved';
+      el.innerHTML = '✓ 已儲存';
+    }
+  }
+
+  /** 儲存目前區塊的所有變更 */
+  async function saveCurrentSection() {
+    if (!currentSectionId || !Object.keys(pendingChanges).length) {
+      showToast('沒有需要儲存的變更', ''); return;
+    }
+
+    const token = localStorage.getItem('admin_token');
+    const saveBtn = document.getElementById('saveBtn');
+    document.getElementById('saveBtnText').textContent = '儲存中...';
+    document.getElementById('saveBtnSpinner').style.display = 'inline-block';
+    saveBtn.disabled = true;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/sections/${currentSectionId}/fields`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ locale: currentLocale, fields: pendingChanges })
+      });
+
+      if (res.ok) {
+        pendingChanges = {};
+        hasUnsavedChanges = false;
+        updateSaveStatus(false);
+        showToast('✅ 儲存成功！Framer 前台可讀取到最新內容', 'success');
+        // 更新本地資料快取
+        await loadPageData();
+      } else {
+        const err = await res.json();
+        showToast(`❌ 儲存失敗：${err.detail}`, 'error');
+      }
+    } catch(e) {
+      showToast('❌ 無法連線到後端', 'error');
+    } finally {
+      document.getElementById('saveBtnText').textContent = '💾 儲存';
+      document.getElementById('saveBtnSpinner').style.display = 'none';
+      saveBtn.disabled = false;
+    }
+  }
+
+  /** 放棄變更 */
+  function discardChanges() {
+    if (!confirm('確定放棄所有未儲存的變更？')) return;
+    pendingChanges = {};
+    hasUnsavedChanges = false;
+    const sec = window._pageData?.sections?.find(s => s.id === currentSectionId);
+    if (sec) { renderFieldEditor(sec); updateSaveStatus(false); }
+  }
+
+  /** 切換語系 */
+  function switchLocale(locale) {
+    if (hasUnsavedChanges && !confirm('切換語系前請先儲存。確定切換嗎？')) return;
+    currentLocale = locale;
+    pendingChanges = {};
+    hasUnsavedChanges = false;
+    document.getElementById('tab-zh').classList.toggle('active', locale === 'zh-TW');
+    document.getElementById('tab-en').classList.toggle('active', locale === 'en-US');
+    const sec = window._pageData?.sections?.find(s => s.id === currentSectionId);
+    if (sec) { renderFieldEditor(sec); updateSaveStatus(false); }
+  }
+
+  /** 刪除區塊 */
+  async function deleteSection(sectionId, sectionName) {
+    if (!confirm(`確定刪除「${sectionName}」？此操作無法復原。`)) return;
+    const token = localStorage.getItem('admin_token');
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/sections/${sectionId}`, {
+        method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        showToast(`已刪除：${sectionName}`, 'success');
+        currentSectionId = null;
+        hasUnsavedChanges = false;
+        document.getElementById('saveBar').style.display = 'none';
+        document.getElementById('editorTitle').textContent = '← 請選擇左側區塊';
+        document.getElementById('editorBody').innerHTML = '';
+        await loadPageData();
+      } else { showToast('刪除失敗', 'error'); }
+    } catch(e) { showToast('無法連線到後端', 'error'); }
+  }
+
+  /** 顯示新增區塊 Modal */
+  function showAddSectionModal() {
+    document.getElementById('modal').style.display = 'flex';
+    document.getElementById('newSectionName').value = '';
+    document.getElementById('newSectionKey').value = '';
+  }
+
+  function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+  /** 新增區塊 */
+  async function addSection() {
+    const name = document.getElementById('newSectionName').value.trim();
+    const key  = document.getElementById('newSectionKey').value.trim();
+    const type = document.getElementById('newSectionType').value;
+
+    if (!name || !key) { alert('請填寫名稱和識別碼'); return; }
+    if (!/^[a-z0-9-]+$/.test(key)) { alert('識別碼只能含小寫英文、數字、連字號'); return; }
+
+    const token = localStorage.getItem('admin_token');
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/pages/${currentPageSlug}/sections`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          section_key: key, name, section_type: type,
+          display_order: (window._pageData?.sections?.length || 0) + 1,
+          is_active: true
+        })
+      });
+      if (res.ok) {
+        closeModal();
+        showToast(`✅ 已新增區塊：${name}`, 'success');
+        await loadPageData();
+      } else {
+        const err = await res.json();
+        alert(`新增失敗：${err.detail}`);
+      }
+    } catch(e) { showToast('無法連線到後端', 'error'); }
+  }
+
+  // ─── 工具函數 ───
+  function escapeHtml(text) {
+    const d = document.createElement('div');
+    d.appendChild(document.createTextNode(String(text)));
+    return d.innerHTML;
+  }
+
+  function logout() {
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_user');
+    window.location.href = 'index.html';
+  }
+
+  function showToast(message, type = '') {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = message;
+    c.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.3s'; setTimeout(()=>t.remove(),300); }, 3500);
+  }
+
+  // 離開前提醒
+  window.addEventListener('beforeunload', e => {
+    if (hasUnsavedChanges) { e.preventDefault(); e.returnValue=''; }
+  });
+</script>
+</body>
+</html>
