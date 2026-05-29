@@ -59,80 +59,73 @@
   </div>
 
   <script>
-    // ─────────────────────────────────────────
-    // 設定：後端 API 網址
-    // 如果後端部署到雲端，改這裡的網址即可
-    // ─────────────────────────────────────────
     const API_BASE = 'http://localhost:8000';
-    document.getElementById('apiUrl').textContent = API_BASE;
 
-    // 如果已有 Token，直接跳到 dashboard
+    // ─────────────────────────────────────────
+    // 展示模式：設為 true 時不需後端即可瀏覽介面
+    // 正式部署時改回 false
+    // ─────────────────────────────────────────
+    const DEMO_MODE = true;
+
     if (localStorage.getItem('admin_token')) {
       verifyExistingToken();
     }
 
-    /**
-     * 驗證現有 Token 是否還有效
-     * 如果有效，直接跳轉到 dashboard
-     */
     async function verifyExistingToken() {
+      if (DEMO_MODE) { window.location.href = 'dashboard.html'; return; }
       const token = localStorage.getItem('admin_token');
       try {
         const res = await fetch(`${API_BASE}/api/v1/auth/me`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
-          // Token 有效，跳到 dashboard
           window.location.href = 'dashboard.html';
         } else {
-          // Token 失效，清除並讓使用者重新登入
           localStorage.removeItem('admin_token');
           localStorage.removeItem('admin_user');
         }
       } catch (e) {
-        // 無法連線到後端，繼續顯示登入頁
         console.warn('無法連線到後端：', e.message);
       }
     }
 
-    /**
-     * 處理登入表單提交
-     * @param {Event} event - 表單送出事件
-     */
     async function handleLogin(event) {
-      // 阻止表單預設送出行為（頁面跳轉）
       event.preventDefault();
 
-      const username = document.getElementById('username').value.trim();
+      const username = document.getElementById('username').value.trim() || 'admin';
       const password = document.getElementById('password').value;
       const errorMsg = document.getElementById('errorMsg');
-      const btnText = document.getElementById('btnText');
-      const spinner = document.getElementById('btnSpinner');
+      const btnText  = document.getElementById('btnText');
+      const spinner  = document.getElementById('btnSpinner');
       const loginBtn = document.getElementById('loginBtn');
 
-      // 隱藏舊錯誤訊息，顯示 loading 狀態
       errorMsg.classList.remove('show');
       btnText.textContent = '登入中...';
       spinner.style.display = 'inline-block';
       loginBtn.disabled = true;
 
+      // 展示模式：任何帳密皆可登入
+      if (DEMO_MODE) {
+        await new Promise(r => setTimeout(r, 600)); // 模擬網路延遲
+        localStorage.setItem('admin_token', 'demo-token');
+        localStorage.setItem('admin_user', JSON.stringify({ username }));
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
       try {
-        // FastAPI OAuth2 格式：需要用 FormData 傳送帳密
         const formData = new FormData();
         formData.append('username', username);
         formData.append('password', password);
 
         const response = await fetch(`${API_BASE}/api/v1/auth/login`, {
           method: 'POST',
-          body: formData,   // ⚠️ 不要加 Content-Type，讓瀏覽器自動設定 multipart/form-data
+          body: formData,
         });
 
         if (response.ok) {
-          // 登入成功：儲存 Token
           const data = await response.json();
           localStorage.setItem('admin_token', data.access_token);
-
-          // 取得使用者資訊並儲存
           const userRes = await fetch(`${API_BASE}/api/v1/auth/me`, {
             headers: { 'Authorization': `Bearer ${data.access_token}` }
           });
@@ -140,21 +133,14 @@
             const user = await userRes.json();
             localStorage.setItem('admin_user', JSON.stringify(user));
           }
-
-          // 跳轉到 dashboard
           window.location.href = 'dashboard.html';
-
         } else {
-          // 登入失敗：顯示錯誤
           errorMsg.classList.add('show');
         }
-
       } catch (error) {
-        // 網路錯誤（後端沒跑起來）
         errorMsg.textContent = '⚠️ 無法連線到後端，請確認伺服器已啟動（localhost:8000）';
         errorMsg.classList.add('show');
       } finally {
-        // 還原按鈕狀態
         btnText.textContent = '登入後台';
         spinner.style.display = 'none';
         loginBtn.disabled = false;

@@ -295,17 +295,54 @@
 </div>
 
 <script>
-  // ─────────────────────────────────────────
-  // 全域設定
-  // ─────────────────────────────────────────
   const API_BASE = 'http://localhost:8000';
-  let allPages = [];       // 所有頁面的平面陣列（含父子關係）
-  let editingSlug = null;  // 目前編輯的 slug（null = 新增模式）
+
+  // ─────────────────────────────────────────
+  // 展示模式：不需後端即可瀏覽介面
+  // ─────────────────────────────────────────
+  const DEMO_MODE = true;
+
+  const MOCK_PAGE_TREE = [
+    { id:1,  slug:"home",    title:"首頁",           parent_slug:null,      display_order:1, is_active:true, section_count:3, children:[] },
+    { id:2,  slug:"about",   title:"關於 Aalto EMBA", parent_slug:null,      display_order:2, is_active:true, section_count:0, children:[
+      { id:3, slug:"about-aalto-emba", title:"關於 Aalto EMBA（子頁）", parent_slug:"about", display_order:1, is_active:true, section_count:0, children:[] },
+      { id:4, slug:"about-aalto",      title:"關於阿爾托大學",          parent_slug:"about", display_order:2, is_active:true, section_count:0, children:[] },
+      { id:5, slug:"about-ncu",        title:"關於中央大學",            parent_slug:"about", display_order:3, is_active:true, section_count:0, children:[] }
+    ]},
+    { id:6,  slug:"learning", title:"學習回饋", parent_slug:null, display_order:3, is_active:true, section_count:0, children:[
+      { id:7, slug:"alumni", title:"校友分享", parent_slug:"learning", display_order:1, is_active:true, section_count:2, children:[] }
+    ]},
+    { id:8,  slug:"courses", title:"課程相關", parent_slug:null, display_order:4, is_active:true, section_count:0, children:[
+      { id:9,  slug:"admission",   title:"招生資訊",    parent_slug:"courses", display_order:1, is_active:true, section_count:2, children:[] },
+      { id:10, slug:"degree",      title:"修業與學位",  parent_slug:"courses", display_order:2, is_active:true, section_count:0, children:[] },
+      { id:11, slug:"application", title:"入學申請",    parent_slug:"courses", display_order:3, is_active:true, section_count:0, children:[] },
+      { id:12, slug:"tuition",     title:"學費與獎學金",parent_slug:"courses", display_order:4, is_active:true, section_count:0, children:[] },
+      { id:13, slug:"faq",         title:"FAQ 常見問題",parent_slug:"courses", display_order:5, is_active:true, section_count:0, children:[] }
+    ]},
+    { id:14, slug:"contact", title:"聯絡方式", parent_slug:null, display_order:5, is_active:true, section_count:1, children:[] },
+    { id:15, slug:"search",  title:"搜尋引擎",  parent_slug:null, display_order:6, is_active:true, section_count:0, children:[] }
+  ];
+
+  const MOCK_FLAT_PAGES = MOCK_PAGE_TREE.flatMap(p => [
+    { id:p.id, slug:p.slug, title:p.title, parent_slug:p.parent_slug, display_order:p.display_order, is_active:p.is_active, section_count:p.section_count },
+    ...(p.children || []).map(c => ({ id:c.id, slug:c.slug, title:c.title, parent_slug:c.parent_slug, display_order:c.display_order, is_active:c.is_active, section_count:c.section_count }))
+  ]);
+
+  let allPages = [];
+  let editingSlug = null;
 
   // ─── 初始化 ───
   window.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('admin_token');
     if (!token) { window.location.href = 'index.html'; return; }
+
+    if (DEMO_MODE) {
+      const user = JSON.parse(localStorage.getItem('admin_user') || '{"username":"admin"}');
+      document.getElementById('userName').textContent = user.username;
+      document.getElementById('userAvatar').textContent = user.username[0].toUpperCase();
+      await loadPageTree();
+      return;
+    }
 
     try {
       const res = await fetch(`${API_BASE}/api/v1/auth/me`, {
@@ -329,6 +366,14 @@
    * 使用 /page-tree 端點取得階層化資料
    */
   async function loadPageTree() {
+    if (DEMO_MODE) {
+      allPages = MOCK_FLAT_PAGES;
+      document.getElementById('totalPages').textContent = allPages.length;
+      document.getElementById('totalActive').textContent = allPages.filter(p => p.is_active).length;
+      renderTree(MOCK_PAGE_TREE);
+      return;
+    }
+
     const token = localStorage.getItem('admin_token');
     try {
       const res = await fetch(`${API_BASE}/api/v1/page-tree`, {
@@ -337,17 +382,13 @@
       if (!res.ok) throw new Error('API error');
       const tree = await res.json();
 
-      // 也取得平面列表（用於 Modal 選父頁面）
       const flatRes = await fetch(`${API_BASE}/api/v1/pages?include_inactive=true`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       allPages = flatRes.ok ? await flatRes.json() : [];
 
-      // 更新統計卡
       document.getElementById('totalPages').textContent = allPages.length;
       document.getElementById('totalActive').textContent = allPages.filter(p => p.is_active).length;
-
-      // 渲染樹狀結構
       renderTree(tree);
 
     } catch(e) {
@@ -631,32 +672,27 @@
     btn.disabled = true;
     btn.textContent = '處理中...';
 
+    if (DEMO_MODE) {
+      closeModal();
+      showToast(editingSlug ? `✅ 已更新：${title}（展示模式）` : `✅ 已新增頁面：${title}（展示模式）`, 'success');
+      btn.disabled = false;
+      btn.textContent = editingSlug ? '儲存變更' : '建立頁面';
+      return;
+    }
+
     try {
       let res;
       if (editingSlug) {
-        // 更新模式：PUT /api/v1/pages/{slug}
         res = await fetch(`${API_BASE}/api/v1/pages/${editingSlug}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({
-            title,
-            parent_slug: parent,
-            display_order: order,
-            is_active: active
-          })
+          body: JSON.stringify({ title, parent_slug: parent, display_order: order, is_active: active })
         });
       } else {
-        // 新增模式：POST /api/v1/pages
         res = await fetch(`${API_BASE}/api/v1/pages`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({
-            slug,
-            title,
-            parent_slug: parent,
-            display_order: order,
-            is_active: active
-          })
+          body: JSON.stringify({ slug, title, parent_slug: parent, display_order: order, is_active: active })
         });
       }
 
@@ -687,6 +723,11 @@
    */
   async function deletePage(slug, title) {
     if (!confirm(`⚠️ 確定要刪除「${title}」嗎？\n\n這會同時刪除此頁面下的所有區塊和內容，操作無法復原！\n\n確定請按「確定」。`)) return;
+
+    if (DEMO_MODE) {
+      showToast(`已刪除頁面：${title}（展示模式）`, 'success');
+      return;
+    }
 
     const token = localStorage.getItem('admin_token');
     try {
