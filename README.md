@@ -13,6 +13,7 @@
 - [登入帳密](#登入帳密)
 - [API 文件](#api-文件)
 - [資料模型](#資料模型)
+- [Git 協作流程](#git-協作流程)
 - [部署指南](#部署指南)
 - [注意事項](#注意事項)
 
@@ -200,6 +201,86 @@ Page（頁面）
 - **Page**：網站頁面（首頁、校友分享等），支援父子階層
 - **Section**：頁面內的功能區塊（Hero、介紹文字、統計數字等）
 - **ContentField**：區塊內的文字欄位，每個欄位有 `zh-TW` 和 `en-US` 兩份資料
+
+---
+
+## Git 協作流程
+
+目前有兩位編輯者，各自在自己的子分支上開發：
+
+| 編輯者 | 分支名稱 |
+|--------|----------|
+| Lucy | `lucy` |
+| Rong | `rong` |
+
+`main` 是主分支，**不要直接在 `main` 上修改內容**，所有修改都在自己的子分支完成，測試沒問題後再合併回 `main`。
+
+### 每次開始修改前：把 main 的最新內容同步到自己的子分支
+
+```bash
+# 1. 切回自己的子分支（以 rong 為例，lucy 同理）
+git checkout rong
+
+# 2. 從 origin 拉取 main 最新內容
+git fetch origin
+git pull origin main
+
+# 3. 如果有衝突，解決後再提交
+git add <衝突檔案>
+git commit
+```
+
+> 這樣可以確保自己的分支包含 main 上最新的內容，再開始修改，避免之後合併時衝突太多。
+
+### 修改完成後：提交並推上自己的分支
+
+```bash
+git add <修改的檔案>
+git commit -m "說明這次修改了什麼"
+git push origin rong   # lucy 則是 git push origin lucy
+```
+
+### 修改確認沒問題後：合併回 main
+
+```bash
+# 1. 先確保自己分支是最新（重複「同步」步驟，避免漏掉別人剛推的更新）
+git checkout rong
+git pull origin main
+
+# 2. 切到 main 並更新到最新
+git checkout main
+git pull origin main
+
+# 3. 把自己的分支合併進 main
+git merge rong   # lucy 則是 git merge lucy
+
+# 4. 如果有衝突，解決後
+git add <衝突檔案>
+git commit
+
+# 5. 把合併後的 main 推上 origin（本地端與 origin 都要更新）
+git push origin main
+```
+
+### 合併完之後
+
+回到自己的子分支繼續開發前，記得再拉一次最新的 `main`：
+
+```bash
+git checkout rong   # 或 lucy
+git pull origin main
+```
+
+### 流程總結
+
+```
+1. checkout 自己分支 → pull origin main（同步最新內容）
+2. 修改 → commit → push origin 自己分支
+3. checkout main → pull origin main → merge 自己分支 → push origin main
+4. 回到自己分支 → pull origin main（同步剛合併的內容，準備下一輪修改）
+```
+
+> ⚠️ 兩人合併到 `main` 前，建議先在群組裡說一聲，避免同時合併造成衝突或互相覆蓋。
 
 ---
 
