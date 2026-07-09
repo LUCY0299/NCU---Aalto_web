@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>頁面編輯器 — NCU × Aalto EMBA 後台管理</title>
   <link rel="stylesheet" href="css/admin.css">
+  <!-- 引入 Quill.js 富文本編輯器主題與核心 -->
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
   <style>
     .editor-layout { display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; }
     .section-panel { position: sticky; top: 88px; }
@@ -30,7 +33,7 @@
       <a href="editor.html?page=about-aalto-emba" class="nav-item sub">關於 Aalto EMBA</a>
       <a href="editor.html?page=about-aalto"      class="nav-item sub">關於阿爾托大學</a>
       <a href="editor.html?page=about-ncu"        class="nav-item sub">關於中央大學</a>
-      <a href="editor.html?page=learning"         class="nav-item" id="nav-learning"><span class="nav-icon">📖</span> 學習資訊</a>
+      <a href="editor.html?page=learning"         class="nav-item" id="nav-learning"><span class="nav-icon">📖</span> 學習回饋</a>
       <a href="editor.html?page=alumni"           class="nav-item sub">校友分享</a>
       <a href="editor.html?page=events"           class="nav-item sub">活動訊息</a>
       <a href="editor.html?page=courses"          class="nav-item" id="nav-courses"><span class="nav-icon">📚</span> 課程資訊</a>
@@ -189,6 +192,14 @@
 
 <script>
   const API_BASE = 'http://localhost:8000';
+  // 定義富文本編輯器的工具列 (對應你的截圖需求)
+  const quillToolbarOptions = [
+    [{ 'header': [1, 2, 3, false] }], // Paragraph 下拉選單 (H1, H2, H3, 一般段落)
+    ['link', 'bold', 'italic', 'blockquote'], // 連結、粗體、斜體、引言 (對應 66)
+    [{ 'list': 'bullet' }, { 'list': 'ordered' }, 'code-block'], // 無符號清單、數字清單、程式碼區塊
+    ['image', 'video'], // 插入圖片與影片 (對應 Insert 選單)
+    ['clean'] // 清除格式
+  ];
 
   // ─────────────────────────────────────────
   // 展示模式：不需後端即可瀏覽介面
@@ -289,7 +300,9 @@
   let currentSectionId = null;
   let currentLocale = 'zh-TW';
   let pendingChanges = {};
+  let listFieldStates = {};
   let hasUnsavedChanges = false;
+  let isRendering = false;
 
   const urlParams = new URLSearchParams(window.location.search);
   currentPageSlug = urlParams.get('page') || 'home';
@@ -333,38 +346,57 @@
   }
 
   async function loadPageData() {
-    let pageData;
+    // 🔒【上鎖】：開始載入與填入資料，忽略所有變更監聽
+    isRendering = true;
+    
+    try {
+        let pageData;
 
-    if (DEMO_MODE) {
-      pageData = getMockPage(currentPageSlug);
-    } else {
-      const token = localStorage.getItem('admin_token');
-      try {
-        const res = await fetch(`${API_BASE}/api/v1/pages/${currentPageSlug}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.status === 404) {
-          document.getElementById('pageTitle').textContent = `找不到頁面：${currentPageSlug}`;
-          return;
+        if (DEMO_MODE) {
+            pageData = getMockPage(currentPageSlug);
+        } else {
+            const token = localStorage.getItem('admin_token');
+            try {
+                const res = await fetch(`${API_BASE}/api/v1/pages/${currentPageSlug}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.status === 404) {
+                    document.getElementById('pageTitle').textContent = `找不到頁面：${currentPageSlug}`;
+                    return; // 這裡 return 會直接跳到 finally 解鎖
+                }
+                pageData = await res.json();
+            } catch(e) {
+                showToast('載入失敗，請確認後端服務已啟動', 'error');
+                return; // 這裡 return 也會直接跳到 finally 解鎖
+            }
         }
-        pageData = await res.json();
-      } catch(e) {
-        showToast('載入失敗，請確認後端服務已啟動', 'error');
-        return;
-      }
+
+        // ==========================================
+        // 以下這些「更新畫面」的動作，必須包在 try 裡面！
+        // 這樣才能確保它們觸發的 onchange 事件會被 isRendering 擋下來
+        // ==========================================
+        window._pageData = pageData;
+        document.getElementById('pageTitle').textContent = `✏️ ${pageData.title}`;
+        document.getElementById('breadcrumbPage').textContent = pageData.title;
+        document.getElementById('pageFullTitle').textContent = pageData.title;
+        document.title = `${pageData.title} — NCU × Aalto EMBA 後台`;
+        
+        document.getElementById('pageStatus').innerHTML = pageData.is_active
+            ? '<span class="badge badge-active">✓ 已啟用</span>'
+            : '<span class="badge badge-inactive">✗ 已停用</span>';
+
+        // 重新渲染左側選單與右側內容
+        renderSectionList(pageData.sections);
+        if (pageData.sections?.length > 0) {
+            selectSection(pageData.sections[0]);
+        }
+
+    } finally {
+        // 🔓【解鎖】：不管上面成功還是失敗、有沒有 return，最後一定會執行這裡
+        setTimeout(() => {
+            isRendering = false;
+        }, 50);
     }
-
-    window._pageData = pageData;
-    document.getElementById('pageTitle').textContent = `✏️ ${pageData.title}`;
-    document.getElementById('breadcrumbPage').textContent = pageData.title;
-    document.getElementById('pageFullTitle').textContent = pageData.title;
-    document.title = `${pageData.title} — NCU × Aalto EMBA 後台`;
-    document.getElementById('pageStatus').innerHTML = pageData.is_active
-      ? '<span class="badge badge-active">✓ 已啟用</span>'
-      : '<span class="badge badge-inactive">✗ 已停用</span>';
-
-    renderSectionList(pageData.sections);
-    if (pageData.sections?.length > 0) selectSection(pageData.sections[0]);
   }
 
   /** 渲染左側區塊列表 */
@@ -374,19 +406,28 @@
       list.innerHTML = '<div style="color:var(--color-text-muted); font-size:13px; padding:8px;">尚無區塊，點右上角新增</div>';
       return;
     }
-    list.innerHTML = sections.sort((a,b) => a.display_order - b.display_order).map(sec => `
-      <div class="section-item" id="sec-item-${sec.id}"
-           onclick='selectSection(${JSON.stringify(sec)})'>
+    list.innerHTML = sections.sort((a,b) => a.display_order - b.display_order).map(sec => {
+      // 判斷目前的狀態
+      const isActive = sec.is_active !== false; 
+      const btnClass = isActive ? 'btn-secondary' : 'btn-success';
+      const btnText = isActive ? '停用' : '啟用';
+      const itemOpacity = isActive ? '1' : '0.5';
+      const statusText = isActive ? '' : '<span style="color:red; font-size:12px; margin-left:8px;">(已停用)</span>';
+
+      // 👇 關鍵修復：這裡原本塞了整包 JSON，現在只傳乾淨的 sec.id
+      return `
+      <div class="section-item" id="sec-item-${sec.id}" style="opacity: ${itemOpacity};"
+            onclick="selectSectionById(${sec.id})">
         <div>
-          <div class="section-item-name">${sec.name}</div>
+          <div class="section-item-name">${sec.name} ${statusText}</div>
           <div class="section-item-type">${sec.section_type} · ${sec.section_key}</div>
         </div>
-        <button class="btn btn-danger"
-          onclick="event.stopPropagation(); deleteSection(${sec.id}, '${sec.name.replace(/'/g, "\\'")}')">
-          刪除
+        <button class="btn ${btnClass}" style="padding: 4px 12px; font-size: 12px;"
+          onclick="event.stopPropagation(); toggleSectionStatus(${sec.id}, ${!isActive}, '${sec.name}')">
+          ${btnText}
         </button>
       </div>
-    `).join('');
+    `}).join('');
   }
 
   /** 選取區塊，顯示編輯欄位 */
@@ -395,6 +436,7 @@
 
     currentSectionId = section.id;
     pendingChanges = {};
+    listFieldStates = {};
     hasUnsavedChanges = false;
 
     document.querySelectorAll('.section-item').forEach(el => el.classList.remove('active'));
@@ -429,15 +471,39 @@
     }
 
     body.innerHTML = fields.map(renderField).join('');
+
+    setTimeout(() => {
+      fields.forEach(f => {
+        if (['list', 'global_list'].includes(f.field_type)) {
+          renderListItems(f.field_key);
+        }
+      });
+    }, 0);
+
     window._currentSection = section;
   }
 
   /** 渲染單一欄位 */
   function renderField(field) {
     let inputHtml;
-    const val = escapeHtml(field.field_value || '');
+    // 強化 escape 避免引號破壞 HTML 屬性
+    const val = escapeHtml(field.field_value || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-    if (['textarea','richtext'].includes(field.field_type)) {
+    if (['list', 'global_list'].includes(field.field_type)) {
+      try {
+        listFieldStates[field.field_key] = JSON.parse(field.field_value || '[]');
+      } catch(e) {
+        listFieldStates[field.field_key] = [];
+      }
+      
+      inputHtml = `
+        <div id="list-container-${field.field_key}" style="background:#f8f9fa; padding:16px; border-radius:8px; border:1px solid #e9ecef; max-height: 600px; overflow-y: auto;">
+          </div>
+        <button type="button" class="btn btn-primary" style="margin-top:12px; font-size:13px;" onclick="addListItem('${field.field_key}')">
+          ➕ 新增校友卡片
+        </button>`;
+
+    } else if (['textarea','richtext'].includes(field.field_type)) {
       inputHtml = `<textarea id="field-${field.id}" rows="4"
         placeholder="請輸入 ${field.label || field.field_key}"
         oninput="markChanged('${field.field_key}', this.value)">${val}</textarea>`;
@@ -448,10 +514,20 @@
         oninput="markChanged('${field.field_key}', this.value)">${val}</textarea>
         <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px;">⚠️ JSON 格式，請確保語法正確</div>`;
     } else if (field.field_type === 'image') {
-      inputHtml = `<input type="text" id="field-${field.id}"
-        value="${val}" placeholder="圖片 URL"
-        oninput="markChanged('${field.field_key}', this.value)">
-        ${field.field_value ? `<img src="${field.field_value}" style="max-width:100%;max-height:120px;margin-top:8px;border-radius:6px;border:1px solid #e0e0e0;" onerror="this.style.display='none'">` : ''}`;
+      const fullImageUrl = val ? (val.startsWith('http') ? val : `${API_BASE}${val}`) : '';
+      
+      inputHtml = `
+        <div class="image-upload-wrapper">
+          <input type="hidden" id="field-${field.id}" value="${val}">
+          
+          <input type="file" accept="image/*" 
+            onchange="uploadImage(this, '${field.field_key}', 'field-${field.id}')" 
+            style="margin-bottom: 10px; display: block;">
+            
+          <img id="preview-${field.field_key}" src="${fullImageUrl}" 
+            style="max-width:100%; max-height:120px; margin-top:8px; border-radius:6px; border:1px solid #e0e0e0; display: ${val ? 'block' : 'none'};" 
+            onerror="this.style.display='none'">
+        </div>`;
     } else {
       inputHtml = `<input type="text" id="field-${field.id}"
         value="${val}" placeholder="請輸入${field.label || field.field_key}"
@@ -469,8 +545,52 @@
       </div>`;
   }
 
+  // 處理圖片上傳的函數 (新增)
+  async function uploadImage(fileInput, fieldKey, inputId) {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    // 顯示上傳中的提示
+    showToast('⏳ 圖片上傳中...', '');
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      // 呼叫後端的上傳 API
+      const res = await fetch(`${API_BASE}/api/v1/upload`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const imageUrl = data.url;
+
+        // 1. 將後端給的新網址塞入隱藏的 input
+        document.getElementById(inputId).value = imageUrl;
+
+        // 2. 觸發系統原有的「有變更」機制 (重要！這樣右上角才會出現儲存按鈕)
+        markChanged(fieldKey, imageUrl);
+
+        // 3. 更新下方的預覽圖片
+        const imgPreview = document.getElementById(`preview-${fieldKey}`);
+        imgPreview.src = imageUrl.startsWith('http') ? imageUrl : `${API_BASE}${imageUrl}`;
+        imgPreview.style.display = 'block';
+
+        showToast('✅ 圖片上傳成功！請記得按下方儲存。', 'success');
+      } else {
+        showToast('❌ 上傳失敗，請檢查後端', 'error');
+      }
+    } catch(e) {
+      showToast('❌ 無法連線到上傳伺服器', 'error');
+      console.error(e);
+    }
+  }
+
   /** 標記有變更 */
   function markChanged(fieldKey, value) {
+    if (isRendering) return;
     pendingChanges[fieldKey] = value;
     hasUnsavedChanges = true;
     updateSaveStatus(true);
@@ -566,6 +686,37 @@
     if (sec) { renderFieldEditor(sec); updateSaveStatus(false); }
   }
 
+  /** 切換區塊的啟用/停用狀態 */
+  async function toggleSectionStatus(sectionId, newStatus) {
+    if (DEMO_MODE) {
+      showToast(`狀態已切換為：${newStatus ? '啟用' : '停用'}（展示模式）`, 'success');
+      return;
+    }
+
+    const token = localStorage.getItem('admin_token');
+    try {
+      // 假設你的後端有這個 PATCH 路由，若沒有，請參考第二步在後端補上
+      const res = await fetch(`${API_BASE}/api/v1/sections/${sectionId}/status`, {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({ is_active: newStatus })
+      });
+      
+      if (res.ok) {
+        showToast(`✅ 區塊已${newStatus ? '啟用' : '停用'}`, 'success');
+        await loadPageData(); // 重新載入左側列表
+      } else { 
+        showToast('❌ 狀態切換失敗', 'error');
+      }
+    } catch(e) { 
+      showToast('❌ 無法連線到後端', 'error'); 
+    }
+  }
+  
+  /** 刪除區塊 */
   async function deleteSection(sectionId, sectionName) {
     if (!confirm(`確定刪除「${sectionName}」？此操作無法復原。`)) return;
 
@@ -634,6 +785,173 @@
         alert(`新增失敗：${err.detail}`);
       }
     } catch(e) { showToast('無法連線到後端', 'error'); }
+  }
+
+  // ════════════════════════════════════════
+  // 🔘 列表 (List) 型態專用管理函數
+  // ════════════════════════════════════════
+
+  /** 渲染卡片清單畫面 (包含富文本編輯器) */
+  function toggleCard(fieldKey, index) {
+    const body = document.getElementById(`card-body-${fieldKey}-${index}`);
+    const icon = document.getElementById(`card-icon-${fieldKey}-${index}`);
+    if (body.style.display === 'none') {
+      body.style.display = 'block';
+      icon.textContent = '▼';
+    } else {
+      body.style.display = 'none';
+      icon.textContent = '▶';
+    }
+  }
+
+  /** 即時更新摺疊面板上的標題 */
+  function updateCardTitle(fieldKey, index, newTitle) {
+    const icon = document.getElementById(`card-icon-${fieldKey}-${index}`).textContent;
+    const header = document.querySelector(`#card-body-${fieldKey}-${index}`).previousElementSibling.querySelector('h4');
+    if(header) {
+      header.innerHTML = `<span id="card-icon-${fieldKey}-${index}" style="display:inline-block; width:20px;">${icon}</span> 🎓 ${newTitle || `新卡片 #${index + 1}`}`;
+    }
+  }
+
+  /** 渲染卡片清單畫面 (升級版：手風琴摺疊介面) */
+  function renderListItems(fieldKey) {
+    const container = document.getElementById(`list-container-${fieldKey}`);
+    if (!container) return;
+    const items = listFieldStates[fieldKey] || [];
+
+    if (items.length === 0) {
+      container.innerHTML = '<div style="text-align:center; color:#adb5bd; padding:20px;">目前尚無卡片，請點擊下方按鈕新增</div>';
+      return;
+    }
+
+    container.innerHTML = items.map((item, index) => {
+      const escape = (str) => escapeHtml(str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      const imgUrl = item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `${API_BASE}${item.image_url}`) : '';
+      
+      // 預設邏輯：第一張卡片展開，其餘摺疊
+      const isExpanded = index === 0;
+      const displayStyle = isExpanded ? 'block' : 'none';
+      const iconText = isExpanded ? '▼' : '▶';
+
+      return `
+      <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#f8f9fa; border-radius:6px; cursor:pointer;" onclick="toggleCard('${fieldKey}', ${index})">
+          <h4 style="margin:0; color:var(--color-primary); font-size:14px; user-select:none;">
+            <span id="card-icon-${fieldKey}-${index}" style="display:inline-block; width:20px;">${iconText}</span>
+            🎓 ${item.title || `新卡片 #${index + 1}`}
+          </h4>
+          <button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="event.stopPropagation(); removeListItem('${fieldKey}', ${index})">刪除</button>
+        </div>
+
+        <div id="card-body-${fieldKey}-${index}" style="padding:16px; border-top:1px solid #eee; display:${displayStyle};">
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom:12px;">
+            <div>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">標題</label>
+              <input type="text" value="${escape(item.title)}" oninput="updateListItem('${fieldKey}', ${index}, 'title', this.value); updateCardTitle('${fieldKey}', ${index}, this.value)" style="width:100%;">
+            </div>
+            <div>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">狀態</label>
+              <select onchange="updateListItem('${fieldKey}', ${index}, 'is_active', this.value === 'true')" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                <option value="true" ${item.is_active !== false ? 'selected' : ''}>🟢 顯示</option>
+                <option value="false" ${item.is_active === false ? 'selected' : ''}>🔴 隱藏</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom:12px;">
+            <div>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">日期</label>
+              <input type="date" value="${escape(item.date)}" onchange="updateListItem('${fieldKey}', ${index}, 'date', this.value)" style="width:100%;">
+            </div>
+            <div>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">卡片封面照</label>
+              <input type="file" accept="image/*" onchange="uploadListImage(this, '${fieldKey}', ${index})" style="margin-bottom:8px; font-size:12px;">
+              ${imgUrl ? `<img src="${imgUrl}" style="max-height:60px; border-radius:4px; border:1px solid #ccc; display:block;">` : ''}
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">內容大綱 (Summary)</label>
+            <textarea rows="2" oninput="updateListItem('${fieldKey}', ${index}, 'summary', this.value)" style="width:100%;">${escape(item.summary)}</textarea>
+          </div>
+
+          <div style="margin-top: 16px;">
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">完整內容 (Content)</label>
+            <div id="quill-editor-${fieldKey}-${index}" style="height: 250px; background: #fff; font-family: sans-serif;"></div>
+          </div>
+        </div>
+      </div>
+    `}).join('');
+
+    // 啟動 Quill 編輯器
+    setTimeout(() => {
+      items.forEach((item, index) => {
+        const editorElement = document.getElementById(`quill-editor-${fieldKey}-${index}`);
+        if (editorElement && !editorElement.classList.contains('ql-container')) {
+          const quill = new Quill(editorElement, {
+            theme: 'snow',
+            modules: { 
+              toolbar: {
+                container: quillToolbarOptions,
+                handlers: { 'image': function() { quillImageHandler(this.quill); } }
+              }
+            },
+            placeholder: '在此輸入校友訪談的完整故事...'
+          });
+
+          if (item.content) { quill.root.innerHTML = item.content; }
+          quill.on('text-change', function() {
+            updateListItem(fieldKey, index, 'content', quill.root.innerHTML);
+          });
+        }
+      });
+    }, 0);
+  }
+
+  /** 新增一張空卡片 */
+  function addListItem(fieldKey) {
+    if (!listFieldStates[fieldKey]) listFieldStates[fieldKey] = [];
+    listFieldStates[fieldKey].push({ title: '', summary: '', image_url: '', content: '', date: '', is_active: true });
+    saveListToPending(fieldKey);
+    renderListItems(fieldKey);
+  }
+
+  /** 刪除一張卡片 */
+  function removeListItem(fieldKey, index) {
+    if(!confirm('確定刪除此卡片？（需按下方儲存才會生效）')) return;
+    listFieldStates[fieldKey].splice(index, 1);
+    saveListToPending(fieldKey);
+    renderListItems(fieldKey);
+  }
+
+  /** 更新卡片內單一欄位的值 */
+  function updateListItem(fieldKey, index, key, value) {
+    listFieldStates[fieldKey][index][key] = value;
+    saveListToPending(fieldKey);
+  }
+
+  /** 將陣列轉為 JSON 字串並觸發儲存機制 */
+  function saveListToPending(fieldKey) {
+    markChanged(fieldKey, JSON.stringify(listFieldStates[fieldKey]));
+  }
+
+  /** 清單專用的圖片上傳 */
+  async function uploadListImage(fileInput, fieldKey, index) {
+    const file = fileInput.files[0];
+    if (!file) return;
+    showToast('⏳ 圖片上傳中...', '');
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/upload`, { method: 'POST', body: formData });
+      if (res.ok) {
+        const data = await res.json();
+        updateListItem(fieldKey, index, 'image_url', data.url);
+        renderListItems(fieldKey); // 重新渲染以顯示新照片
+        showToast('✅ 圖片上傳成功！', 'success');
+      } else { showToast('❌ 上傳失敗', 'error'); }
+    } catch(e) { showToast('❌ 無法連線到上傳伺服器', 'error'); }
   }
 
   // ─── 工具函數 ───
