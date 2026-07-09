@@ -28,6 +28,9 @@ import models  # noqa: F401
 
 # 匯入路由器
 from routers import auth, pages
+from routers.auth import verify_token
+from models import User
+from fastapi import Depends
 
 # ─────────────────────────────────────────
 # 建立 FastAPI 應用程式實例
@@ -132,8 +135,11 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 # 圖片上傳 API 端點
 # ─────────────────────────────────────────
 @app.post("/api/v1/upload", tags=["上傳"])
-async def upload_image(file: UploadFile = File(...)):
-    """接收前台或後台上傳的圖片，並回傳存取網址"""
+async def upload_image(
+    file: UploadFile = File(...),
+    current_user: User = Depends(verify_token),  # 需要登入
+):
+    """接收後台上傳的圖片，並回傳存取網址（需要登入）"""
     # 幫圖片產生一個獨一無二的檔名 (UUID)，避免檔名重複導致覆蓋
     file_extension = file.filename.split(".")[-1]
     unique_filename = f"{uuid.uuid4()}.{file_extension}"

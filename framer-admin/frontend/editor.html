@@ -560,6 +560,7 @@
       // 呼叫後端的上傳 API
       const res = await fetch(`${API_BASE}/api/v1/upload`, {
         method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` },
         body: formData
       });
 
@@ -944,7 +945,11 @@
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/upload`, { method: 'POST', body: formData });
+      const res = await fetch(`${API_BASE}/api/v1/upload`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` },
+        body: formData
+      });
       if (res.ok) {
         const data = await res.json();
         updateListItem(fieldKey, index, 'image_url', data.url);
