@@ -44,6 +44,7 @@ PAGES = [
     {"slug": "about-ncu",       "title": "關於中央大學",    "parent_slug": "about",   "order": 3,  "active": True},
     {"slug": "learning",        "title": "學習回饋",        "parent_slug": None,      "order": 3,  "active": True},
     {"slug": "alumni",          "title": "校友分享",        "parent_slug": "learning","order": 1,  "active": True},
+    {"slug": "events",          "title": "活動訊息",        "parent_slug": "learning","order": 2,  "active": True},
     {"slug": "courses",         "title": "課程相關",        "parent_slug": None,      "order": 4,  "active": True},
     {"slug": "admission",       "title": "招生資訊",        "parent_slug": "courses", "order": 1,  "active": True},
     {"slug": "degree",          "title": "修業與學位",      "parent_slug": "courses", "order": 2,  "active": True},
@@ -131,6 +132,32 @@ SECTIONS_DATA = [
     },
 
     # ════════════════════
+    # 活動訊息 (event_news)
+    # ════════════════════
+    {
+        "page_slug": "events",
+        "key": "event_news",
+        "name": "活動訊息",
+        "type": "list",
+        "order": 1,
+        "fields": [
+            {
+                "key": "event_list",
+                "label": "活動清單",
+                "type": "list",  # 巢狀列表結構（跟校友分享共用同一套後台介面）
+                "items": [
+                    {"key": "title", "label": "標題", "type": "text"},
+                    {"key": "summary", "label": "列表摘要", "type": "text"},
+                    {"key": "is_active", "label": "狀態", "type": "boolean"},
+                    {"key": "image_url", "label": "封面圖", "type": "image"},
+                    {"key": "date", "label": "日期", "type": "date"},
+                    {"key": "content", "label": "詳情頁完整內容（可在文字中插入圖片）", "type": "richtext"}
+                ]
+            }
+        ]
+    },
+
+    # ════════════════════
     # 招生資訊 (admission)
     # ════════════════════
     {
@@ -140,19 +167,97 @@ SECTIONS_DATA = [
              "zh": "招生資訊",
              "en": "Admission Information"},
             {"key": "subtitle", "label": "副標題", "type": "text",
-             "zh": "開啟您的國際 EMBA 之旅",
-             "en": "Begin your international EMBA journey"},
+             "zh": "了解最新說明會、講座與招生活動資訊",
+             "en": "Learn about the latest info sessions, seminars, and admission events"},
         ]
     },
     {
-        "page_slug": "admission", "key": "admission-requirements", "name": "申請資格", "type": "list", "order": 2,
+        "page_slug": "admission", "key": "admission-info", "name": "招生資訊", "type": "text", "order": 2,
         "fields": [
             {"key": "title",   "label": "區塊標題", "type": "text",
-             "zh": "申請資格",
-             "en": "Requirements"},
-            {"key": "content", "label": "資格說明", "type": "textarea",
-             "zh": "• 大學畢業\n• 5年以上工作經驗\n• 具備基本英文能力",
-             "en": "• Bachelor's degree\n• 5+ years work experience\n• Basic English proficiency"},
+             "zh": "招生資訊",
+             "en": "Admission Information"},
+            {"key": "image_url", "label": "圖片", "type": "image",
+             "zh": "", "en": ""},
+            {"key": "image_url_2", "label": "圖片 2（測試用）", "type": "image",
+             "zh": "", "en": ""},
+            {"key": "heading", "label": "小標", "type": "text",
+             "zh": "本專班包含15 門課程及個人論文項目，其中:",
+             "en": "This program includes 15 courses and an individual thesis project, of which:"},
+            {"key": "content", "label": "內文", "type": "textarea",
+             "zh": "(一) 9 門課程由中央大學管理學院授課。\n(二) 6門課程由阿爾托大學設立之高階管理教育機構授課。\nAalto EE的6門課程中，其中5門課程將由該校教授來台授課，另1門則為國際課程。",
+             "en": "(1) 9 courses are taught by NCU College of Management.\n(2) 6 courses are taught by Aalto EE, the executive education institute established by Aalto University.\nOf Aalto EE's 6 courses, 5 will be taught in Taiwan by Aalto faculty, and 1 is an international course."},
+        ]
+    },
+    {
+        "page_slug": "admission", "key": "admission-requirements", "name": "入學門檻", "type": "text", "order": 3,
+        "fields": [
+            {"key": "title",   "label": "區塊標題", "type": "text",
+             "zh": "入學門檻",
+             "en": "Admission Requirements"},
+            {"key": "image_url", "label": "圖片", "type": "image",
+             "zh": "", "en": ""},
+            {"key": "heading", "label": "小標", "type": "text",
+             "zh": "申請人可通過以下語言測試之一來證明其英語能力：",
+             "en": "Applicants may prove English proficiency through one of the following language tests:"},
+            {"key": "content", "label": "內文", "type": "textarea",
+             "zh": "(一) IELTS Academic\n1.最低總分：6.5\n2.寫作最低分數：5.5\n(二) TOEFL\n1.TOEFL iBT（網路測驗）：最低 92 分，且寫作 22 分\n2.TOEFL PDT（紙本測驗）：閱讀 22 分、聽力 22 分、寫作 24 分\n(三) TOEIC\n最低800分",
+             "en": "(1) IELTS Academic\n1. Minimum overall score: 6.5\n2. Minimum writing score: 5.5\n(2) TOEFL\n1. TOEFL iBT: minimum 92, with a writing score of 22\n2. TOEFL PDT: reading 22, listening 22, writing 24\n(3) TOEIC\nMinimum score: 800"},
+        ]
+    },
+
+    # ════════════════════
+    # 修業與學位 (degree)
+    # ════════════════════
+    {
+        "page_slug": "degree", "key": "degree-hero", "name": "修業與學位 頂部", "type": "hero", "order": 1,
+        "fields": [
+            {"key": "title",    "label": "主標題", "type": "text",
+             "zh": "修業與學位",
+             "en": "Degree & Certification"},
+            {"key": "subtitle", "label": "副標題", "type": "text",
+             "zh": "了解申請資格、流程與所需文件",
+             "en": "Learn about eligibility, process, and required documents"},
+        ]
+    },
+    {
+        "page_slug": "degree", "key": "degree-regulations", "name": "修業規定", "type": "text", "order": 2,
+        "fields": [
+            {"key": "title",   "label": "區塊標題", "type": "text",
+             "zh": "修業規定",
+             "en": "Academic Regulations"},
+            {"key": "item1_heading", "label": "小標題 1", "type": "text",
+             "zh": "一、課程架構",
+             "en": "1. Course Structure"},
+            {"key": "item1_content", "label": "內文 1", "type": "textarea",
+             "zh": "高階經營管理碩士在職學位學程課程由中央大學及阿爾托大學下設之高階管理教育機構(AaltoEE)共同規劃，包含15 門課程及個人論文項目，共計45 個學分。其中9 門課程由中央大學管理學院授課，另6 門課程由阿爾托大學商學院(Aalto University School of Business)授課。阿爾托大學商學院(Aalto University School of Business)的6門課程中，其中5 門課程將由該校教授在台灣授課，另1 門為國際課程，學生將前往由芬蘭赫辛基阿爾托大學下設之高階管理教育機構(Aalto EE)所安排規課為期1至2週的學習活動。所有在職專班組成要素，包括教職員、課程規劃、修課辦法等規劃皆需經中央大學及阿爾托商學院(Aalto University School of Business)雙方批准後實行。",
+             "en": "The Executive MBA program is jointly designed by NCU and Aalto University's Aalto EE, comprising 15 courses and an individual thesis project, totaling 45 credits. 9 courses are taught by NCU College of Management, and 6 courses are taught by Aalto University School of Business. Of these 6 courses, 5 are taught in Taiwan by Aalto faculty, and 1 is an international course requiring a 1-2 week study trip to Aalto EE in Helsinki, Finland. All program elements, including faculty, curriculum, and course requirements, must be approved by both NCU and Aalto University School of Business."},
+            {"key": "item2_heading", "label": "小標題 2", "type": "text",
+             "zh": "二、個人論文",
+             "en": "2. Individual Thesis"},
+            {"key": "item2_content", "label": "內文 2", "type": "textarea",
+             "zh": "個人論文將由國立中央大學教授擔任主要指導，並須經阿爾托大學審閱與核准論文摘要，以確保跨校學術標準之一致性與研究成果之品質。隨著雙方合作關係持續深化，未來將逐步推動共同論文指導與跨校研究合作機制，進一步提升學生研究能力及國際學術影響力。學生須修習並完成論文相關課程，累計共6 學分。",
+             "en": "The individual thesis is primarily supervised by an NCU professor, with the thesis abstract reviewed and approved by Aalto University to ensure consistency of academic standards and research quality across both institutions. As the partnership deepens, joint thesis supervision and cross-institution research collaboration will gradually be promoted to further enhance students' research capabilities and international academic impact. Students must complete thesis-related coursework totaling 6 credits."},
+        ]
+    },
+    {
+        "page_slug": "degree", "key": "degree-certification", "name": "學位授予", "type": "text", "order": 3,
+        "fields": [
+            {"key": "title",   "label": "區塊標題", "type": "text",
+             "zh": "學位授予",
+             "en": "Degree Conferral"},
+            {"key": "item1_heading", "label": "小標題 1", "type": "text",
+             "zh": "一、學位證明",
+             "en": "1. Degree Certificate"},
+            {"key": "item1_content", "label": "內文 1", "type": "textarea",
+             "zh": "(一) 完成畢業要求之學生，由中央大學授予「學位證明」，並依芬蘭大學法規定，由阿爾托大學商學院（Aalto University School of Business）頒發「結業證明」，學位及結業證明將以英語頒發。\n(二) 在計畫結束時授予參與者的學位證明：由國立中央大學管理學院頒發的高階主管企管碩士（Executive Master of Business Administration）畢業證書。",
+             "en": "(1) Students who complete graduation requirements will be awarded a \"Degree Certificate\" by NCU. In accordance with Finnish university regulations, a \"Certificate of Completion\" will also be issued by Aalto University School of Business. Both certificates will be issued in English.\n(2) Degree certificate awarded upon program completion: Executive Master of Business Administration diploma issued by the NCU College of Management."},
+            {"key": "item2_heading", "label": "小標題 2", "type": "text",
+             "zh": "二、結業證明",
+             "en": "2. Certificate of Completion"},
+            {"key": "item2_content", "label": "內文 2", "type": "textarea",
+             "zh": "在計畫結束時授予參與者的結業證明：由阿爾托大學商學院(Aalto University School of Business)頒發的高階主管企管碩士（Executive Master of Business Administration）結業證書。",
+             "en": "Certificate of completion awarded upon program completion: Executive Master of Business Administration certificate issued by Aalto University School of Business."},
         ]
     },
 
