@@ -502,11 +502,12 @@
         listFieldStates[field.field_key] = [];
       }
       
+      const addBtnLabel = field.field_key === 'event_list' ? '➕ 新增活動卡片' : '➕ 新增校友卡片';
       inputHtml = `
         <div id="list-container-${field.field_key}" style="background:#f8f9fa; padding:16px; border-radius:8px; border:1px solid #e9ecef; max-height: 600px; overflow-y: auto;">
           </div>
         <button type="button" class="btn btn-primary" style="margin-top:12px; font-size:13px;" onclick="addListItem('${field.field_key}')">
-          ➕ 新增校友卡片
+          ${addBtnLabel}
         </button>`;
 
     } else if (['textarea','richtext'].includes(field.field_type)) {
@@ -858,6 +859,116 @@
     }
   }
 
+  /** 渲染「內容區塊」編輯器（活動詳情頁用：文字／圖片／圖說三種可新增、刪除、排序的區塊） */
+  function renderContentBlocksSection(fieldKey, itemIndex, item) {
+    const escape = (str) => escapeHtml(str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const blocks = item.blocks || [];
+    const typeLabel = { text: '📝 文字', image: '🖼️ 圖片', caption: '💬 圖說' };
+
+    const blocksHtml = blocks.length === 0
+      ? '<div style="text-align:center; color:#adb5bd; padding:12px; font-size:13px;">尚無內容區塊，用下方按鈕新增</div>'
+      : blocks.map((block, bi) => {
+          const imgUrl = block.image_url ? (block.image_url.startsWith('http') ? block.image_url : `${API_BASE}${block.image_url}`) : '';
+          let bodyHtml = '';
+          if (block.type === 'image') {
+            bodyHtml = `
+              <input type="file" accept="image/*" onchange="uploadBlockImage(this, '${fieldKey}', ${itemIndex}, ${bi})" style="margin-bottom:8px; font-size:12px;">
+              ${imgUrl ? `<img src="${imgUrl}" style="max-height:80px; border-radius:4px; border:1px solid #ccc; display:block;">` : ''}
+            `;
+          } else {
+            bodyHtml = `<textarea rows="3" oninput="updateContentBlockText('${fieldKey}', ${itemIndex}, ${bi}, this.value)" style="width:100%;" placeholder="${block.type === 'caption' ? '輸入圖說文字...' : '輸入段落文字...'}">${escape(block.text)}</textarea>`;
+          }
+
+          return `
+          <div style="background:#fff; border:1px solid #e0e0e0; border-radius:6px; padding:10px; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:12px; font-weight:bold; color:var(--color-primary);">${typeLabel[block.type] || block.type}</span>
+              <div style="display:flex; gap:4px;">
+                <button type="button" class="btn btn-secondary" style="padding:2px 8px; font-size:12px;" onclick="moveContentBlock('${fieldKey}', ${itemIndex}, ${bi}, -1)" ${bi === 0 ? 'disabled' : ''}>▲</button>
+                <button type="button" class="btn btn-secondary" style="padding:2px 8px; font-size:12px;" onclick="moveContentBlock('${fieldKey}', ${itemIndex}, ${bi}, 1)" ${bi === blocks.length - 1 ? 'disabled' : ''}>▼</button>
+                <button type="button" class="btn btn-danger" style="padding:2px 8px; font-size:12px;" onclick="removeContentBlock('${fieldKey}', ${itemIndex}, ${bi})">刪除</button>
+              </div>
+            </div>
+            ${bodyHtml}
+          </div>`;
+        }).join('');
+
+    return `
+      <div style="margin-top: 16px;">
+        <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">內容區塊（詳情頁用，可自由新增／刪除／排序）</label>
+        <div style="background:#f8f9fa; padding:12px; border-radius:8px; border:1px solid #e9ecef;">
+          ${blocksHtml}
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button type="button" class="btn btn-secondary" style="font-size:12px;" onclick="addContentBlock('${fieldKey}', ${itemIndex}, 'text')">＋ 文字</button>
+            <button type="button" class="btn btn-secondary" style="font-size:12px;" onclick="addContentBlock('${fieldKey}', ${itemIndex}, 'image')">＋ 圖片</button>
+            <button type="button" class="btn btn-secondary" style="font-size:12px;" onclick="addContentBlock('${fieldKey}', ${itemIndex}, 'caption')">＋ 圖說</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  /** 新增一個內容區塊 */
+  function addContentBlock(fieldKey, itemIndex, type) {
+    const item = listFieldStates[fieldKey][itemIndex];
+    if (!item.blocks) item.blocks = [];
+    item.blocks.push(type === 'image' ? { type, image_url: '' } : { type, text: '' });
+    saveListToPending(fieldKey);
+    renderListItems(fieldKey);
+  }
+
+  /** 刪除一個內容區塊 */
+  function removeContentBlock(fieldKey, itemIndex, blockIndex) {
+    listFieldStates[fieldKey][itemIndex].blocks.splice(blockIndex, 1);
+    saveListToPending(fieldKey);
+    renderListItems(fieldKey);
+  }
+
+  /** 上下移動一個內容區塊 */
+  function moveContentBlock(fieldKey, itemIndex, blockIndex, direction) {
+    const blocks = listFieldStates[fieldKey][itemIndex].blocks;
+    const newIndex = blockIndex + direction;
+    if (newIndex < 0 || newIndex >= blocks.length) return;
+    const tmp = blocks[blockIndex];
+    blocks[blockIndex] = blocks[newIndex];
+    blocks[newIndex] = tmp;
+    saveListToPending(fieldKey);
+    renderListItems(fieldKey);
+  }
+
+  /** 更新文字／圖說區塊的內容（不用重新渲染，避免打字時失焦） */
+  function updateContentBlockText(fieldKey, itemIndex, blockIndex, value) {
+    listFieldStates[fieldKey][itemIndex].blocks[blockIndex].text = value;
+    saveListToPending(fieldKey);
+  }
+
+  /** 上傳圖片區塊的圖片 */
+  async function uploadBlockImage(fileInput, fieldKey, itemIndex, blockIndex) {
+    const file = fileInput.files[0];
+    if (!file) return;
+    showToast('⏳ 圖片上傳中...', '');
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/upload`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` },
+        body: formData
+      });
+      if (res.ok) {
+        const data = await res.json();
+        listFieldStates[fieldKey][itemIndex].blocks[blockIndex].image_url = data.url;
+        saveListToPending(fieldKey);
+        renderListItems(fieldKey);
+        showToast('✅ 圖片上傳成功！請記得按下方儲存。', 'success');
+      } else {
+        showToast('❌ 上傳失敗', 'error');
+      }
+    } catch (e) {
+      showToast('❌ 無法連線到上傳伺服器', 'error');
+      console.error(e);
+    }
+  }
+
   /** 渲染卡片清單畫面 (升級版：手風琴摺疊介面) */
   function renderListItems(fieldKey) {
     const container = document.getElementById(`list-container-${fieldKey}`);
@@ -921,10 +1032,16 @@
             <textarea rows="2" oninput="updateListItem('${fieldKey}', ${index}, 'summary', this.value)" style="width:100%;">${escape(item.summary)}</textarea>
           </div>
 
+          <div style="margin-bottom:12px;">
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">圖說 (Image Caption，選填)</label>
+            <textarea rows="2" oninput="updateListItem('${fieldKey}', ${index}, 'image_caption', this.value)" style="width:100%;">${escape(item.image_caption)}</textarea>
+          </div>
+
+          ${fieldKey === 'event_list' ? renderContentBlocksSection(fieldKey, index, item) : `
           <div style="margin-top: 16px;">
             <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">完整內容 (Content)</label>
             <div id="quill-editor-${fieldKey}-${index}" style="height: 250px; background: #fff; font-family: sans-serif;"></div>
-          </div>
+          </div>`}
         </div>
       </div>
     `}).join('');
@@ -957,7 +1074,7 @@
   /** 新增一張空卡片 */
   function addListItem(fieldKey) {
     if (!listFieldStates[fieldKey]) listFieldStates[fieldKey] = [];
-    listFieldStates[fieldKey].push({ title: '', summary: '', image_url: '', content: '', date: '', is_active: true });
+    listFieldStates[fieldKey].push({ title: '', summary: '', image_url: '', image_caption: '', content: '', date: '', is_active: true, blocks: [] });
     saveListToPending(fieldKey);
     renderListItems(fieldKey);
   }

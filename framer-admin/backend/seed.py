@@ -150,8 +150,14 @@ SECTIONS_DATA = [
                     {"key": "summary", "label": "列表摘要", "type": "text"},
                     {"key": "is_active", "label": "狀態", "type": "boolean"},
                     {"key": "image_url", "label": "封面圖", "type": "image"},
+                    {"key": "image_caption", "label": "圖說（選填，封面圖用）", "type": "text"},
                     {"key": "date", "label": "日期", "type": "date"},
-                    {"key": "content", "label": "詳情頁完整內容（可在文字中插入圖片）", "type": "richtext"}
+                    {
+                        "key": "blocks",
+                        "label": "詳情頁內容區塊（可新增/刪除/排序，文字、圖片、圖說各自獨立）",
+                        "type": "blocks",
+                        "block_types": ["text", "image", "caption"],
+                    },
                 ]
             }
         ]
