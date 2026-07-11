@@ -59,7 +59,7 @@
   </div>
 
   <script>
-    const API_BASE = 'http://localhost:8000';
+    const API_BASE = '';
 
     // ─────────────────────────────────────────
     // 展示模式：設為 true 時不需後端即可瀏覽介面
@@ -138,7 +138,7 @@
           errorMsg.classList.add('show');
         }
       } catch (error) {
-        errorMsg.textContent = '⚠️ 無法連線到後端，請確認伺服器已啟動（localhost:8000）';
+        errorMsg.textContent = '⚠️ 無法連線到後端，請確認伺服器已啟動';
         errorMsg.classList.add('show');
       } finally {
         btnText.textContent = '登入後台';

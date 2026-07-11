@@ -162,7 +162,7 @@
       <a href="editor.html?page=events"  class="nav-item"><span class="nav-icon">📢</span> 活動訊息</a>
       <a href="editor.html?page=contact" class="nav-item"><span class="nav-icon">📞</span> 聯絡方式</a>
       <div class="nav-section-label" style="margin-top:8px">系統</div>
-      <a href="http://localhost:8000/docs" target="_blank" class="nav-item"><span class="nav-icon">📖</span> API 文件</a>
+      <a href="/docs" target="_blank" class="nav-item"><span class="nav-icon">📖</span> API 文件</a>
     </nav>
     <div class="sidebar-footer">
       <div class="user-info">
@@ -184,7 +184,7 @@
       </div>
       <div class="topbar-actions">
         <button class="btn btn-accent" onclick="openCreateModal(null)">＋ 新增頂層頁面</button>
-        <a href="http://localhost:8000/docs" target="_blank" class="btn btn-secondary btn-sm">API 文件 ↗</a>
+        <a href="/docs" target="_blank" class="btn btn-secondary btn-sm">API 文件 ↗</a>
       </div>
     </div>
 
@@ -295,7 +295,7 @@
 </div>
 
 <script>
-  const API_BASE = 'http://localhost:8000';
+  const API_BASE = '';
 
   // ─────────────────────────────────────────
   // 展示模式：不需後端即可瀏覽介面
@@ -393,7 +393,7 @@
 
     } catch(e) {
       document.getElementById('pageTree').innerHTML =
-        '<div style="color:var(--color-danger); font-size:14px;">❌ 載入失敗，請確認後端服務已啟動（localhost:8000）</div>';
+        '<div style="color:var(--color-danger); font-size:14px;">❌ 載入失敗，請確認後端服務已啟動</div>';
     }
   }
 
