@@ -91,11 +91,21 @@ app.add_middleware(
 async def startup_event():
     """
     伺服器啟動時自動執行：
-    根據 models.py 裡的定義，在資料庫建立對應的資料表。
-    如果資料表已存在，不會重複建立（安全的）。
+    1. 根據 models.py 裡的定義，在資料庫建立對應的資料表（已存在不會重複建立）
+    2. 執行 seed.py，補上管理員帳號與頁面初始資料（已存在的資料會自動跳過，不會覆蓋）
+
+    這樣即使在 Render 免費方案（沒有 Shell 可以手動下指令）上，
+    重新部署或資料庫被清空時，也能自動恢復基本資料。
     """
     Base.metadata.create_all(bind=engine)
     print("Database tables created (or already exist)")
+
+    try:
+        from seed import seed_database
+        seed_database()
+    except Exception as e:
+        print(f"Seed 執行失敗（不影響伺服器啟動）：{e}")
+
     print("NCU x Aalto EMBA Backend API started!")
     print("API Docs: http://localhost:8000/docs")
 
