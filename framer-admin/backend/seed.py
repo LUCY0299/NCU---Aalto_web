@@ -27,8 +27,8 @@ from routers.auth import hash_password
 # 執行 seed.py 後，用這組帳密登入後台
 # 正式上線前請務必修改密碼！
 # ─────────────────────────────────────────
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "ncu-aalto-2024"   # ⚠️ 請在 .env 裡設定，或直接改這裡
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "ncu-aalto-2024")   # ⚠️ 請在 .env 或雲端環境變數裡設定
 ADMIN_EMAIL = "admin@example.com"
 
 
