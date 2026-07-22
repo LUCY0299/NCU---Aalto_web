@@ -535,6 +535,17 @@
             style="max-width:100%; max-height:120px; margin-top:8px; border-radius:6px; border:1px solid #e0e0e0; display: ${val ? 'block' : 'none'};" 
             onerror="this.style.display='none'">
         </div>`;
+    } else if (field.field_type === 'boolean') {
+      // 判斷當前值是否為 true (支援字串 'true' 與布林值 true)
+      const isChecked = (val === 'true' || val === true) ? 'checked' : '';
+      
+      inputHtml = `
+        <label style="display: flex; align-items: center; cursor: pointer; gap: 8px;">
+          <input type="checkbox" id="field-${field.id}" ${isChecked}
+            style="width: 18px; height: 18px; cursor: pointer;"
+            onchange="markChanged('${field.field_key}', this.checked ? 'true' : 'false')">
+          <span style="font-size: 14px; font-weight: 500; color: #333;">啟用 (開啟)</span>
+        </label>`;
     } else {
       inputHtml = `<input type="text" id="field-${field.id}"
         value="${val}" placeholder="請輸入${field.label || field.field_key}"

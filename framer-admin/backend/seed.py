@@ -115,6 +115,10 @@ SECTIONS_DATA = [
         "type": "list", # 定義為列表清單
         "order": 1,
         "fields": [
+            {"key": "section_title", "label": "區塊標題", "type": "text", "default": "校友分享"},
+            {"key": "show_button", "label": "顯示更多按鈕", "type": "boolean", "default": True},
+            {"key": "button_text", "label": "按鈕文字", "type": "text", "default": "更多 校友分享"},
+            {"key": "button_link", "label": "按鈕連結", "type": "text", "default": "/alumni"},
             {
                 "key": "alumni_list", 
                 "label": "校友分享清單", 
