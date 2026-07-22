@@ -996,24 +996,27 @@
     }
   }
 
-  /** 渲染卡片清單畫面 (升級版：手風琴摺疊介面) */
+  /** 渲染卡片清單畫面 */
   function renderListItems(fieldKey) {
     const container = document.getElementById(`list-container-${fieldKey}`);
     if (!container) return;
     const items = listFieldStates[fieldKey] || [];
 
-    if (items.length > 0 && !items._isSorted) {
+    if (!window._hasSortedList) window._hasSortedList = {};
+    
+    if (items.length > 0 && !window._hasSortedList[fieldKey]) {
       items.sort((a, b) => {
-        // 如果沒填日期 (例如剛新增的空卡片)，視為未來時間 (Infinity)，保證永遠排在最上面
-        const timeA = a.date ? new Date(a.date).getTime() : Infinity;
-        const timeB = b.date ? new Date(b.date).getTime() : Infinity;
-        return timeB - timeA;
+        const parseDate = (d) => {
+          if (!d) return Infinity;
+          const time = new Date(d).getTime();
+          return isNaN(time) ? 0 : time;
+        };
+        return parseDate(b.date) - parseDate(a.date);
       });
-      // 標記已排序 (使用 enumerable: false 確保這個標記不會被存進資料庫)
-      Object.defineProperty(items, '_isSorted', { value: true, enumerable: false });
+      window._hasSortedList[fieldKey] = true;
     }
 
-    // 記住目前的捲動位置，重新渲染後還原，避免每次新增/刪除區塊都跳回最上面
+    // 記住目前的捲動位置
     const savedScrollY = window.scrollY;
 
     if (items.length === 0) {
@@ -1021,7 +1024,6 @@
       return;
     }
 
-    // 第一次渲染這個欄位時，預設展開第一張卡片；之後都沿用使用者實際展開/摺疊的狀態
     if (!expandedCards[fieldKey]) expandedCards[fieldKey] = new Set([0]);
 
     container.innerHTML = items.map((item, index) => {
@@ -1089,7 +1091,7 @@
       </div>
     `}).join('');
 
-    // 還原捲動位置，避免重新渲染後畫面跳回最上面
+    // 還原捲動位置
     window.scrollTo(0, savedScrollY);
 
     // 啟動 Quill 編輯器
@@ -1109,9 +1111,17 @@
           });
 
           if (item.content) { quill.root.innerHTML = item.content; }
+          
           quill.on('text-change', function(delta, oldDelta, source) {
             if (source === 'user') {
-              updateListItem(fieldKey, index, 'content', quill.root.innerHTML);
+              const currentHtml = quill.root.innerHTML;
+              const originalHtml = item.content || '';
+              
+              const isActuallyEmpty = (originalHtml === '' && currentHtml === '<p><br></p>');
+
+              if (currentHtml !== originalHtml && !isActuallyEmpty) {
+                updateListItem(fieldKey, index, 'content', currentHtml);
+              }
             }
           });
         }
