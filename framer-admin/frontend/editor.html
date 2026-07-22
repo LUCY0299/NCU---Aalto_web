@@ -855,15 +855,24 @@
   function toggleCard(fieldKey, index) {
     const body = document.getElementById(`card-body-${fieldKey}-${index}`);
     const icon = document.getElementById(`card-icon-${fieldKey}-${index}`);
-    if (!expandedCards[fieldKey]) expandedCards[fieldKey] = new Set([0]);
-    if (body.style.display === 'none') {
+    const isOpening = (body.style.display === 'none');
+
+    // 🌟 關鍵 1：先找出所有「目前打開中」的卡片，把它們全部關閉
+    expandedCards[fieldKey].forEach((openIndex) => {
+      const openBody = document.getElementById(`card-body-${fieldKey}-${openIndex}`);
+      const openIcon = document.getElementById(`card-icon-${fieldKey}-${openIndex}`);
+      if (openBody && openIcon) {
+        openBody.style.display = 'none';
+        openIcon.textContent = '▶';
+      }
+    });
+
+    expandedCards[fieldKey].clear();
+
+    if (isOpening) {
       body.style.display = 'block';
       icon.textContent = '▼';
       expandedCards[fieldKey].add(index);
-    } else {
-      body.style.display = 'none';
-      icon.textContent = '▶';
-      expandedCards[fieldKey].delete(index);
     }
   }
 
@@ -1100,10 +1109,10 @@
   /** 新增一張空卡片 */
   function addListItem(fieldKey) {
     if (!listFieldStates[fieldKey]) listFieldStates[fieldKey] = [];
-    listFieldStates[fieldKey].push({ title: '', summary: '', image_url: '', image_caption: '', content: '', date: '', is_active: true, blocks: [] });
-    const newIndex = listFieldStates[fieldKey].length - 1;
+    listFieldStates[fieldKey].unshift({ title: '', summary: '', image_url: '', image_caption: '', content: '', date: '', is_active: true, blocks: [] });
+    const newIndex = 0;
     if (!expandedCards[fieldKey]) expandedCards[fieldKey] = new Set([0]);
-    expandedCards[fieldKey].add(newIndex); // 新卡片自動展開，方便直接編輯
+    expandedCards[fieldKey] = new Set([0]);
     saveListToPending(fieldKey);
     renderListItems(fieldKey);
   }
