@@ -106,23 +106,36 @@ SECTIONS_DATA = [
         ]
     },
     # ════════════════════
-    # 校友分享 (alumni_sharing)
+    # 校友分享 (標題連結) - 負責按鈕與標題
     # ════════════════════
     {
-        "page_slug": "alumni", # 校友分享頁編輯
-        "key": "alumni_sharing", 
-        "name": "校友分享", 
-        "type": "list", # 定義為列表清單
+        "page_slug": "alumni",
+        "key": "alumni_header",
+        "name": "校友分享(標題連結)",
+        "type": "text", 
         "order": 1,
         "fields": [
-            {"key": "section_title", "label": "區塊標題", "type": "text", "default": "校友分享"},
-            {"key": "show_button", "label": "顯示更多按鈕", "type": "boolean", "default": True},
-            {"key": "button_text", "label": "按鈕文字", "type": "text", "default": "更多 校友分享"},
-            {"key": "button_link", "label": "按鈕連結", "type": "text", "default": "/alumni"},
+            {"key": "section_title", "label": "區塊標題", "type": "text", "zh": "校友分享", "en": "Alumni Sharing"},
+            {"key": "show_button", "label": "顯示更多按鈕", "type": "boolean", "zh": "true", "en": "true"},
+            {"key": "button_text", "label": "按鈕文字", "type": "text", "zh": "更多 校友分享", "en": "More Alumni"},
+            {"key": "button_link", "label": "按鈕連結", "type": "text", "zh": "/校友分享全", "en": "/alumni"}
+        ]
+    },
+    
+    # ════════════════════
+    # 校友分享 (卡片) - 負責純卡片清單
+    # ════════════════════
+    {
+        "page_slug": "alumni",
+        "key": "alumni_sharing",
+        "name": "校友分享(卡片)",
+        "type": "list",
+        "order": 2,
+        "fields": [
             {
                 "key": "alumni_list", 
                 "label": "校友分享清單", 
-                "type": "list", # 巢狀列表結構
+                "type": "list",
                 "items": [
                     {"key": "title", "label": "標題", "type": "text"},
                     {"key": "summary", "label": "內容大綱", "type": "text"},
