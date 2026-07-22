@@ -109,12 +109,6 @@ async def startup_event():
     print("Database tables created (or already exist)")
 
     try:
-        from delete_alumni import delete_old_alumni_data
-        delete_old_alumni_data()
-    except Exception as e:
-        print(f"刪除舊資料失敗：{e}")
-        
-    try:
         from seed import seed_database
         seed_database()
     except Exception as e:
