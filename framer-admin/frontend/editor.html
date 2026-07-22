@@ -301,6 +301,7 @@
   let currentLocale = 'zh-TW';
   let pendingChanges = {};
   let listFieldStates = {};
+  let expandedCards = {}; // { [fieldKey]: Set(展開中的卡片索引) }，避免每次重新渲染都跳回第一張
   let hasUnsavedChanges = false;
   let isRendering = false;
 
@@ -443,6 +444,7 @@
     currentSectionId = section.id;
     pendingChanges = {};
     listFieldStates = {};
+    expandedCards = {};
     hasUnsavedChanges = false;
 
     document.querySelectorAll('.section-item').forEach(el => el.classList.remove('active'));
@@ -573,6 +575,7 @@
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("page_slug", currentPageSlug);
 
     try {
       // 呼叫後端的上傳 API
@@ -621,6 +624,7 @@
       const range = quill.getSelection(true);
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('page_slug', currentPageSlug);
 
       try {
         const res = await fetch(`${API_BASE}/api/v1/upload`, {
@@ -631,8 +635,7 @@
 
         if (res.ok) {
           const data = await res.json();
-          // 只存相對路徑（例如 /uploads/xxx.jpg），跟其他圖片欄位一致；
-          // 瀏覽器顯示時會自動補上目前頁面所在的網域，之後換網址也不會壞掉
+          // 後端回傳的是 Supabase Storage 的完整網址，直接插入即可
           quill.insertEmbed(range.index, 'image', data.url);
           quill.setSelection(range.index + 1);
         } else {
@@ -852,12 +855,15 @@
   function toggleCard(fieldKey, index) {
     const body = document.getElementById(`card-body-${fieldKey}-${index}`);
     const icon = document.getElementById(`card-icon-${fieldKey}-${index}`);
+    if (!expandedCards[fieldKey]) expandedCards[fieldKey] = new Set([0]);
     if (body.style.display === 'none') {
       body.style.display = 'block';
       icon.textContent = '▼';
+      expandedCards[fieldKey].add(index);
     } else {
       body.style.display = 'none';
       icon.textContent = '▶';
+      expandedCards[fieldKey].delete(index);
     }
   }
 
@@ -959,6 +965,7 @@
     showToast('⏳ 圖片上傳中...', '');
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('page_slug', currentPageSlug);
     try {
       const res = await fetch(`${API_BASE}/api/v1/upload`, {
         method: 'POST',
@@ -986,17 +993,22 @@
     if (!container) return;
     const items = listFieldStates[fieldKey] || [];
 
+    // 記住目前的捲動位置，重新渲染後還原，避免每次新增/刪除區塊都跳回最上面
+    const savedScrollY = window.scrollY;
+
     if (items.length === 0) {
       container.innerHTML = '<div style="text-align:center; color:#adb5bd; padding:20px;">目前尚無卡片，請點擊下方按鈕新增</div>';
       return;
     }
 
+    // 第一次渲染這個欄位時，預設展開第一張卡片；之後都沿用使用者實際展開/摺疊的狀態
+    if (!expandedCards[fieldKey]) expandedCards[fieldKey] = new Set([0]);
+
     container.innerHTML = items.map((item, index) => {
       const escape = (str) => escapeHtml(str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       const imgUrl = item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `${API_BASE}${item.image_url}`) : '';
-      
-      // 預設邏輯：第一張卡片展開，其餘摺疊
-      const isExpanded = index === 0;
+
+      const isExpanded = expandedCards[fieldKey].has(index);
       const displayStyle = isExpanded ? 'block' : 'none';
       const iconText = isExpanded ? '▼' : '▶';
 
@@ -1057,6 +1069,9 @@
       </div>
     `}).join('');
 
+    // 還原捲動位置，避免重新渲染後畫面跳回最上面
+    window.scrollTo(0, savedScrollY);
+
     // 啟動 Quill 編輯器
     setTimeout(() => {
       items.forEach((item, index) => {
@@ -1086,6 +1101,9 @@
   function addListItem(fieldKey) {
     if (!listFieldStates[fieldKey]) listFieldStates[fieldKey] = [];
     listFieldStates[fieldKey].push({ title: '', summary: '', image_url: '', image_caption: '', content: '', date: '', is_active: true, blocks: [] });
+    const newIndex = listFieldStates[fieldKey].length - 1;
+    if (!expandedCards[fieldKey]) expandedCards[fieldKey] = new Set([0]);
+    expandedCards[fieldKey].add(newIndex); // 新卡片自動展開，方便直接編輯
     saveListToPending(fieldKey);
     renderListItems(fieldKey);
   }
@@ -1094,6 +1112,15 @@
   function removeListItem(fieldKey, index) {
     if(!confirm('確定刪除此卡片？（需按下方儲存才會生效）')) return;
     listFieldStates[fieldKey].splice(index, 1);
+    // 索引會因為刪除而整體往前移，重新對照展開狀態，避免展開錯的卡片
+    if (expandedCards[fieldKey]) {
+      const shifted = new Set();
+      expandedCards[fieldKey].forEach((i) => {
+        if (i < index) shifted.add(i);
+        else if (i > index) shifted.add(i - 1);
+      });
+      expandedCards[fieldKey] = shifted;
+    }
     saveListToPending(fieldKey);
     renderListItems(fieldKey);
   }
@@ -1116,6 +1143,7 @@
     showToast('⏳ 圖片上傳中...', '');
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("page_slug", currentPageSlug);
     try {
       const res = await fetch(`${API_BASE}/api/v1/upload`, {
         method: 'POST',

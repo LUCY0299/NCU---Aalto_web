@@ -16,9 +16,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
-from fastapi import UploadFile, File
+from fastapi import UploadFile, File, Form, HTTPException
 import shutil
 import uuid
+import httpx
+
+# ─────────────────────────────────────────
+# Supabase Storage 設定（圖片改存這裡，不再存 Render 本機硬碟）
+# ─────────────────────────────────────────
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
+SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET", "uploads")
 
 # 匯入資料庫設定
 from database import engine, Base
@@ -147,20 +155,35 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 @app.post("/api/v1/upload", tags=["上傳"])
 async def upload_image(
     file: UploadFile = File(...),
+    page_slug: str = Form("misc"),  # 依照目前編輯的頁面自動分類到對應資料夾
     current_user: User = Depends(verify_token),  # 需要登入
 ):
-    """接收後台上傳的圖片，並回傳存取網址（需要登入）"""
+    """接收後台上傳的圖片，存到 Supabase Storage（永久保存），依頁面分資料夾，並回傳完整網址"""
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(status_code=500, detail="尚未設定 SUPABASE_URL / SUPABASE_SERVICE_KEY 環境變數")
+
     # 幫圖片產生一個獨一無二的檔名 (UUID)，避免檔名重複導致覆蓋
     file_extension = file.filename.split(".")[-1]
     unique_filename = f"{uuid.uuid4()}.{file_extension}"
-    file_path = f"uploads/{unique_filename}"
-    
-    # 將檔案寫入本機的 uploads 資料夾
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-        
-    # 回傳圖片的路徑，讓資料庫和 Framer 知道去哪裡抓圖片
-    return {"url": f"/uploads/{unique_filename}"}
+    storage_path = f"{page_slug}/{unique_filename}"
+    file_bytes = await file.read()
+
+    async with httpx.AsyncClient() as client:
+        res = await client.post(
+            f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_BUCKET}/{storage_path}",
+            headers={
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": file.content_type or "application/octet-stream",
+            },
+            content=file_bytes,
+        )
+
+    if res.status_code not in (200, 201):
+        raise HTTPException(status_code=502, detail=f"上傳到 Supabase Storage 失敗：{res.text}")
+
+    # 回傳完整的公開網址，讓資料庫和 Framer 直接使用
+    public_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{storage_path}"
+    return {"url": public_url}
 
 # ─────────────────────────────────────────
 # 健康檢查端點（部署平台用）
