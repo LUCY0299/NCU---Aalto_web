@@ -564,6 +564,7 @@
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("page_slug", currentPageSlug);
 
     try {
       // 呼叫後端的上傳 API
@@ -612,6 +613,7 @@
       const range = quill.getSelection(true);
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('page_slug', currentPageSlug);
 
       try {
         const res = await fetch(`${API_BASE}/api/v1/upload`, {
@@ -622,8 +624,7 @@
 
         if (res.ok) {
           const data = await res.json();
-          // 只存相對路徑（例如 /uploads/xxx.jpg），跟其他圖片欄位一致；
-          // 瀏覽器顯示時會自動補上目前頁面所在的網域，之後換網址也不會壞掉
+          // 後端回傳的是 Supabase Storage 的完整網址，直接插入即可
           quill.insertEmbed(range.index, 'image', data.url);
           quill.setSelection(range.index + 1);
         } else {
@@ -953,6 +954,7 @@
     showToast('⏳ 圖片上傳中...', '');
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('page_slug', currentPageSlug);
     try {
       const res = await fetch(`${API_BASE}/api/v1/upload`, {
         method: 'POST',
@@ -1130,6 +1132,7 @@
     showToast('⏳ 圖片上傳中...', '');
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("page_slug", currentPageSlug);
     try {
       const res = await fetch(`${API_BASE}/api/v1/upload`, {
         method: 'POST',

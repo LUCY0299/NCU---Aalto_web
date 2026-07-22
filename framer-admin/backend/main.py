@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
-from fastapi import UploadFile, File, HTTPException
+from fastapi import UploadFile, File, Form, HTTPException
 import shutil
 import uuid
 import httpx
@@ -155,20 +155,22 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 @app.post("/api/v1/upload", tags=["上傳"])
 async def upload_image(
     file: UploadFile = File(...),
+    page_slug: str = Form("misc"),  # 依照目前編輯的頁面自動分類到對應資料夾
     current_user: User = Depends(verify_token),  # 需要登入
 ):
-    """接收後台上傳的圖片，存到 Supabase Storage（永久保存），並回傳完整網址"""
+    """接收後台上傳的圖片，存到 Supabase Storage（永久保存），依頁面分資料夾，並回傳完整網址"""
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         raise HTTPException(status_code=500, detail="尚未設定 SUPABASE_URL / SUPABASE_SERVICE_KEY 環境變數")
 
     # 幫圖片產生一個獨一無二的檔名 (UUID)，避免檔名重複導致覆蓋
     file_extension = file.filename.split(".")[-1]
     unique_filename = f"{uuid.uuid4()}.{file_extension}"
+    storage_path = f"{page_slug}/{unique_filename}"
     file_bytes = await file.read()
 
     async with httpx.AsyncClient() as client:
         res = await client.post(
-            f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_BUCKET}/{unique_filename}",
+            f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_BUCKET}/{storage_path}",
             headers={
                 "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
                 "Content-Type": file.content_type or "application/octet-stream",
@@ -180,7 +182,7 @@ async def upload_image(
         raise HTTPException(status_code=502, detail=f"上傳到 Supabase Storage 失敗：{res.text}")
 
     # 回傳完整的公開網址，讓資料庫和 Framer 直接使用
-    public_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{unique_filename}"
+    public_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{storage_path}"
     return {"url": public_url}
 
 # ─────────────────────────────────────────
