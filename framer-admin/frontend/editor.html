@@ -1002,28 +1002,6 @@
     if (!container) return;
     const items = listFieldStates[fieldKey] || [];
 
-    if (!window._hasSortedList) window._hasSortedList = {};
-    
-    if (items.length > 0 && !window._hasSortedList[fieldKey]) {
-      items.sort((a, b) => {
-        const getValidTime = (d) => {
-          if (!d) return Number.MAX_SAFE_INTEGER; // 沒填日期給最大值(排最上)
-          const time = new Date(d).getTime();
-          return isNaN(time) ? Number.MAX_SAFE_INTEGER : time; 
-        };
-        const timeA = getValidTime(a.date);
-        const timeB = getValidTime(b.date);
-        
-        if (timeA === timeB) return 0; // 避免出現 NaN 破壞排序
-        return timeB > timeA ? 1 : -1; // 確保降冪排序 (最新的在最上面)
-      });
-      window._hasSortedList[fieldKey] = true; // 標記為已排序
-      
-      // 💡 關鍵新增：排完序後，自動通知系統順序已改變，確保能存入資料庫！
-      saveListToPending(fieldKey); 
-    }
-
-    // 記住目前的捲動位置
     const savedScrollY = window.scrollY;
 
     if (items.length === 0) {
@@ -1033,7 +1011,17 @@
 
     if (!expandedCards[fieldKey]) expandedCards[fieldKey] = new Set([0]);
 
-    container.innerHTML = items.map((item, index) => {
+    // 在卡片列表最上方加入一顆「重新排序」的藍色按鈕
+    const sortButtonHtml = `
+      <div style="display:flex; justify-content:flex-end; margin-bottom: 12px;">
+        <button class="btn" style="background-color: #17a2b8; color: white; border: none; padding: 6px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onclick="forceSortByDate('${fieldKey}')">
+          🔄 依照日期重新排序 (由新到舊)
+        </button>
+      </div>
+    `;
+
+    // 將按鈕與卡片結合在一起印出
+    container.innerHTML = sortButtonHtml + items.map((item, index) => {
       const escape = (str) => escapeHtml(str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       const imgUrl = item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `${API_BASE}${item.image_url}`) : '';
 
@@ -1098,10 +1086,8 @@
       </div>
     `}).join('');
 
-    // 還原捲動位置
     window.scrollTo(0, savedScrollY);
 
-    // 啟動 Quill 編輯器
     setTimeout(() => {
       items.forEach((item, index) => {
         const editorElement = document.getElementById(`quill-editor-${fieldKey}-${index}`);
@@ -1123,7 +1109,6 @@
             if (source === 'user') {
               const currentHtml = quill.root.innerHTML;
               const originalHtml = item.content || '';
-              
               const isActuallyEmpty = (originalHtml === '' && currentHtml === '<p><br></p>');
 
               if (currentHtml !== originalHtml && !isActuallyEmpty) {
@@ -1136,6 +1121,30 @@
     }, 0);
   }
 
+  /** 手動強制依照日期排序 */
+  function forceSortByDate(fieldKey) {
+    const items = listFieldStates[fieldKey];
+    if (!items || items.length === 0) return;
+
+    // 執行最強壯的排序邏輯
+    items.sort((a, b) => {
+      const getValidTime = (d) => {
+        if (!d) return Number.MAX_SAFE_INTEGER; // 沒填日期排最上面
+        const time = new Date(d).getTime();
+        return isNaN(time) ? Number.MAX_SAFE_INTEGER : time; 
+      };
+      return getValidTime(b.date) - getValidTime(a.date); // 由新到舊
+    });
+
+    // 排序完後，預設打開最上面的第一張卡片
+    expandedCards[fieldKey] = new Set([0]); 
+    
+    // 儲存並重新渲染畫面
+    saveListToPending(fieldKey);
+    renderListItems(fieldKey);
+    showToast('✅ 已依照日期重新排序！', 'success');
+  }
+  
   /** 新增一張空卡片 */
   function addListItem(fieldKey) {
     if (!listFieldStates[fieldKey]) listFieldStates[fieldKey] = [];
