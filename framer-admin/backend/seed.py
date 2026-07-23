@@ -127,13 +127,18 @@ SECTIONS_DATA = [
     # ════════════════════
     {
         "page_slug": "about-aalto-emba",
-        "key": "about_intro",
+        "key": "about_intro_sec",
         "name": "關於Aalto EMBA(特色介紹)",
-        "type": "list",
+        "type": "content", 
         "order": 2,
         "fields": [
-            {"key": "title", "label": "特色標題", "type": "text", "zh": "", "en": ""},
-            {"key": "desc", "label": "特色內文", "type": "textarea", "zh": "", "en": ""}
+            {
+                "key": "about_intro",
+                "label": "特色介紹清單",
+                "type": "list",
+                "zh": "[]", 
+                "en": "[]"
+            }
         ]
     },
 
@@ -142,15 +147,18 @@ SECTIONS_DATA = [
     # ════════════════════
     {
         "page_slug": "about-aalto-emba",
-        "key": "about_links",
+        "key": "about_links_sec", 
         "name": "關於Aalto EMBA(圖片連結)",
-        "type": "list",  # 🌟 改為 list，啟動標準的新增清單按鈕
+        "type": "content", 
         "order": 3,
         "fields": [
-            # 定義「每一張圖片卡片」需要填寫的欄位
-            {"key": "title", "label": "按鈕文字", "type": "text", "zh": "", "en": ""},
-            {"key": "image_url", "label": "背景圖片", "type": "image", "zh": "", "en": ""},
-            {"key": "link_url", "label": "連結網址", "type": "text", "zh": "", "en": ""}
+            {
+                "key": "about_links",
+                "label": "圖片連結清單",
+                "type": "list",
+                "zh": "[]", 
+                "en": "[]"
+            }
         ]
     },
 

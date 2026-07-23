@@ -620,7 +620,10 @@
         listFieldStates[field.field_key] = [];
       }
       
-      const addBtnLabel = field.field_key === 'event_list' ? '➕ 新增活動卡片' : '➕ 新增校友卡片';
+      let addBtnLabel = `➕ 新增 ${field.label || '項目'}`;
+      if (field.field_key === 'event_list') addBtnLabel = '➕ 新增活動卡片';
+      else if (field.field_key === 'alumni_list') addBtnLabel = '➕ 新增校友卡片';
+
       inputHtml = `
         <div id="list-container-${field.field_key}" style="background:#f8f9fa; padding:16px; border-radius:8px; border:1px solid #e9ecef; max-height: 600px; overflow-y: auto;">
           </div>
@@ -1252,37 +1255,90 @@
     const container = document.getElementById(`list-container-${fieldKey}`);
     if (!container) return;
     const items = listFieldStates[fieldKey] || [];
-
     const savedScrollY = window.scrollY;
 
     if (items.length === 0) {
-      container.innerHTML = '<div style="text-align:center; color:#adb5bd; padding:20px;">目前尚無卡片，請點擊下方按鈕新增</div>';
+      container.innerHTML = '<div style="text-align:center; color:#adb5bd; padding:20px;">目前尚無項目，請點擊下方按鈕新增</div>';
       return;
     }
 
     if (!expandedCards[fieldKey]) expandedCards[fieldKey] = new Set([0]);
 
-    // 在卡片列表最上方加入一顆「重新排序」的藍色按鈕
-    const sortButtonHtml = `
-      <div style="display:flex; justify-content:flex-end; margin-bottom: 12px;">
-        <button class="btn" style="background-color: #17a2b8; color: white; border: none; padding: 6px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onclick="forceSortByDate('${fieldKey}')">
-          🔄 依照日期重新排序 (由新到舊)
-        </button>
-      </div>
-    `;
+    // ==========================================
+    // 🌟 條件判斷：隱藏不需要排序的區塊按鈕
+    // ==========================================
+    let sortButtonHtml = '';
+    if (fieldKey !== 'about_intro' && fieldKey !== 'about_links') {
+      sortButtonHtml = `
+        <div style="display:flex; justify-content:flex-end; margin-bottom: 12px;">
+          <button class="btn" style="background-color: #17a2b8; color: white; border: none; padding: 6px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onclick="forceSortByDate('${fieldKey}')">
+            🔄 依照日期重新排序 (由新到舊)
+          </button>
+        </div>
+      `;
+    }
 
-    // 將按鈕與卡片結合在一起印出
     container.innerHTML = sortButtonHtml + items.map((item, index) => {
       const escape = (str) => escapeHtml(str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       const imgUrl = item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `${API_BASE}${item.image_url}`) : '';
-
       const isExpanded = expandedCards[fieldKey].has(index);
       const displayStyle = isExpanded ? 'block' : 'none';
       const iconText = isExpanded ? '▼' : '▶';
 
+      // ==========================================
+      // 專屬 UI：特色介紹 (about_intro)
+      // ==========================================
+      if (fieldKey === 'about_intro') {
+        return `
+        <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h4 style="margin:0; color:var(--color-primary); font-size:16px;">✨ 特色項目 #${index + 1}</h4>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
+          </div>
+          <div style="margin-bottom:12px;">
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">特色標題</label>
+            <input type="text" value="${escape(item.title)}" oninput="updateListItem('${fieldKey}', ${index}, 'title', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="例如: 1. 結合台灣與北歐的管理實務">
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">特色內文</label>
+            <textarea rows="4" oninput="updateListItem('${fieldKey}', ${index}, 'desc', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="請輸入特色內容...">${escape(item.desc)}</textarea>
+          </div>
+        </div>`;
+      }
+
+      // ==========================================
+      // 專屬 UI：圖片連結 (about_links)
+      // ==========================================
+      if (fieldKey === 'about_links') {
+        return `
+        <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h4 style="margin:0; color:var(--color-primary); font-size:16px;">🖼️ 圖片卡片 #${index + 1}</h4>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom:12px;">
+            <div>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">按鈕文字</label>
+              <input type="text" value="${escape(item.title)}" oninput="updateListItem('${fieldKey}', ${index}, 'title', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="例如: 關於Aalto ➔">
+            </div>
+            <div>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">連結網址</label>
+              <input type="text" value="${escape(item.link_url)}" oninput="updateListItem('${fieldKey}', ${index}, 'link_url', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="例如: /about">
+            </div>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">背景圖片</label>
+            <input type="file" accept="image/*" onchange="uploadListImage(this, '${fieldKey}', ${index})" style="margin-bottom:8px; font-size:12px;">
+            ${imgUrl ? `<img src="${imgUrl}" style="max-height:100px; border-radius:4px; border:1px solid #ccc; display:block;">` : ''}
+          </div>
+        </div>`;
+      }
+
+      // ==========================================
+      // 預設 UI：原本的校友/活動卡片 (保留不動)
+      // ==========================================
       return `
       <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-
         <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#f8f9fa; border-radius:6px; cursor:pointer;" onclick="toggleCard('${fieldKey}', ${index})">
           <h4 style="margin:0; color:var(--color-primary); font-size:14px; user-select:none;">
             <span id="card-icon-${fieldKey}-${index}" style="display:inline-block; width:20px;">${iconText}</span>
@@ -1335,10 +1391,12 @@
           </div>`}
         </div>
       </div>
-    `}).join('');
+      `;
+    }).join('');
 
     window.scrollTo(0, savedScrollY);
 
+    // Quill 編輯器初始化
     setTimeout(() => {
       items.forEach((item, index) => {
         const editorElement = document.getElementById(`quill-editor-${fieldKey}-${index}`);
@@ -1371,7 +1429,7 @@
       });
     }, 0);
   }
-
+  
   /** 手動強制依照日期排序 */
   function forceSortByDate(fieldKey) {
     const items = listFieldStates[fieldKey];
@@ -1399,7 +1457,22 @@
   /** 新增一張空卡片 */
   function addListItem(fieldKey) {
     if (!listFieldStates[fieldKey]) listFieldStates[fieldKey] = [];
-    listFieldStates[fieldKey].unshift({ title: '', summary: '', image_url: '', image_caption: '', content: '', date: '', is_active: true, blocks: [] });
+    
+    // 根據不同的 fieldKey，塞入不同結構的空資料
+    let newItem = {};
+    if (fieldKey === 'about_intro') {
+      // 特色介紹：只需要標題與內文
+      newItem = { title: '', desc: '', is_active: true };
+    } else if (fieldKey === 'about_links') {
+      // 圖片連結：需要標題、圖片、連結
+      newItem = { title: '', image_url: '', link_url: '', is_active: true };
+    } else {
+      // 預設 (原本的校友/活動卡片)
+      newItem = { title: '', summary: '', image_url: '', image_caption: '', content: '', date: '', is_active: true, blocks: [] };
+    }
+
+    listFieldStates[fieldKey].unshift(newItem);
+    
     const newIndex = 0;
     if (!expandedCards[fieldKey]) expandedCards[fieldKey] = new Set([0]);
     expandedCards[fieldKey] = new Set([0]);
