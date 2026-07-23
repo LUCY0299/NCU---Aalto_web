@@ -249,16 +249,12 @@ SECTIONS_DATA = [
             {"key": "title",   "label": "區塊標題", "type": "text",
              "zh": "招生資訊",
              "en": "Admission Information"},
-            {"key": "image_url", "label": "圖片", "type": "image",
-             "zh": "", "en": ""},
-            {"key": "image_url_2", "label": "圖片 2（測試用）", "type": "image",
-             "zh": "", "en": ""},
-            {"key": "heading", "label": "小標", "type": "text",
-             "zh": "本專班包含15 門課程及個人論文項目，其中:",
-             "en": "This program includes 15 courses and an individual thesis project, of which:"},
-            {"key": "content", "label": "內文", "type": "textarea",
-             "zh": "(一) 9 門課程由中央大學管理學院授課。\n(二) 6門課程由阿爾托大學設立之高階管理教育機構授課。\nAalto EE的6門課程中，其中5門課程將由該校教授來台授課，另1門則為國際課程。",
-             "en": "(1) 9 courses are taught by NCU College of Management.\n(2) 6 courses are taught by Aalto EE, the executive education institute established by Aalto University.\nOf Aalto EE's 6 courses, 5 will be taught in Taiwan by Aalto faculty, and 1 is an international course."},
+            {
+                "key": "blocks",
+                "label": "內容區塊（可自由新增/刪除/排序文字、圖片）",
+                "type": "blocks",
+                "block_types": ["text", "image"],
+            },
         ]
     },
     {
@@ -267,14 +263,12 @@ SECTIONS_DATA = [
             {"key": "title",   "label": "區塊標題", "type": "text",
              "zh": "入學門檻",
              "en": "Admission Requirements"},
-            {"key": "image_url", "label": "圖片", "type": "image",
-             "zh": "", "en": ""},
-            {"key": "heading", "label": "小標", "type": "text",
-             "zh": "申請人可通過以下語言測試之一來證明其英語能力：",
-             "en": "Applicants may prove English proficiency through one of the following language tests:"},
-            {"key": "content", "label": "內文", "type": "textarea",
-             "zh": "(一) IELTS Academic\n1.最低總分：6.5\n2.寫作最低分數：5.5\n(二) TOEFL\n1.TOEFL iBT（網路測驗）：最低 92 分，且寫作 22 分\n2.TOEFL PDT（紙本測驗）：閱讀 22 分、聽力 22 分、寫作 24 分\n(三) TOEIC\n最低800分",
-             "en": "(1) IELTS Academic\n1. Minimum overall score: 6.5\n2. Minimum writing score: 5.5\n(2) TOEFL\n1. TOEFL iBT: minimum 92, with a writing score of 22\n2. TOEFL PDT: reading 22, listening 22, writing 24\n(3) TOEIC\nMinimum score: 800"},
+            {
+                "key": "blocks",
+                "label": "內容區塊（可自由新增/刪除/排序文字、圖片）",
+                "type": "blocks",
+                "block_types": ["text", "image"],
+            },
         ]
     },
 
@@ -439,8 +433,8 @@ def seed_database():
             for field_data in sec_data.get("fields", []):
                 
                 # 👇 1. 判斷欄位類型，給予正確的初始值
-                if field_data.get("type") in ["list", "global_list"]:
-                    # 如果是清單類型，初始值給一個空的 JSON 陣列
+                if field_data.get("type") in ["list", "global_list", "blocks"]:
+                    # 如果是清單類型或自由區塊類型，初始值給一個空的 JSON 陣列
                     zh_value = "[]"
                     en_value = "[]"
                 else:

@@ -8,6 +8,9 @@
   <!-- 引入 Quill.js 富文本編輯器主題與核心 -->
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
   <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <!-- 引入 Cropper.js 圖片裁切工具 -->
+  <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.js"></script>
   <style>
     .editor-layout { display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; }
     .section-panel { position: sticky; top: 88px; }
@@ -160,6 +163,27 @@
 <!-- Toast 容器 -->
 <div class="toast-container" id="toastContainer"></div>
 
+<!-- 圖片裁切 Modal -->
+<div id="cropModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:2000; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:12px; padding:20px; width:640px; max-width:92vw; box-shadow:0 8px 30px rgba(0,0,0,0.3);">
+    <h3 style="margin:0 0 12px 0; font-size:16px; font-weight:700; color:var(--color-primary);">✂️ 裁切圖片</h3>
+    <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
+      <button type="button" class="btn btn-secondary crop-ratio-btn" data-ratio="NaN" onclick="setCropAspect(NaN, this)">自由裁切</button>
+      <button type="button" class="btn btn-secondary crop-ratio-btn" data-ratio="1" onclick="setCropAspect(1, this)">1:1 方形</button>
+      <button type="button" class="btn btn-secondary crop-ratio-btn" data-ratio="1.3333" onclick="setCropAspect(4/3, this)">4:3</button>
+      <button type="button" class="btn btn-secondary crop-ratio-btn" data-ratio="1.7778" onclick="setCropAspect(16/9, this)">16:9</button>
+      <button type="button" class="btn btn-secondary crop-ratio-btn" data-ratio="0.5625" onclick="setCropAspect(9/16, this)">9:16（直式）</button>
+    </div>
+    <div style="max-height:60vh; overflow:hidden; background:#222; border-radius:6px;">
+      <img id="cropImage" style="max-width:100%; display:block;">
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+      <button type="button" class="btn btn-secondary" onclick="cancelCrop()">取消</button>
+      <button type="button" class="btn btn-primary" onclick="confirmCrop()">✅ 確認裁切並上傳</button>
+    </div>
+  </div>
+</div>
+
 <!-- 新增區塊 Modal -->
 <div id="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center;">
   <div style="background:white; border-radius:var(--radius-lg); border:2px solid var(--color-border); padding:32px; width:480px; max-width:90vw; box-shadow:var(--shadow-lg);">
@@ -302,8 +326,72 @@
   let pendingChanges = {};
   let listFieldStates = {};
   let expandedCards = {}; // { [fieldKey]: Set(展開中的卡片索引) }，避免每次重新渲染都跳回第一張
+  let blocksFieldStates = {}; // { [fieldKey]: [block, block, ...] }，非清單型、可自由編輯的內容區塊
   let hasUnsavedChanges = false;
   let isRendering = false;
+
+  // ─── 圖片裁切共用邏輯 ───
+  let cropperInstance = null;
+  let cropperOnConfirm = null; // 目前這次裁切完成後要執行的 callback(croppedBlob)
+
+  /** 選好檔案後，先跳出裁切視窗，裁切完再呼叫 onConfirm(croppedBlob, originalFile) */
+  function openCropModal(file, onConfirm) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.getElementById('cropImage');
+      img.src = e.target.result;
+      document.getElementById('cropModal').style.display = 'flex';
+
+      if (cropperInstance) { cropperInstance.destroy(); }
+      cropperInstance = new Cropper(img, {
+        viewMode: 1,
+        aspectRatio: NaN, // 自由裁切，不限制比例
+        autoCropArea: 1,
+        background: false,
+      });
+      cropperOnConfirm = (blob) => onConfirm(blob, file);
+
+      // 重置比例按鈕的選中樣式，預設選「自由裁切」
+      document.querySelectorAll('.crop-ratio-btn').forEach((btn, i) => {
+        btn.style.background = i === 0 ? 'var(--color-primary)' : '';
+        btn.style.color = i === 0 ? '#fff' : '';
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /** 切換裁切框的固定比例（NaN 代表自由裁切） */
+  function setCropAspect(ratio, btnEl) {
+    if (!cropperInstance) return;
+    cropperInstance.setAspectRatio(ratio);
+    document.querySelectorAll('.crop-ratio-btn').forEach((btn) => {
+      btn.style.background = '';
+      btn.style.color = '';
+    });
+    btnEl.style.background = 'var(--color-primary)';
+    btnEl.style.color = '#fff';
+  }
+
+  function confirmCrop() {
+    if (!cropperInstance || !cropperOnConfirm) return;
+    cropperInstance.getCroppedCanvas().toBlob((blob) => {
+      const callback = cropperOnConfirm;
+      closeCropModal();
+      callback(blob);
+    }, 'image/jpeg', 0.92);
+  }
+
+  function cancelCrop() {
+    closeCropModal();
+    showToast('已取消裁切，圖片未上傳', '');
+  }
+
+  function closeCropModal() {
+    document.getElementById('cropModal').style.display = 'none';
+    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+    cropperOnConfirm = null;
+  }
 
   const urlParams = new URLSearchParams(window.location.search);
   currentPageSlug = urlParams.get('page') || 'home';
@@ -445,6 +533,7 @@
     pendingChanges = {};
     listFieldStates = {};
     expandedCards = {};
+    blocksFieldStates = {};
     hasUnsavedChanges = false;
 
     document.querySelectorAll('.section-item').forEach(el => el.classList.remove('active'));
@@ -485,6 +574,9 @@
         if (['list', 'global_list'].includes(f.field_type)) {
           renderListItems(f.field_key);
         }
+        if (f.field_type === 'blocks') {
+          renderBlocksField(f.field_key);
+        }
       });
     }, 0);
 
@@ -511,6 +603,14 @@
         <button type="button" class="btn btn-primary" style="margin-top:12px; font-size:13px;" onclick="addListItem('${field.field_key}')">
           ${addBtnLabel}
         </button>`;
+
+    } else if (field.field_type === 'blocks') {
+      try {
+        blocksFieldStates[field.field_key] = JSON.parse(field.field_value || '[]');
+      } catch (e) {
+        blocksFieldStates[field.field_key] = [];
+      }
+      inputHtml = `<div id="blocks-field-${field.field_key}"></div>`;
 
     } else if (['textarea','richtext'].includes(field.field_type)) {
       inputHtml = `<textarea id="field-${field.id}" rows="4"
@@ -566,15 +666,18 @@
   }
 
   // 處理圖片上傳的函數 (新增)
-  async function uploadImage(fileInput, fieldKey, inputId) {
+  function uploadImage(fileInput, fieldKey, inputId) {
     const file = fileInput.files[0];
     if (!file) return;
+    openCropModal(file, (croppedBlob, originalFile) => doUploadImage(croppedBlob, originalFile, fieldKey, inputId));
+    fileInput.value = ''; // 允許之後重新選同一個檔案也會觸發 onchange
+  }
 
-    // 顯示上傳中的提示
+  async function doUploadImage(blob, originalFile, fieldKey, inputId) {
     showToast('⏳ 圖片上傳中...', '');
 
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", blob, originalFile.name);
     formData.append("page_slug", currentPageSlug);
 
     try {
@@ -617,34 +720,36 @@
     input.setAttribute('accept', 'image/*');
     input.click();
 
-    input.onchange = async () => {
+    input.onchange = () => {
       const file = input.files[0];
       if (!file) return;
-
       const range = quill.getSelection(true);
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('page_slug', currentPageSlug);
 
-      try {
-        const res = await fetch(`${API_BASE}/api/v1/upload`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` },
-          body: formData
-        });
+      openCropModal(file, async (croppedBlob, originalFile) => {
+        const formData = new FormData();
+        formData.append('file', croppedBlob, originalFile.name);
+        formData.append('page_slug', currentPageSlug);
 
-        if (res.ok) {
-          const data = await res.json();
-          // 後端回傳的是 Supabase Storage 的完整網址，直接插入即可
-          quill.insertEmbed(range.index, 'image', data.url);
-          quill.setSelection(range.index + 1);
-        } else {
-          showToast('❌ 圖片上傳失敗', 'error');
+        try {
+          const res = await fetch(`${API_BASE}/api/v1/upload`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` },
+            body: formData
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            // 後端回傳的是 Supabase Storage 的完整網址，直接插入即可
+            quill.insertEmbed(range.index, 'image', data.url);
+            quill.setSelection(range.index + 1);
+          } else {
+            showToast('❌ 圖片上傳失敗', 'error');
+          }
+        } catch (e) {
+          showToast('❌ 無法連線到上傳伺服器', 'error');
+          console.error(e);
         }
-      } catch (e) {
-        showToast('❌ 無法連線到上傳伺服器', 'error');
-        console.error(e);
-      }
+      });
     };
   }
 
@@ -968,12 +1073,17 @@
   }
 
   /** 上傳圖片區塊的圖片 */
-  async function uploadBlockImage(fileInput, fieldKey, itemIndex, blockIndex) {
+  function uploadBlockImage(fileInput, fieldKey, itemIndex, blockIndex) {
     const file = fileInput.files[0];
     if (!file) return;
+    openCropModal(file, (croppedBlob, originalFile) => doUploadBlockImage(croppedBlob, originalFile, fieldKey, itemIndex, blockIndex));
+    fileInput.value = '';
+  }
+
+  async function doUploadBlockImage(blob, originalFile, fieldKey, itemIndex, blockIndex) {
     showToast('⏳ 圖片上傳中...', '');
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', blob, originalFile.name);
     formData.append('page_slug', currentPageSlug);
     try {
       const res = await fetch(`${API_BASE}/api/v1/upload`, {
@@ -986,6 +1096,123 @@
         listFieldStates[fieldKey][itemIndex].blocks[blockIndex].image_url = data.url;
         saveListToPending(fieldKey);
         renderListItems(fieldKey);
+        showToast('✅ 圖片上傳成功！請記得按下方儲存。', 'success');
+      } else {
+        showToast('❌ 上傳失敗', 'error');
+      }
+    } catch (e) {
+      showToast('❌ 無法連線到上傳伺服器', 'error');
+      console.error(e);
+    }
+  }
+
+  // ════════════════════════════════════════
+  // 獨立的「自由區塊」欄位（不掛在清單卡片底下，
+  // 例如招生資訊、入學門檻，整個區塊本身就是一串可自訂的文字/圖片）
+  // ════════════════════════════════════════
+
+  /** 渲染獨立區塊欄位 */
+  function renderBlocksField(fieldKey) {
+    const container = document.getElementById(`blocks-field-${fieldKey}`);
+    if (!container) return;
+    const blocks = blocksFieldStates[fieldKey] || [];
+    const escape = (str) => escapeHtml(str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const typeLabel = { text: '📝 文字', image: '🖼️ 圖片' };
+
+    const blocksHtml = blocks.length === 0
+      ? '<div style="text-align:center; color:#adb5bd; padding:12px; font-size:13px;">尚無內容區塊，用下方按鈕新增</div>'
+      : blocks.map((block, bi) => {
+          const imgUrl = block.image_url ? (block.image_url.startsWith('http') ? block.image_url : `${API_BASE}${block.image_url}`) : '';
+          let bodyHtml = '';
+          if (block.type === 'image') {
+            bodyHtml = `
+              <input type="file" accept="image/*" onchange="uploadStandaloneBlockImage(this, '${fieldKey}', ${bi})" style="margin-bottom:8px; font-size:12px;">
+              ${imgUrl ? `<img src="${imgUrl}" style="max-height:100px; border-radius:4px; border:1px solid #ccc; display:block;">` : ''}
+            `;
+          } else {
+            bodyHtml = `<textarea rows="3" oninput="updateBlockItemText('${fieldKey}', ${bi}, this.value)" style="width:100%;" placeholder="輸入段落文字...">${escape(block.text)}</textarea>`;
+          }
+
+          return `
+          <div style="background:#fff; border:1px solid #e0e0e0; border-radius:6px; padding:10px; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:12px; font-weight:bold; color:var(--color-primary);">${typeLabel[block.type] || block.type}</span>
+              <div style="display:flex; gap:4px;">
+                <button type="button" class="btn btn-secondary" style="padding:2px 8px; font-size:12px;" onclick="moveBlockItem('${fieldKey}', ${bi}, -1)" ${bi === 0 ? 'disabled' : ''}>▲</button>
+                <button type="button" class="btn btn-secondary" style="padding:2px 8px; font-size:12px;" onclick="moveBlockItem('${fieldKey}', ${bi}, 1)" ${bi === blocks.length - 1 ? 'disabled' : ''}>▼</button>
+                <button type="button" class="btn btn-danger" style="padding:2px 8px; font-size:12px;" onclick="removeBlockItem('${fieldKey}', ${bi})">刪除</button>
+              </div>
+            </div>
+            ${bodyHtml}
+          </div>`;
+        }).join('');
+
+    container.innerHTML = `
+      <div style="background:#f8f9fa; padding:12px; border-radius:8px; border:1px solid #e9ecef;">
+        ${blocksHtml}
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button type="button" class="btn btn-secondary" style="font-size:12px;" onclick="addBlockItem('${fieldKey}', 'text')">＋ 文字</button>
+          <button type="button" class="btn btn-secondary" style="font-size:12px;" onclick="addBlockItem('${fieldKey}', 'image')">＋ 圖片</button>
+        </div>
+      </div>`;
+  }
+
+  function saveBlocksToPending(fieldKey) {
+    markChanged(fieldKey, JSON.stringify(blocksFieldStates[fieldKey]));
+  }
+
+  function addBlockItem(fieldKey, type) {
+    if (!blocksFieldStates[fieldKey]) blocksFieldStates[fieldKey] = [];
+    blocksFieldStates[fieldKey].push(type === 'image' ? { type, image_url: '' } : { type, text: '' });
+    saveBlocksToPending(fieldKey);
+    renderBlocksField(fieldKey);
+  }
+
+  function removeBlockItem(fieldKey, index) {
+    blocksFieldStates[fieldKey].splice(index, 1);
+    saveBlocksToPending(fieldKey);
+    renderBlocksField(fieldKey);
+  }
+
+  function moveBlockItem(fieldKey, index, direction) {
+    const blocks = blocksFieldStates[fieldKey];
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= blocks.length) return;
+    const tmp = blocks[index];
+    blocks[index] = blocks[newIndex];
+    blocks[newIndex] = tmp;
+    saveBlocksToPending(fieldKey);
+    renderBlocksField(fieldKey);
+  }
+
+  function updateBlockItemText(fieldKey, index, value) {
+    blocksFieldStates[fieldKey][index].text = value;
+    saveBlocksToPending(fieldKey);
+  }
+
+  function uploadStandaloneBlockImage(fileInput, fieldKey, index) {
+    const file = fileInput.files[0];
+    if (!file) return;
+    openCropModal(file, (croppedBlob, originalFile) => doUploadStandaloneBlockImage(croppedBlob, originalFile, fieldKey, index));
+    fileInput.value = '';
+  }
+
+  async function doUploadStandaloneBlockImage(blob, originalFile, fieldKey, index) {
+    showToast('⏳ 圖片上傳中...', '');
+    const formData = new FormData();
+    formData.append('file', blob, originalFile.name);
+    formData.append('page_slug', currentPageSlug);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/upload`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` },
+        body: formData
+      });
+      if (res.ok) {
+        const data = await res.json();
+        blocksFieldStates[fieldKey][index].image_url = data.url;
+        saveBlocksToPending(fieldKey);
+        renderBlocksField(fieldKey);
         showToast('✅ 圖片上傳成功！請記得按下方儲存。', 'success');
       } else {
         showToast('❌ 上傳失敗', 'error');
@@ -1185,12 +1412,17 @@
   }
 
   /** 清單專用的圖片上傳 */
-  async function uploadListImage(fileInput, fieldKey, index) {
+  function uploadListImage(fileInput, fieldKey, index) {
     const file = fileInput.files[0];
     if (!file) return;
+    openCropModal(file, (croppedBlob, originalFile) => doUploadListImage(croppedBlob, originalFile, fieldKey, index));
+    fileInput.value = '';
+  }
+
+  async function doUploadListImage(blob, originalFile, fieldKey, index) {
     showToast('⏳ 圖片上傳中...', '');
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", blob, originalFile.name);
     formData.append("page_slug", currentPageSlug);
     try {
       const res = await fetch(`${API_BASE}/api/v1/upload`, {
