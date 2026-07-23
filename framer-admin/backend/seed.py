@@ -131,7 +131,11 @@ SECTIONS_DATA = [
         "name": "關於Aalto EMBA(特色介紹)",
         "type": "list", 
         "order": 2,
-        "fields": []
+        "fields": [
+            # 定義清單裡的每一筆項目，需要填寫哪些東西
+            {"key": "title", "label": "特色標題", "type": "text", "zh": "", "en": ""},
+            {"key": "content", "label": "特色內文", "type": "textarea", "zh": "", "en": ""}
+        ]
     },
 
     # ════════════════════
@@ -143,7 +147,12 @@ SECTIONS_DATA = [
         "name": "關於Aalto EMBA(圖片連結)",
         "type": "list", 
         "order": 3,
-        "fields": []
+        "fields": [
+            # 定義圖片卡片需要填寫的欄位
+            {"key": "title", "label": "按鈕文字", "type": "text", "zh": "", "en": ""},
+            {"key": "image_url", "label": "背景圖片", "type": "image", "zh": "", "en": ""},
+            {"key": "link_url", "label": "連結網址", "type": "text", "zh": "", "en": ""}
+        ]
     },
 
     # ════════════════════
