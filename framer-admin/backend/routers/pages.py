@@ -361,7 +361,7 @@ def get_section_content(
     fields = db.query(ContentField).filter(
         ContentField.section_id == section.id,
         ContentField.locale == locale
-    ).all()
+    ).order_by(ContentField.id).all()
 
     fields_dict = {field.field_key: field.field_value for field in fields}
 
