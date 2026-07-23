@@ -105,6 +105,47 @@ SECTIONS_DATA = [
              "en": ""}
         ]
     },
+
+    # ════════════════════
+    # 關於 Aalto EMBA (標題前言)
+    # ════════════════════
+    {
+        "page_slug": "about-aalto-emba",
+        "key": "about_header",
+        "name": "關於Aalto EMBA(標題前言)",
+        "type": "text", 
+        "order": 1,
+        "fields": [
+            {"key": "title", "label": "主標題", "type": "text", "zh": "關於 Aalto EMBA", "en": "About Aalto EMBA"},
+            {"key": "content", "label": "前言內文", "type": "textarea", "zh": "隨著全球企業面臨數位轉型的浪潮，許多公司渴望培養優秀的第二代接班人，並透過學習以提升自身能力，為學術界拓展潛在人才培育資源創造良機。為了應對全球化的挑戰並提升國立中央大學管理學院的國際競爭力，國立中央大學管理學院與芬蘭阿爾托大學設立之高階管理教育機構（Aalto University Executive Ltd,簡稱Aalto EE）合作，推出高階經營管理碩士在職學位學程，本課程旨在強化參與者在跨國商業環境中進行戰略決策的能力，並培養跨領域整合知能。", "en": ""},
+            {"key": "image_url", "label": "頂部圖片", "type": "image", "zh": "", "en": ""}
+        ]
+    },
+
+    # ════════════════════
+    # 關於 Aalto EMBA (特色介紹)
+    # ════════════════════
+    {
+        "page_slug": "about-aalto-emba",
+        "key": "about_intro",
+        "name": "關於Aalto EMBA(特色介紹)",
+        "type": "list", 
+        "order": 2,
+        "fields": []
+    },
+
+    # ════════════════════
+    # 關於 Aalto EMBA (圖片連結)
+    # ════════════════════
+    {
+        "page_slug": "about-aalto-emba",
+        "key": "about_links",
+        "name": "關於Aalto EMBA(圖片連結)",
+        "type": "list", 
+        "order": 3,
+        "fields": []
+    },
+
     # ════════════════════
     # 校友分享 (標題連結)
     # ════════════════════
