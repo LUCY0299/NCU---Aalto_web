@@ -1006,14 +1006,21 @@
     
     if (items.length > 0 && !window._hasSortedList[fieldKey]) {
       items.sort((a, b) => {
-        const parseDate = (d) => {
-          if (!d) return Infinity;
+        const getValidTime = (d) => {
+          if (!d) return Number.MAX_SAFE_INTEGER; // 沒填日期給最大值(排最上)
           const time = new Date(d).getTime();
-          return isNaN(time) ? 0 : time;
+          return isNaN(time) ? Number.MAX_SAFE_INTEGER : time; 
         };
-        return parseDate(b.date) - parseDate(a.date);
+        const timeA = getValidTime(a.date);
+        const timeB = getValidTime(b.date);
+        
+        if (timeA === timeB) return 0; // 避免出現 NaN 破壞排序
+        return timeB > timeA ? 1 : -1; // 確保降冪排序 (最新的在最上面)
       });
-      window._hasSortedList[fieldKey] = true;
+      window._hasSortedList[fieldKey] = true; // 標記為已排序
+      
+      // 💡 關鍵新增：排完序後，自動通知系統順序已改變，確保能存入資料庫！
+      saveListToPending(fieldKey); 
     }
 
     // 記住目前的捲動位置
