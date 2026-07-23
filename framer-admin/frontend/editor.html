@@ -1043,8 +1043,8 @@
         <div id="card-body-${fieldKey}-${index}" style="padding:16px; border-top:1px solid #eee; display:${displayStyle};">
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom:12px;">
             <div>
-              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">標題</label>
-              <input type="text" value="${escape(item.title)}" oninput="updateListItem('${fieldKey}', ${index}, 'title', this.value); updateCardTitle('${fieldKey}', ${index}, this.value)" style="width:100%;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">標題（Enter 可換行，換行位置會反映在前台）</label>
+              <textarea rows="2" oninput="updateListItem('${fieldKey}', ${index}, 'title', this.value); updateCardTitle('${fieldKey}', ${index}, this.value)" style="width:100%; resize:vertical;">${escape(item.title)}</textarea>
             </div>
             <div>
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">狀態</label>
