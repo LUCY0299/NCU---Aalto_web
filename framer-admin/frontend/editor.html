@@ -1456,32 +1456,34 @@
   
   /** 新增一張空卡片 */
   function addListItem(fieldKey) {
+    // 🌟 測謊機 1：確認你的滑鼠點擊，真的有觸發這個新版本的程式碼
+    alert("目前傳入的區塊識別碼是：" + fieldKey); 
+    
     if (!listFieldStates[fieldKey]) listFieldStates[fieldKey] = [];
     
-    // 1. 根據不同的 fieldKey，塞入不同結構的空資料
     let newItem = {};
-    if (fieldKey === 'about_intro') {
+    if (fieldKey.includes('about_intro')) {
       newItem = { title: '', desc: '', is_active: true };
-    } else if (fieldKey === 'about_links') {
+    } else if (fieldKey.includes('about_links')) {
       newItem = { title: '', image_url: '', link_url: '', is_active: true };
     } else {
       newItem = { title: '', summary: '', image_url: '', image_caption: '', content: '', date: '', is_active: true, blocks: [] };
     }
 
-    // 智慧判斷：要加在上面還是下面？
     let newIndex = 0;
     
     if (fieldKey.includes('about_intro') || fieldKey.includes('about_links')) {
-      // 特色與圖片：加在最下面 (順序新增)
+      // 🌟 測謊機 2：確認程式碼有沒有乖乖走進 push 的路線
+      alert("✅ 準備把卡片加在最下面 (走 push 路線)！"); 
       listFieldStates[fieldKey].push(newItem);
       newIndex = listFieldStates[fieldKey].length - 1; 
     } else {
-      // 校友與其他：加在最上面 (方便發布最新文章)
+      // 🌟 測謊機 3：抓出走到舊邏輯的兇手
+      alert("❌ 準備把卡片加在最上面 (走 unshift 路線)！");
       listFieldStates[fieldKey].unshift(newItem);
       newIndex = 0;
     }
     
-    // 展開剛剛新增的卡片並更新畫面
     if (!expandedCards[fieldKey]) expandedCards[fieldKey] = new Set([newIndex]);
     expandedCards[fieldKey] = new Set([newIndex]);
     saveListToPending(fieldKey);
