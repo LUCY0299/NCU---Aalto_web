@@ -1288,7 +1288,7 @@
       // ==========================================
       // 專屬 UI：特色介紹 (about_intro)
       // ==========================================
-      if (fieldKey === 'about_intro') {
+      if (fieldKey.includes('about_intro')) {
         return `
         <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -1309,7 +1309,7 @@
       // ==========================================
       // 專屬 UI：圖片連結 (about_links)
       // ==========================================
-      if (fieldKey === 'about_links') {
+      if (fieldKey.includes('about_links')) {
         return `
         <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -1471,7 +1471,7 @@
     // 智慧判斷：要加在上面還是下面？
     let newIndex = 0;
     
-    if (fieldKey === 'about_intro' || fieldKey === 'about_links') {
+    if (fieldKey.includes('about_intro') || fieldKey.includes('about_links')) {
       // 特色與圖片：加在最下面 (順序新增)
       listFieldStates[fieldKey].push(newItem);
       newIndex = listFieldStates[fieldKey].length - 1; 
