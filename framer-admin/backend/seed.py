@@ -278,7 +278,7 @@ SECTIONS_DATA = [
         ]
     },
 
-    # 內容區塊四：關於中大(底部圖片卡片)
+    # 內容區塊四：關於中大(底部圖片)
     {
         "page_slug": "about-ncu", 
         "key": "about_ncu_links", 
