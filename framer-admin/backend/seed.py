@@ -162,6 +162,87 @@ SECTIONS_DATA = [
         ]
     },
 
+    # ════════════════════════════════════════
+    # 關於阿爾托大學 (About Aalto University)關於阿爾托(標題、簡介與大圖)
+    # ════════════════════════════════════════
+    {
+        "page_slug": "about-aalto",
+        "key": "about_header",
+        "name": "關於阿爾托(標題、簡介與大圖)",
+        "type": "text", 
+        "order": 1,
+        "fields": [
+            {"key": "title", "label": "主標題", "type": "text", "zh": "關於阿爾托大學 Aalto University", "en": "About Aalto University"},
+            {"key": "top_image", "label": "左側小圖 (選填)", "type": "image"},
+            {"key": "top_text", "label": "右側簡介", "type": "textarea", "zh": "阿爾托大學（Aalto University）成立於2010年...", "en": ""},
+            {"key": "middle_text", "label": "中間延伸介紹 (可自由換行)", "type": "textarea", "zh": "作為芬蘭最具國際影響力的大學之一...", "en": ""},
+            {"key": "bottom_image", "label": "底部橫幅大圖 (選填)", "type": "image"}
+        ]
+    },
+
+    # ════════════════════════════════════════
+    # 關於阿爾托大學 (About Aalto University)
+    # ════════════════════════════════════════
+
+    # 內容區塊一：關於阿爾托 (標題、簡介與大圖)
+    {
+        "page_slug": "about-aalto",
+        "key": "about_header",
+        "name": "關於阿爾托(標題、簡介與大圖)",
+        "type": "text", 
+        "order": 1,
+        "fields": [
+            {"key": "title", "label": "主標題", "type": "text", "zh": "關於阿爾托大學 Aalto University", "en": "About Aalto University"},
+            {"key": "top_image", "label": "左側小圖 (選填)", "type": "image"},
+            {"key": "top_text", "label": "右側簡介", "type": "textarea", "zh": "阿爾托大學（Aalto University）成立於2010年...", "en": ""},
+            {"key": "middle_text", "label": "中間延伸介紹 (可自由換行)", "type": "textarea", "zh": "作為芬蘭最具國際影響力的大學之一...", "en": ""},
+            {"key": "bottom_image", "label": "底部橫幅大圖 (選填)", "type": "image"}
+        ]
+    },
+
+    # 內容區塊二：關於阿爾托商學院 (特色介紹)
+    {
+        "page_slug": "about-aalto",
+        "key": "about_intro_sec",
+        "name": "關於阿爾托商學院(特色介紹)",
+        "type": "list",
+        "order": 2,
+        "fields": [
+            {
+                "key": "about_intro", 
+                "label": "特色介紹清單", 
+                "type": "list",
+                "items": [
+                    {"key": "title", "label": "特色標題 (前台會自動顯示為紫色)", "type": "text"},
+                    {"key": "desc", "label": "特色內文", "type": "textarea"},
+                    {"key": "is_active", "label": "狀態", "type": "boolean"}
+                ]
+            }
+        ]
+    },
+
+    # 內容區塊三：關於阿爾托 (底部圖片/影片卡片)
+    {
+        "page_slug": "about-aalto",
+        "key": "about_links_sec",
+        "name": "關於阿爾托(底部圖片/影片卡片)",
+        "type": "list",
+        "order": 3,
+        "fields": [
+            {
+                "key": "about_links", 
+                "label": "卡片與影片清單", 
+                "type": "list",
+                "items": [
+                    {"key": "title", "label": "卡片左下角小字 (若填YouTube網址則免填)", "type": "text"},
+                    {"key": "link_url", "label": "一般連結 或 YouTube 網址", "type": "text"},
+                    {"key": "image_url", "label": "卡片封面圖 (若填YouTube網址會自動抓取，免上傳)", "type": "image"},
+                    {"key": "is_active", "label": "狀態", "type": "boolean"}
+                ]
+            }
+        ]
+    }
+
     # ════════════════════
     # 校友分享 (標題連結)
     # ════════════════════
