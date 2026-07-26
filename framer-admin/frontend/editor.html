@@ -42,9 +42,11 @@
       <a href="editor.html?page=courses"          class="nav-item" id="nav-courses"><span class="nav-icon">📚</span> 課程資訊</a>
       <a href="editor.html?page=admission"        class="nav-item sub">招生資訊</a>
       <a href="editor.html?page=degree"           class="nav-item sub">學位與修業規定</a>
+      <!-- 以下三頁尚未建立任何內容區塊，先隱藏選單連結，之後要做再打開
       <a href="editor.html?page=application"      class="nav-item sub">申請流程</a>
       <a href="editor.html?page=tuition"          class="nav-item sub">學費資訊</a>
       <a href="editor.html?page=faq"              class="nav-item sub">常見問題</a>
+      -->
       <a href="editor.html?page=contact"          class="nav-item" id="nav-contact"><span class="nav-icon">📞</span> 聯絡我們</a>
       <a href="editor.html?page=search"           class="nav-item" id="nav-search"><span class="nav-icon">🔍</span> 搜尋</a>
       <div class="nav-section-label" style="margin-top:8px">系統</div>
@@ -78,6 +80,7 @@
           <button class="locale-tab active" id="tab-zh" onclick="switchLocale('zh-TW')">🇹🇼 繁體中文</button>
           <button class="locale-tab" id="tab-en" onclick="switchLocale('en-US')">🇺🇸 English</button>
         </div>
+        <button class="btn btn-secondary btn-sm" id="btnAutoTranslate" style="display:none;" onclick="autoTranslateSection()">🌐 自動翻譯成英文</button>
         <a href="https://crowded-pictogram-488999.framer.app/" target="_blank" class="btn btn-secondary btn-sm">前台預覽 ↗</a>
       </div>
     </div>
@@ -874,8 +877,157 @@
     hasUnsavedChanges = false;
     document.getElementById('tab-zh').classList.toggle('active', locale === 'zh-TW');
     document.getElementById('tab-en').classList.toggle('active', locale === 'en-US');
+    document.getElementById('btnAutoTranslate').style.display = locale === 'en-US' ? 'inline-flex' : 'none';
     const sec = window._pageData?.sections?.find(s => s.id === currentSectionId);
     if (sec) { renderFieldEditor(sec); updateSaveStatus(false); }
+  }
+
+  /** 呼叫後端翻譯 API，把中文文字翻成英文 */
+  async function callTranslateAPI(text) {
+    if (!text || !text.trim()) return '';
+    const res = await fetch(`${API_BASE}/api/v1/translate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+      },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) throw new Error(`翻譯 API 回應 ${res.status}`);
+    const data = await res.json();
+    return data.translated || '';
+  }
+
+  /**
+   * 翻譯富文本 HTML 內容（例如校友分享的「完整內容」）：
+   * 用瀏覽器內建的 DOMParser 把 HTML 拆開，只抓出裡面真正的文字節點去翻譯，
+   * <p>、<img>、<blockquote> 等標籤本身完全不動，翻完再放回原本的標籤結構裡。
+   */
+  async function translateHtmlContent(html) {
+    if (!html || !html.trim()) return html;
+
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const walker = document.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null);
+    const textNodes = [];
+    let node;
+    while ((node = walker.nextNode())) {
+      if (node.textContent.trim()) textNodes.push(node);
+    }
+
+    for (const textNode of textNodes) {
+      const original = textNode.textContent;
+      try {
+        const translated = await callTranslateAPI(original);
+        textNode.textContent = translated || original;
+      } catch (e) {
+        console.error('HTML 內文字翻譯失敗，保留原文：', e);
+      }
+    }
+
+    return doc.body.innerHTML;
+  }
+
+  /** 翻譯清單型欄位（活動清單/校友清單）：複製整個中文陣列的結構，把可翻譯的文字換成英文，圖片/日期/狀態維持不變 */
+  async function translateListField(field) {
+    let zhItems;
+    try { zhItems = JSON.parse(field.field_value || '[]'); } catch (e) { zhItems = []; }
+    if (!Array.isArray(zhItems) || zhItems.length === 0) return null;
+
+    const translatedItems = [];
+    for (const item of zhItems) {
+      const newItem = { ...item };
+      if (item.title) newItem.title = await callTranslateAPI(item.title);
+      if (item.summary) newItem.summary = await callTranslateAPI(item.summary);
+      if (item.image_caption) newItem.image_caption = await callTranslateAPI(item.image_caption);
+      if (item.content) newItem.content = await translateHtmlContent(item.content);
+      if (Array.isArray(item.blocks)) {
+        const newBlocks = [];
+        for (const block of item.blocks) {
+          if ((block.type === 'text' || block.type === 'caption') && block.text) {
+            newBlocks.push({ ...block, text: await callTranslateAPI(block.text) });
+          } else {
+            newBlocks.push(block);
+          }
+        }
+        newItem.blocks = newBlocks;
+      }
+      translatedItems.push(newItem);
+    }
+    return translatedItems;
+  }
+
+  /** 翻譯自由區塊欄位（招生資訊等）：文字/圖說區塊翻譯，圖片區塊維持不變 */
+  async function translateBlocksField(field) {
+    let zhBlocks;
+    try { zhBlocks = JSON.parse(field.field_value || '[]'); } catch (e) { zhBlocks = []; }
+    if (!Array.isArray(zhBlocks) || zhBlocks.length === 0) return null;
+
+    const translatedBlocks = [];
+    for (const block of zhBlocks) {
+      if ((block.type === 'text' || block.type === 'caption') && block.text) {
+        translatedBlocks.push({ ...block, text: await callTranslateAPI(block.text) });
+      } else {
+        translatedBlocks.push(block);
+      }
+    }
+    return translatedBlocks;
+  }
+
+  /**
+   * 自動翻譯目前這個區塊的所有欄位：把中文分頁的內容翻譯成英文，填入英文分頁。
+   * 支援單純文字欄位、清單型（活動/校友清單）、自由區塊（招生資訊等）。
+   * 例外：富文本 HTML（校友分享的「完整內容」）不會自動翻譯，需要手動處理，避免翻壞 HTML 標籤。
+   */
+  async function autoTranslateSection() {
+    const section = window._currentSection;
+    if (!section) return;
+
+    const zhFields = (section.content_fields || []).filter(f => f.locale === 'zh-TW');
+    if (zhFields.length === 0) {
+      showToast('這個區塊沒有中文內容可以翻譯', '');
+      return;
+    }
+
+    showToast(`⏳ 翻譯中...（欄位較多時可能需要一點時間，請耐心等候）`, '');
+
+    let successCount = 0;
+    for (const field of zhFields) {
+      try {
+        if (['text', 'textarea'].includes(field.field_type)) {
+          if (!field.field_value) continue;
+          const translated = await callTranslateAPI(field.field_value);
+          const enField = (section.content_fields || []).find(
+            f => f.locale === 'en-US' && f.field_key === field.field_key
+          );
+          if (enField) {
+            const input = document.getElementById(`field-${enField.id}`);
+            if (input) input.value = translated;
+            markChanged(field.field_key, translated);
+            successCount++;
+          }
+        } else if (['list', 'global_list'].includes(field.field_type)) {
+          const translatedItems = await translateListField(field);
+          if (translatedItems) {
+            listFieldStates[field.field_key] = translatedItems;
+            saveListToPending(field.field_key);
+            renderListItems(field.field_key);
+            successCount++;
+          }
+        } else if (field.field_type === 'blocks') {
+          const translatedBlocks = await translateBlocksField(field);
+          if (translatedBlocks) {
+            blocksFieldStates[field.field_key] = translatedBlocks;
+            saveBlocksToPending(field.field_key);
+            renderBlocksField(field.field_key);
+            successCount++;
+          }
+        }
+      } catch (e) {
+        console.error(`欄位 ${field.field_key} 翻譯失敗：`, e);
+      }
+    }
+
+    showToast(`✅ 已翻譯 ${successCount} 個欄位，請檢查內容後記得按「儲存」`, 'success');
   }
 
   /** 切換區塊的啟用/停用狀態 */

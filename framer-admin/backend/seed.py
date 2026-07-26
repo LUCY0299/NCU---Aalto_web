@@ -48,9 +48,10 @@ PAGES = [
     {"slug": "courses",         "title": "課程相關",        "parent_slug": None,      "order": 4,  "active": True},
     {"slug": "admission",       "title": "招生資訊",        "parent_slug": "courses", "order": 1,  "active": True},
     {"slug": "degree",          "title": "修業與學位",      "parent_slug": "courses", "order": 2,  "active": True},
-    {"slug": "application",     "title": "入學申請",        "parent_slug": "courses", "order": 3,  "active": True},
-    {"slug": "tuition",         "title": "學費與獎學金",    "parent_slug": "courses", "order": 4,  "active": True},
-    {"slug": "faq",             "title": "FAQ 常見問題",    "parent_slug": "courses", "order": 5,  "active": True},
+    # 以下三個頁面尚未建立任何內容區塊，先停用不顯示在後台選單，之後要做再打開
+    # {"slug": "application",     "title": "入學申請",        "parent_slug": "courses", "order": 3,  "active": True},
+    # {"slug": "tuition",         "title": "學費與獎學金",    "parent_slug": "courses", "order": 4,  "active": True},
+    # {"slug": "faq",             "title": "FAQ 常見問題",    "parent_slug": "courses", "order": 5,  "active": True},
     {"slug": "contact",         "title": "聯絡方式",        "parent_slug": None,      "order": 5,  "active": True},
     {"slug": "search",          "title": "搜尋引擎",        "parent_slug": None,      "order": 6,  "active": True},
 ]
@@ -296,6 +297,8 @@ SECTIONS_DATA = [
         "type": "list",
         "order": 1,
         "fields": [
+            {"key": "section_title", "label": "區塊標題（同一份資料，活動頁面跟首頁會一起更新）", "type": "text",
+             "zh": "活動訊息", "en": "Events"},
             {
                 "key": "event_list",
                 "label": "活動清單",

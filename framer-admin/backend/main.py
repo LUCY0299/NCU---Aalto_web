@@ -186,6 +186,62 @@ async def upload_image(
     return {"url": public_url}
 
 # ─────────────────────────────────────────
+# 翻譯 API（用 MyMemory，免費、不需金鑰）
+# ─────────────────────────────────────────
+MYMEMORY_URL = "https://api.mymemory.translated.net/get"
+MYMEMORY_CHUNK_SIZE = 450  # MyMemory 單次請求長度限制，超過要切段分別翻譯
+
+
+def _split_text_for_translation(text: str) -> list[str]:
+    """把長文字依照換行、句號切成不超過 MYMEMORY_CHUNK_SIZE 的段落，避免超過 MyMemory 單次請求上限"""
+    if len(text) <= MYMEMORY_CHUNK_SIZE:
+        return [text]
+
+    chunks = []
+    current = ""
+    for line in text.split("\n"):
+        candidate = f"{current}\n{line}" if current else line
+        if len(candidate) > MYMEMORY_CHUNK_SIZE:
+            if current:
+                chunks.append(current)
+            current = line
+        else:
+            current = candidate
+    if current:
+        chunks.append(current)
+    return chunks
+
+
+@app.post("/api/v1/translate", tags=["翻譯"])
+async def translate_text(
+    payload: dict,
+    current_user: User = Depends(verify_token),
+):
+    """把中文文字翻譯成英文（用 MyMemory 免費 API），需要登入"""
+    text = (payload.get("text") or "").strip()
+    if not text:
+        return {"translated": ""}
+
+    chunks = _split_text_for_translation(text)
+    translated_chunks = []
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        for chunk in chunks:
+            try:
+                res = await client.get(
+                    MYMEMORY_URL,
+                    params={"q": chunk, "langpair": "zh-TW|en-US"},
+                )
+                data = res.json()
+                translated = data.get("responseData", {}).get("translatedText", "")
+                translated_chunks.append(translated or chunk)
+            except Exception as e:
+                print(f"翻譯失敗（保留原文）：{e}")
+                translated_chunks.append(chunk)
+
+    return {"translated": "\n".join(translated_chunks)}
+
+# ─────────────────────────────────────────
 # 健康檢查端點（部署平台用）
 # ─────────────────────────────────────────
 @app.get("/health", tags=["系統"])
