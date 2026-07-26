@@ -209,7 +209,7 @@ SECTIONS_DATA = [
         "page_slug": "about-aalto", 
         "key": "about_links_sec", 
         "name": "關於阿爾托(圖片連結卡片)", 
-        "type": "content", 
+        "type": "content",
         "order": 3,
         "fields": [
             {
@@ -227,17 +227,15 @@ SECTIONS_DATA = [
         "page_slug": "about-aalto", 
         "key": "about_yt_sec", 
         "name": "關於阿爾托(YouTube影片嵌入)", 
-        "type": "list", 
+        "type": "content",
         "order": 4,
         "fields": [
             {
                 "key": "about_yt", 
-                "label": "YouTube影片清單 (貼上網址即可)", 
+                "label": "YouTube影片清單 (貼上網址即可，其餘欄位留空)", 
                 "type": "list",
-                "items": [
-                    {"key": "yt_url", "label": "YouTube 影片網址", "type": "text"},
-                    {"key": "is_active", "label": "狀態 (勾選即顯示)", "type": "boolean"}
-                ]
+                "zh": "[]",
+                "en": "[]"
             }
         ]
     },
@@ -285,7 +283,7 @@ SECTIONS_DATA = [
         "page_slug": "about-ncu", 
         "key": "about_ncu_links", 
         "name": "關於中大(圖片連結卡片)", 
-        "type": "content", 
+        "type": "content",
         "order": 4,
         "fields": [
             {
@@ -303,17 +301,15 @@ SECTIONS_DATA = [
         "page_slug": "about-ncu", 
         "key": "about_ncu_yt", 
         "name": "關於中大(底部YT影片)", 
-        "type": "list", 
+        "type": "content",
         "order": 5,
         "fields": [
             {
                 "key": "ncu_yt", 
-                "label": "YouTube影片清單 (貼上網址即可)", 
+                "label": "YouTube影片清單 (貼上網址即可，其餘欄位留空)", 
                 "type": "list",
-                "items": [
-                    {"key": "yt_url", "label": "YouTube 影片網址", "type": "text"},
-                    {"key": "is_active", "label": "狀態 (勾選即顯示)", "type": "boolean"}
-                ]
+                "zh": "[]",
+                "en": "[]"
             }
         ]
     },
