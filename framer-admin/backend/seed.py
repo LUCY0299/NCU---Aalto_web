@@ -42,7 +42,7 @@ PAGES = [
     {"slug": "about-aalto-emba","title": "關於 Aalto EMBA（子頁）","parent_slug": "about","order": 1,"active": True},
     {"slug": "about-aalto",     "title": "關於 Aalto",     "parent_slug": "about",   "order": 2,  "active": True},
     {"slug": "about-ncu",       "title": "關於中央大學",    "parent_slug": "about",   "order": 3,  "active": True},
-    {"slug": "learning",        "title": "學習回饋",        "parent_slug": None,      "order": 3,  "active": True},
+    {"slug": "learning",        "title": "學習資訊",        "parent_slug": None,      "order": 3,  "active": True},
     {"slug": "alumni",          "title": "校友分享",        "parent_slug": "learning","order": 1,  "active": True},
     {"slug": "events",          "title": "活動訊息",        "parent_slug": "learning","order": 2,  "active": True},
     {"slug": "courses",         "title": "課程相關",        "parent_slug": None,      "order": 4,  "active": True},
