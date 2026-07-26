@@ -164,24 +164,6 @@ SECTIONS_DATA = [
     },
 
     # ════════════════════════════════════════
-    # 關於阿爾托大學 (About Aalto University)關於阿爾托(標題、簡介與大圖)
-    # ════════════════════════════════════════
-    {
-        "page_slug": "about-aalto",
-        "key": "about_header",
-        "name": "關於阿爾托(標題、簡介與大圖)",
-        "type": "text", 
-        "order": 1,
-        "fields": [
-            {"key": "title", "label": "主標題", "type": "text", "zh": "關於阿爾托大學 Aalto University", "en": "About Aalto University"},
-            {"key": "top_image", "label": "左側小圖 (選填)", "type": "image"},
-            {"key": "top_text", "label": "右側簡介", "type": "textarea", "zh": "阿爾托大學（Aalto University）成立於2010年...", "en": ""},
-            {"key": "middle_text", "label": "中間延伸介紹 (可自由換行)", "type": "textarea", "zh": "作為芬蘭最具國際影響力的大學之一...", "en": ""},
-            {"key": "bottom_image", "label": "底部橫幅大圖 (選填)", "type": "image"}
-        ]
-    },
-
-    # ════════════════════════════════════════
     # 關於阿爾托大學 (About Aalto University)
     # ════════════════════════════════════════
 
@@ -235,10 +217,10 @@ SECTIONS_DATA = [
                 "label": "卡片與影片清單", 
                 "type": "list",
                 "items": [
-                    {"key": "title", "label": "卡片左下角小字 (若填YouTube網址則免填)", "type": "text"},
-                    {"key": "link_url", "label": "一般連結 或 YouTube 網址", "type": "text"},
-                    {"key": "image_url", "label": "卡片封面圖 (若填YouTube網址會自動抓取，免上傳)", "type": "image"},
-                    {"key": "is_active", "label": "狀態", "type": "boolean"}
+                    {"key": "title", "label": "按鈕文字 (例如: 關於Aalto ➔ 或 影片標題)", "type": "text"},
+                    {"key": "link_url", "label": "連結網址 (例如: /about 或 YouTube網址)", "type": "text"},
+                    {"key": "image_url", "label": "背景圖片 (若為YouTube可不上傳)", "type": "image"},
+                    {"key": "is_active", "label": "狀態 (勾選即顯示)", "type": "boolean"}
                 ]
             }
         ]
