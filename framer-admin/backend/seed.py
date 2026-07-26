@@ -204,11 +204,11 @@ SECTIONS_DATA = [
         ]
     },
 
-    # 內容區塊三：關於阿爾托 (底部圖片/影片卡片)
+    # 內容區塊三：關於阿爾托 (底部圖片/影片)
     {
         "page_slug": "about-aalto",
         "key": "about_links_sec",
-        "name": "關於阿爾托(底部圖片/影片卡片)",
+        "name": "關於阿爾托(底部圖片/影片)",
         "type": "list",
         "order": 3,
         "fields": [
