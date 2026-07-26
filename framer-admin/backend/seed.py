@@ -204,22 +204,96 @@ SECTIONS_DATA = [
         ]
     },
 
-    # 內容區塊三：關於阿爾托 (底部圖片/影片)
+    # 內容區塊三：關於阿爾托 (底部圖片)
     {
-        "page_slug": "about-aalto",
-        "key": "about_links_sec",
-        "name": "關於阿爾托(底部圖片/影片)",
-        "type": "list",
-        "order": 3,
+        "page_slug": "about-aalto", "key": "about_links_sec", "name": "關於阿爾托(一般圖片連結)", "type": "list", "order": 3,
         "fields": [
             {
-                "key": "about_links", 
-                "label": "卡片與影片清單", 
-                "type": "list",
+                "key": "about_links", "label": "圖片連結清單", "type": "list",
                 "items": [
-                    {"key": "title", "label": "按鈕文字 (例如: 關於Aalto ➔ 或 影片標題)", "type": "text"},
-                    {"key": "link_url", "label": "連結網址 (例如: /about 或 YouTube網址)", "type": "text"},
-                    {"key": "image_url", "label": "背景圖片 (若為YouTube可不上傳)", "type": "image"},
+                    {"key": "title", "label": "按鈕文字 (例如: 關於Aalto ➔)", "type": "text"},
+                    {"key": "link_url", "label": "連結網址 (例如: /about)", "type": "text"},
+                    {"key": "image_url", "label": "背景圖片", "type": "image"},
+                    {"key": "is_active", "label": "狀態 (勾選即顯示)", "type": "boolean"}
+                ]
+            }
+        ]
+    },
+
+    # 內容區塊四：關於阿爾托 (影片)
+    {
+        "page_slug": "about-aalto", "key": "about_yt_sec", "name": "關於阿爾托(YouTube影片嵌入)", "type": "list", "order": 4,
+        "fields": [
+            {
+                "key": "about_yt", "label": "YouTube影片清單", "type": "list",
+                "items": [
+                    {"key": "yt_url", "label": "YouTube 影片網址", "type": "text"},
+                    {"key": "is_active", "label": "狀態 (勾選即顯示)", "type": "boolean"}
+                ]
+            }
+        ]
+    },
+
+    # ════════════════════════════════════════
+    # 關於中央大學 (About NCU) - 全新設計
+    # ════════════════════════════════════════
+
+    # 內容區塊一：關於中大(頂部標題與大圖)
+    {
+        "page_slug": "about-ncu", "key": "about_ncu_header", "name": "關於中大(頂部標題與大圖)", "type": "text", "order": 1,
+        "fields": [
+            {"key": "title", "label": "主標題", "type": "text", "zh": "關於國立中央大學 National Central University", "en": "About National Central University"},
+            {"key": "intro_text", "label": "前言簡介", "type": "textarea", "zh": "國立中央大學（National Central University, NCU）為台灣具代表性的國立研究型大學之一...", "en": ""},
+            {"key": "hero_image", "label": "滿版大圖", "type": "image"}
+        ]
+    },
+
+    # 內容區塊二：關於中大(管理學院簡介)
+    {
+        "page_slug": "about-ncu", "key": "about_ncu_college", "name": "關於中大(管理學院簡介)", "type": "text", "order": 2,
+        "fields": [
+            {"key": "subtitle", "label": "紫色大標題", "type": "text", "zh": "管理學院 College of Management", "en": "College of Management"},
+            {"key": "content_text", "label": "介紹內文", "type": "textarea", "zh": "國立中央大學管理學院成立於1984年...", "en": ""}
+        ]
+    },
+
+     # 內容區塊三：關於中大(管理學院特色與優勢)
+    {
+        "page_slug": "about-ncu", "key": "about_ncu_features", "name": "關於中大(管理學院特色與優勢)", "type": "list", "order": 3,
+        "fields": [
+            {
+                "key": "features_list", "label": "特色與優勢清單", "type": "list",
+                "items": [
+                    {"key": "title", "label": "左側特色標題 (紫色)", "type": "text"},
+                    {"key": "desc", "label": "右側詳細說明", "type": "textarea"},
+                    {"key": "is_active", "label": "狀態 (勾選即顯示)", "type": "boolean"}
+                ]
+            }
+        ]
+    },
+
+    # 內容區塊四：關於中大(底部圖片卡片)
+    {
+        "page_slug": "about-ncu", "key": "about_ncu_links", "name": "關於中大(底部圖片卡片)", "type": "list", "order": 4,
+        "fields": [
+            {
+                "key": "ncu_links", "label": "圖片卡片清單", "type": "list",
+                "items": [
+                    {"key": "title", "label": "卡片左下角小字", "type": "text"},
+                    {"key": "link_url", "label": "一般連結網址", "type": "text"},
+                    {"key": "image_url", "label": "卡片封面圖", "type": "image"},
+                    {"key": "is_active", "label": "狀態 (勾選即顯示)", "type": "boolean"}
+                ]
+            }
+        ]
+    },
+    {
+        "page_slug": "about-ncu", "key": "about_ncu_yt", "name": "關於中大(底部YT影片)", "type": "list", "order": 5,
+        "fields": [
+            {
+                "key": "ncu_yt", "label": "YouTube影片清單", "type": "list",
+                "items": [
+                    {"key": "yt_url", "label": "YouTube 影片網址", "type": "text"},
                     {"key": "is_active", "label": "狀態 (勾選即顯示)", "type": "boolean"}
                 ]
             }
