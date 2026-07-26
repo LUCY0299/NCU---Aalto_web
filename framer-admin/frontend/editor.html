@@ -1417,10 +1417,11 @@
     if (!expandedCards[fieldKey]) expandedCards[fieldKey] = new Set([0]);
 
     // ==========================================
-    // 🌟 條件判斷：隱藏不需要排序的區塊按鈕
+    // 條件判斷：隱藏不需要排序的區塊按鈕
     // ==========================================
     let sortButtonHtml = '';
-    if (fieldKey !== 'about_intro' && fieldKey !== 'about_links') {
+    // 特色、連結卡片、YT影片 都不需要排序按鈕
+    if (!fieldKey.includes('intro') && !fieldKey.includes('links') && !fieldKey.includes('yt')) {
       sortButtonHtml = `
         <div style="display:flex; justify-content:flex-end; margin-bottom: 12px;">
           <button class="btn" style="background-color: #17a2b8; color: white; border: none; padding: 6px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onclick="forceSortByDate('${fieldKey}')">
@@ -1438,9 +1439,9 @@
       const iconText = isExpanded ? '▼' : '▶';
 
       // ==========================================
-      // 專屬 UI：特色介紹 (about_intro)
+      // 專屬 UI：特色介紹 (包含 about_intro 等)
       // ==========================================
-      if (fieldKey.includes('about_intro')) {
+      if (fieldKey.includes('intro') || fieldKey.includes('features')) {
         return `
         <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -1459,9 +1460,9 @@
       }
 
       // ==========================================
-      // 專屬 UI：圖片連結 (about_links)
+      // 專屬 UI：圖片連結 (包含 about_links, ncu_links)
       // ==========================================
-      if (fieldKey.includes('about_links')) {
+      if (fieldKey.includes('links')) {
         return `
         <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -1487,7 +1488,33 @@
       }
 
       // ==========================================
-      // 預設 UI：原本的校友/活動卡片 (保留不動)
+      // 專屬 UI：YouTube 影片
+      // ==========================================
+      if (fieldKey.includes('yt')) {
+        return `
+        <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h4 style="margin:0; color:#e62117; font-size:16px;">▶️ YouTube 影片 #${index + 1}</h4>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
+          </div>
+          <div style="display:flex; gap: 16px; align-items: flex-end;">
+            <div style="flex:1;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">YouTube 網址 (直接貼上即可)</label>
+              <input type="text" value="${escape(item.yt_url)}" oninput="updateListItem('${fieldKey}', ${index}, 'yt_url', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="https://www.youtube.com/watch?v=...">
+            </div>
+            <div style="width:120px;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">狀態</label>
+              <select onchange="updateListItem('${fieldKey}', ${index}, 'is_active', this.value === 'true')" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                <option value="true" ${item.is_active !== false ? 'selected' : ''}>🟢 顯示</option>
+                <option value="false" ${item.is_active === false ? 'selected' : ''}>🔴 隱藏</option>
+              </select>
+            </div>
+          </div>
+        </div>`;
+      }
+
+      // ==========================================
+      // 預設 UI：原本的校友/活動卡片
       // ==========================================
       return `
       <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
@@ -1548,38 +1575,40 @@
 
     window.scrollTo(0, savedScrollY);
 
-    // Quill 編輯器初始化
-    setTimeout(() => {
-      items.forEach((item, index) => {
-        const editorElement = document.getElementById(`quill-editor-${fieldKey}-${index}`);
-        if (editorElement && !editorElement.classList.contains('ql-container')) {
-          const quill = new Quill(editorElement, {
-            theme: 'snow',
-            modules: { 
-              toolbar: {
-                container: quillToolbarOptions,
-                handlers: { 'image': function() { quillImageHandler(this.quill); } }
-              }
-            },
-            placeholder: '在此輸入校友訪談的完整故事...'
-          });
+    // Quill 編輯器初始化 (防錯：不給 YT 或 Links 綁定編輯器)
+    if (!fieldKey.includes('intro') && !fieldKey.includes('links') && !fieldKey.includes('yt')) {
+      setTimeout(() => {
+        items.forEach((item, index) => {
+          const editorElement = document.getElementById(`quill-editor-${fieldKey}-${index}`);
+          if (editorElement && !editorElement.classList.contains('ql-container')) {
+            const quill = new Quill(editorElement, {
+              theme: 'snow',
+              modules: { 
+                toolbar: {
+                  container: quillToolbarOptions,
+                  handlers: { 'image': function() { quillImageHandler(this.quill); } }
+                }
+              },
+              placeholder: '在此輸入完整內容...'
+            });
 
-          if (item.content) { quill.root.innerHTML = item.content; }
-          
-          quill.on('text-change', function(delta, oldDelta, source) {
-            if (source === 'user') {
-              const currentHtml = quill.root.innerHTML;
-              const originalHtml = item.content || '';
-              const isActuallyEmpty = (originalHtml === '' && currentHtml === '<p><br></p>');
+            if (item.content) { quill.root.innerHTML = item.content; }
+            
+            quill.on('text-change', function(delta, oldDelta, source) {
+              if (source === 'user') {
+                const currentHtml = quill.root.innerHTML;
+                const originalHtml = item.content || '';
+                const isActuallyEmpty = (originalHtml === '' && currentHtml === '<p><br></p>');
 
-              if (currentHtml !== originalHtml && !isActuallyEmpty) {
-                updateListItem(fieldKey, index, 'content', currentHtml);
+                if (currentHtml !== originalHtml && !isActuallyEmpty) {
+                  updateListItem(fieldKey, index, 'content', currentHtml);
+                }
               }
-            }
-          });
-        }
-      });
-    }, 0);
+            });
+          }
+        });
+      }, 0);
+    }
   }
   
   /** 手動強制依照日期排序 */
@@ -1612,19 +1641,20 @@
     
     // 1. 根據不同的 fieldKey，塞入不同結構的空資料
     let newItem = {};
-    if (fieldKey.includes('about_intro')) {
+    if (fieldKey.includes('intro') || fieldKey.includes('features')) {
       newItem = { title: '', desc: '', is_active: true };
-    } else if (fieldKey.includes('about_links')) {
+    } else if (fieldKey.includes('links')) {
       newItem = { title: '', image_url: '', link_url: '', is_active: true };
+    } else if (fieldKey.includes('yt')) {
+      newItem = { yt_url: '', is_active: true };
     } else {
       newItem = { title: '', summary: '', image_url: '', image_caption: '', content: '', date: '', is_active: true, blocks: [] };
     }
 
     // 2. 智慧判斷：要加在上面還是下面？
     let newIndex = 0;
-    
-    if (fieldKey.includes('about_intro') || fieldKey.includes('about_links')) {
-      // 特色與圖片：加在最下面 (順序新增)
+    if (fieldKey.includes('intro') || fieldKey.includes('features') || fieldKey.includes('links') || fieldKey.includes('yt')) {
+      // 特色、圖片、YT：加在最下面 (順序新增)
       listFieldStates[fieldKey].push(newItem);
       newIndex = listFieldStates[fieldKey].length - 1; 
     } else {
