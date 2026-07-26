@@ -281,13 +281,13 @@ SECTIONS_DATA = [
     # 內容區塊四：關於中大(底部圖片)
     {
         "page_slug": "about-ncu", 
-        "key": "about_links_sec", 
+        "key": "about_ncu_links", 
         "name": "關於中大(圖片連結卡片)", 
         "type": "content", 
         "order": 4,
         "fields": [
             {
-                "key": "about_links", 
+                "key": "ncu_links", 
                 "label": "圖片卡片清單", 
                 "type": "list",
                 "zh": "[]", 
