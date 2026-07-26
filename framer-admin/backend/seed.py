@@ -204,28 +204,36 @@ SECTIONS_DATA = [
         ]
     },
 
-    # 內容區塊三：關於阿爾托 (底部圖片)
+    # 內容區塊三：關於阿爾托 (圖片連結卡片)
     {
-        "page_slug": "about-aalto", "key": "about_links_sec", "name": "關於阿爾托(一般圖片連結)", "type": "list", "order": 3,
+        "page_slug": "about-aalto", 
+        "key": "about_links_sec", 
+        "name": "關於阿爾托(圖片連結卡片)", 
+        "type": "content", 
+        "order": 3,
         "fields": [
             {
-                "key": "about_links", "label": "圖片連結清單", "type": "list",
-                "items": [
-                    {"key": "title", "label": "按鈕文字 (例如: 關於Aalto ➔)", "type": "text"},
-                    {"key": "link_url", "label": "連結網址 (例如: /about)", "type": "text"},
-                    {"key": "image_url", "label": "背景圖片", "type": "image"},
-                    {"key": "is_active", "label": "狀態 (勾選即顯示)", "type": "boolean"}
-                ]
+                "key": "about_links", 
+                "label": "圖片連結清單", 
+                "type": "list",
+                "zh": "[]", 
+                "en": "[]"
             }
         ]
     },
 
-    # 內容區塊四：關於阿爾托 (影片)
+    # 內容區塊四：關於阿爾托 (YouTube影片嵌入)
     {
-        "page_slug": "about-aalto", "key": "about_yt_sec", "name": "關於阿爾托(YouTube影片嵌入)", "type": "list", "order": 4,
+        "page_slug": "about-aalto", 
+        "key": "about_yt_sec", 
+        "name": "關於阿爾托(YouTube影片嵌入)", 
+        "type": "list", 
+        "order": 4,
         "fields": [
             {
-                "key": "about_yt", "label": "YouTube影片清單", "type": "list",
+                "key": "about_yt", 
+                "label": "YouTube影片清單 (貼上網址即可)", 
+                "type": "list",
                 "items": [
                     {"key": "yt_url", "label": "YouTube 影片網址", "type": "text"},
                     {"key": "is_active", "label": "狀態 (勾選即顯示)", "type": "boolean"}
@@ -235,7 +243,7 @@ SECTIONS_DATA = [
     },
 
     # ════════════════════════════════════════
-    # 關於中央大學 (About NCU) - 全新設計
+    # 關於中央大學 (About NCU)
     # ════════════════════════════════════════
 
     # 內容區塊一：關於中大(頂部標題與大圖)
@@ -274,24 +282,34 @@ SECTIONS_DATA = [
 
     # 內容區塊四：關於中大(底部圖片卡片)
     {
-        "page_slug": "about-ncu", "key": "about_ncu_links", "name": "關於中大(底部圖片卡片)", "type": "list", "order": 4,
+        "page_slug": "about-ncu", 
+        "key": "about_ncu_links", 
+        "name": "關於中大(圖片連結卡片)", 
+        "type": "content", 
+        "order": 4,
         "fields": [
             {
-                "key": "ncu_links", "label": "圖片卡片清單", "type": "list",
-                "items": [
-                    {"key": "title", "label": "卡片左下角小字", "type": "text"},
-                    {"key": "link_url", "label": "一般連結網址", "type": "text"},
-                    {"key": "image_url", "label": "卡片封面圖", "type": "image"},
-                    {"key": "is_active", "label": "狀態 (勾選即顯示)", "type": "boolean"}
-                ]
+                "key": "ncu_links", 
+                "label": "圖片卡片清單", 
+                "type": "list",
+                "zh": "[]", 
+                "en": "[]"
             }
         ]
     },
+
+    # 內容區塊五：關於中大(底部YT影片)
     {
-        "page_slug": "about-ncu", "key": "about_ncu_yt", "name": "關於中大(底部YT影片)", "type": "list", "order": 5,
+        "page_slug": "about-ncu", 
+        "key": "about_ncu_yt", 
+        "name": "關於中大(底部YT影片)", 
+        "type": "list", 
+        "order": 5,
         "fields": [
             {
-                "key": "ncu_yt", "label": "YouTube影片清單", "type": "list",
+                "key": "ncu_yt", 
+                "label": "YouTube影片清單 (貼上網址即可)", 
+                "type": "list",
                 "items": [
                     {"key": "yt_url", "label": "YouTube 影片網址", "type": "text"},
                     {"key": "is_active", "label": "狀態 (勾選即顯示)", "type": "boolean"}
