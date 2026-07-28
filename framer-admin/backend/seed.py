@@ -315,6 +315,40 @@ SECTIONS_DATA = [
     },
 
     # ════════════════════
+    # 學習資訊
+    # ════════════════════
+    {
+        "page_slug": "learning-info",
+        "key": "learning_header", 
+        "name": "學習資訊(頂部標題與大圖)", 
+        "type": "text", 
+        "order": 1,
+        "fields": [
+            {
+                "key": "title", 
+                "label": "大標題", 
+                "type": "text",
+                "zh": "學習資訊", 
+                "en": "Learning Information"
+            },
+            {
+                "key": "hero_image", 
+                "label": "頂部大圖", 
+                "type": "image",
+                "zh": "", 
+                "en": ""
+            },
+            {
+                "key": "description", 
+                "label": "圖片下方描述", 
+                "type": "textarea",
+                "zh": "首屆學員入學後，建議於第一學期末（約2026年12月）蒐集見證，格式如下：", 
+                "en": ""
+            }
+        ]
+    },
+
+    # ════════════════════
     # 校友分享 (標題連結)
     # ════════════════════
     {
