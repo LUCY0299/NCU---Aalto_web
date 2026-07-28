@@ -318,7 +318,7 @@ SECTIONS_DATA = [
     # 學習資訊
     # ════════════════════
     {
-        "page_slug": "learning-info",
+        "page_slug": "learning",
         "key": "learning_header", 
         "name": "學習資訊(頂部標題與大圖)", 
         "type": "text", 
@@ -384,6 +384,7 @@ SECTIONS_DATA = [
                     {"key": "summary", "label": "內容大綱", "type": "text"},
                     {"key": "is_active", "label": "狀態", "type": "boolean"},
                     {"key": "image_url", "label": "照片", "type": "image"},
+                    {"key": "image_caption", "label": "圖說", "type": "text"},
                     {"key": "date", "label": "日期", "type": "date"},
                     {"key": "content", "label": "完整內容", "type": "richtext"}
                 ]
