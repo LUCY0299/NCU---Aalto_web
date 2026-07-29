@@ -1402,7 +1402,7 @@
     }
   }
 
-  /** 渲染卡片清單畫面 */
+/** 渲染卡片清單畫面 */
   function renderListItems(fieldKey) {
     const container = document.getElementById(`list-container-${fieldKey}`);
     if (!container) return;
@@ -1417,11 +1417,11 @@
     if (!expandedCards[fieldKey]) expandedCards[fieldKey] = new Set([0]);
 
     // ==========================================
-    // 條件判斷：隱藏不需要排序的區塊按鈕
+    // 條件判斷：隱藏不需要自動排序的區塊按鈕
     // ==========================================
     let sortButtonHtml = '';
-    // 特色、連結卡片、YT影片 都不需要排序按鈕
-    if (!fieldKey.includes('intro') && !fieldKey.includes('links') && !fieldKey.includes('yt')) {
+    // 特色、連結卡片、YT影片、"校友分享" 都不需要「依日期排序」按鈕
+    if (!fieldKey.includes('intro') && !fieldKey.includes('links') && !fieldKey.includes('yt') && !fieldKey.includes('alumni')) {
       sortButtonHtml = `
         <div style="display:flex; justify-content:flex-end; margin-bottom: 12px;">
           <button class="btn" style="background-color: #17a2b8; color: white; border: none; padding: 6px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onclick="forceSortByDate('${fieldKey}')">
@@ -1439,6 +1439,48 @@
       const iconText = isExpanded ? '▼' : '▶';
 
       // ==========================================
+      // 🌟 新增專屬 UI：校友分享 (極簡化版：只有標題、連結、圖片、狀態、排序)
+      // ==========================================
+      if (fieldKey.includes('alumni')) {
+        return `
+        <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h4 style="margin:0; color:var(--color-primary); font-size:16px;">🎓 校友分享卡片 #${index + 1}</h4>
+            <div style="display:flex; gap:4px;">
+              <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲ 上移</button>
+              <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, 1)" ${index === items.length - 1 ? 'disabled' : ''}>▼ 下移</button>
+              <button class="btn btn-danger" style="padding:4px 8px; font-size:12px; margin-left: 12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom:12px;">
+            <div>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">標題 (Enter可換行)</label>
+              <textarea rows="2" oninput="updateListItem('${fieldKey}', ${index}, 'title', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; resize:vertical;" placeholder="請輸入標題">${escape(item.title)}</textarea>
+            </div>
+            <div>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">狀態</label>
+              <select onchange="updateListItem('${fieldKey}', ${index}, 'is_active', this.value === 'true')" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                <option value="true" ${item.is_active !== false ? 'selected' : ''}>🟢 顯示</option>
+                <option value="false" ${item.is_active === false ? 'selected' : ''}>🔴 隱藏</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">外部連結網址 (點擊後連到的網頁)</label>
+            <input type="text" value="${escape(item.link || item.link_url)}" oninput="updateListItem('${fieldKey}', ${index}, 'link', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="例如: https://www.ft.com/...">
+          </div>
+
+          <div>
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">卡片封面照 (建議 16:9)</label>
+            <input type="file" accept="image/*" onchange="uploadListImage(this, '${fieldKey}', ${index})" style="margin-bottom:8px; font-size:12px;">
+            ${imgUrl ? `<img src="${imgUrl}" style="max-height:100px; border-radius:4px; border:1px solid #ccc; display:block;">` : ''}
+          </div>
+        </div>`;
+      }
+
+      // ==========================================
       // 專屬 UI：特色介紹 (包含 about_intro 等)
       // ==========================================
       if (fieldKey.includes('intro') || fieldKey.includes('features')) {
@@ -1446,7 +1488,11 @@
         <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
             <h4 style="margin:0; color:var(--color-primary); font-size:16px;">✨ 特色項目 #${index + 1}</h4>
-            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
+            <div style="display:flex; gap:4px;">
+              <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲ 上移</button>
+              <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, 1)" ${index === items.length - 1 ? 'disabled' : ''}>▼ 下移</button>
+              <button class="btn btn-danger" style="padding:4px 8px; font-size:12px; margin-left: 12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
+            </div>
           </div>
           <div style="margin-bottom:12px;">
             <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">特色標題</label>
@@ -1467,7 +1513,11 @@
         <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
             <h4 style="margin:0; color:var(--color-primary); font-size:16px;">🖼️ 圖片卡片 #${index + 1}</h4>
-            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
+            <div style="display:flex; gap:4px;">
+              <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲ 上移</button>
+              <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, 1)" ${index === items.length - 1 ? 'disabled' : ''}>▼ 下移</button>
+              <button class="btn btn-danger" style="padding:4px 8px; font-size:12px; margin-left: 12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
+            </div>
           </div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom:12px;">
             <div>
@@ -1495,7 +1545,11 @@
         <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <h4 style="margin:0; color:#e62117; font-size:16px;">▶️ YouTube 影片 #${index + 1}</h4>
-            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
+            <div style="display:flex; gap:4px;">
+              <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲ 上移</button>
+              <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, 1)" ${index === items.length - 1 ? 'disabled' : ''}>▼ 下移</button>
+              <button class="btn btn-danger" style="padding:4px 8px; font-size:12px; margin-left: 12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
+            </div>
           </div>
           <div style="display:flex; gap: 16px; align-items: flex-end;">
             <div style="flex:1;">
@@ -1514,14 +1568,14 @@
       }
 
       // ==========================================
-      // 預設 UI：原本的校友/活動卡片
+      // 預設 UI：只剩下「活動卡片 (Event)」會用到這個最複雜的介面
       // ==========================================
       return `
       <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#f8f9fa; border-radius:6px; cursor:pointer;" onclick="toggleCard('${fieldKey}', ${index})">
           <h4 style="margin:0; color:var(--color-primary); font-size:14px; user-select:none;">
             <span id="card-icon-${fieldKey}-${index}" style="display:inline-block; width:20px;">${iconText}</span>
-            🎓 ${item.title || `新卡片 #${index + 1}`}
+            📰 ${item.title || `新項目 #${index + 1}`}
           </h4>
           <button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="event.stopPropagation(); removeListItem('${fieldKey}', ${index})">刪除</button>
         </div>
@@ -1529,7 +1583,7 @@
         <div id="card-body-${fieldKey}-${index}" style="padding:16px; border-top:1px solid #eee; display:${displayStyle};">
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom:12px;">
             <div>
-              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">標題（Enter 可換行，換行位置會反映在前台）</label>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">標題</label>
               <textarea rows="2" oninput="updateListItem('${fieldKey}', ${index}, 'title', this.value); updateCardTitle('${fieldKey}', ${index}, this.value)" style="width:100%; resize:vertical;">${escape(item.title)}</textarea>
             </div>
             <div>
@@ -1558,11 +1612,6 @@
             <textarea rows="2" oninput="updateListItem('${fieldKey}', ${index}, 'summary', this.value)" style="width:100%;">${escape(item.summary)}</textarea>
           </div>
 
-          <div style="margin-bottom:12px;">
-            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">圖說 (Image Caption，選填)</label>
-            <textarea rows="2" oninput="updateListItem('${fieldKey}', ${index}, 'image_caption', this.value)" style="width:100%;">${escape(item.image_caption)}</textarea>
-          </div>
-
           ${fieldKey === 'event_list' ? renderContentBlocksSection(fieldKey, index, item) : `
           <div style="margin-top: 16px;">
             <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">完整內容 (Content)</label>
@@ -1575,8 +1624,8 @@
 
     window.scrollTo(0, savedScrollY);
 
-    // Quill 編輯器初始化 (防錯：不給 YT 或 Links 綁定編輯器)
-    if (!fieldKey.includes('intro') && !fieldKey.includes('links') && !fieldKey.includes('yt')) {
+    // Quill 編輯器初始化 (防錯：不給 alumni, yt, links 綁定編輯器)
+    if (!fieldKey.includes('intro') && !fieldKey.includes('links') && !fieldKey.includes('yt') && !fieldKey.includes('alumni')) {
       setTimeout(() => {
         items.forEach((item, index) => {
           const editorElement = document.getElementById(`quill-editor-${fieldKey}-${index}`);
@@ -1647,18 +1696,22 @@
       newItem = { title: '', image_url: '', link_url: '', is_active: true };
     } else if (fieldKey.includes('yt')) {
       newItem = { yt_url: '', is_active: true };
+    } else if (fieldKey.includes('alumni')) {
+      // 校友卡片極簡化：只有標題、連結、圖片、狀態
+      newItem = { title: '', link: '', image_url: '', is_active: true };
     } else {
+      // 剩餘的(活動訊息)
       newItem = { title: '', summary: '', image_url: '', image_caption: '', content: '', date: '', is_active: true, blocks: [] };
     }
 
-    // 2. 智慧判斷：要加在上面還是下面？
+    // 2. 新增位置邏輯
     let newIndex = 0;
-    if (fieldKey.includes('intro') || fieldKey.includes('features') || fieldKey.includes('links') || fieldKey.includes('yt')) {
-      // 特色、圖片、YT：加在最下面 (順序新增)
+    if (fieldKey.includes('intro') || fieldKey.includes('features') || fieldKey.includes('links') || fieldKey.includes('yt') || fieldKey.includes('alumni')) {
+      // 校友分享因為改成手動排序，新增時統一加在最下面
       listFieldStates[fieldKey].push(newItem);
       newIndex = listFieldStates[fieldKey].length - 1; 
     } else {
-      // 校友與活動：加在最上面 (方便發布最新文章)
+      // 活動訊息因為有日期排序，新增時加在最上面
       listFieldStates[fieldKey].unshift(newItem);
       newIndex = 0;
     }
@@ -1683,6 +1736,23 @@
       });
       expandedCards[fieldKey] = shifted;
     }
+    saveListToPending(fieldKey);
+    renderListItems(fieldKey);
+  }
+
+  /** 上下移動卡片排序 */
+  function moveListItem(fieldKey, index, direction) {
+    const items = listFieldStates[fieldKey];
+    const newIndex = index + direction;
+    
+    // 檢查是否超出陣列範圍
+    if (newIndex < 0 || newIndex >= items.length) return;
+    
+    // 交換位置
+    const tmp = items[index];
+    items[index] = items[newIndex];
+    items[newIndex] = tmp;
+    
     saveListToPending(fieldKey);
     renderListItems(fieldKey);
   }

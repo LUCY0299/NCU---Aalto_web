@@ -365,7 +365,7 @@ SECTIONS_DATA = [
         ]
     },
     
-    # ════════════════════
+   # ════════════════════
     # 校友分享 (卡片)
     # ════════════════════
     {
@@ -381,12 +381,9 @@ SECTIONS_DATA = [
                 "type": "list",
                 "items": [
                     {"key": "title", "label": "標題", "type": "text"},
-                    {"key": "summary", "label": "內容大綱", "type": "text"},
                     {"key": "is_active", "label": "狀態", "type": "boolean"},
                     {"key": "image_url", "label": "照片", "type": "image"},
-                    {"key": "image_caption", "label": "圖說", "type": "text"},
-                    {"key": "date", "label": "日期", "type": "date"},
-                    {"key": "content", "label": "完整內容", "type": "richtext"}
+                    {"key": "link", "label": "外部連結網址 (點擊後直接外連)", "type": "text"}
                 ]
             }
         ]
