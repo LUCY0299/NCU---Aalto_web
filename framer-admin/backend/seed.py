@@ -317,6 +317,11 @@ SECTIONS_DATA = [
         "page_slug": "about-ncu", "key": "about_ncu_features", "name": "關於中大(管理學院特色與優勢)", "type": "list", "order": 3,
         "fields": [
             {
+                "key": "section_title", "label": "區塊標題", "type": "text",
+                "zh": "管理學院特色與優勢",
+                "en": "Features & Advantages of College of Management"
+            },
+            {
                 "key": "features_list", "label": "特色與優勢清單", "type": "list",
                 "items": [
                     {"key": "title", "label": "左側特色標題 (紫色)", "type": "text"},
