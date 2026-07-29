@@ -390,12 +390,12 @@ SECTIONS_DATA = [
     },
     
     # ════════════════════
-    # 校友分享 (卡片)
+    # 校友分享 (卡片外部連結)
     # ════════════════════
     {
         "page_slug": "alumni",
         "key": "alumni_sharing",
-        "name": "校友分享(卡片)",
+        "name": "校友分享(卡片外部連結)",
         "type": "list",
         "order": 2,
         "fields": [
