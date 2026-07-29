@@ -102,8 +102,31 @@ SECTIONS_DATA = [
             
             # 圖片存放欄位
             {"key": "image_url", "label": "計畫圖片", "type": "image",
-             "zh": "", 
+             "zh": "",
              "en": ""}
+        ]
+    },
+
+    # ════════════════════
+    # 首頁 (home) — 最新文章
+    # ════════════════════
+    {
+        "page_slug": "home", "key": "latest_articles", "name": "最新文章", "type": "list", "order": 3,
+        "fields": [
+            {"key": "section_title", "label": "區塊標題", "type": "text",
+             "zh": "最新文章", "en": "Latest Articles"},
+            {
+                "key": "article_list",
+                "label": "文章清單",
+                "type": "list",
+                "items": [
+                    {"key": "title", "label": "文章標題", "type": "text"},
+                    {"key": "author", "label": "作者", "type": "text"},
+                    {"key": "date", "label": "日期", "type": "date"},
+                    {"key": "link_url", "label": "外部連結網址", "type": "text"},
+                    {"key": "is_active", "label": "狀態", "type": "boolean"},
+                ]
+            }
         ]
     },
 
