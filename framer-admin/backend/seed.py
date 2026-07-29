@@ -644,6 +644,26 @@ SECTIONS_DATA = [
              "zh": "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png",
              "en": "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png"}
         ]
+    },
+    {
+        "page_slug": "layout", "key": "cta_section", "name": "全站 CTA 區塊 (CTA Section)", "type": "cta", "order": 4,
+        "fields": [
+            {"key": "title", "label": "標題文字 (Title)", "type": "text",
+             "zh": "跟著我們，一起解鎖北歐\n創新管理新思維！",
+             "en": "Join us and unlock new perspectives on Nordic innovation management!"},
+            {"key": "button_text", "label": "按鈕文字 (Button Text)", "type": "text",
+             "zh": "聯絡我們",
+             "en": "Contact Us"},
+            {"key": "button_link", "label": "自訂跳轉連結 (Button Link)", "type": "text",
+             "zh": "/contact",
+             "en": "/en/contact"},
+            {"key": "left_image", "label": "左側圖片 (Left Image)", "type": "image",
+             "zh": "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-aalto/9a41fe87-23a8-448c-bc67-e4ed7203e7cf.jpg",
+             "en": "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-aalto/9a41fe87-23a8-448c-bc67-e4ed7203e7cf.jpg"},
+            {"key": "right_image", "label": "右側圖片 (Right Image)", "type": "image",
+             "zh": "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-ncu/7b6f1d3b-bf99-4ba3-ab27-512c0a9693be.jpg",
+             "en": "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-ncu/7b6f1d3b-bf99-4ba3-ab27-512c0a9693be.jpg"}
+        ]
     }
 
 ]
