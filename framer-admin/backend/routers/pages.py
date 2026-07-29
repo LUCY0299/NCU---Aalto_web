@@ -468,3 +468,139 @@ def update_section_status(
     db.commit()
     db.refresh(section)
     return section
+
+
+# ════════════════════════════════════════
+# 🔍 全站搜尋 API（Framer 即時下拉選單使用）
+# ════════════════════════════════════════
+@router.get("/search", summary="全站內容即時搜尋（Framer 用）")
+def global_search(
+    q: str = Query(..., description="搜尋關鍵字"),
+    locale: str = Query("zh-TW", description="語系"),
+    db: Session = Depends(get_db)
+):
+    """
+    提供 Framer 前台導覽列使用的即時下拉搜尋功能。
+    會搜尋所有頁面之內容欄位（包含 JSON 格式的 Blocks/活動清單等），並整理回傳匹配的頁面跳轉連結。
+    """
+    import urllib.parse
+    import json
+
+    if not q or len(q.strip()) < 1:
+        return []
+
+    q_clean = q.strip().lower()
+    search_pattern = f"%{q_clean}%"
+
+    # 模糊搜尋已啟用頁面的欄位內容
+    query_results = db.query(ContentField, Section, Page).join(
+        Section, ContentField.section_id == Section.id
+    ).join(
+        Page, Section.page_id == Page.id
+    ).filter(
+        ContentField.locale == locale,
+        Page.is_active == True,
+        ContentField.field_value.ilike(search_pattern)
+    ).all()
+
+    search_hits = []
+
+    for field, section, page in query_results:
+        val_str = field.field_value
+        
+        # 1. 處理活動清單 (event_list)
+        if field.field_key == "event_list":
+            try:
+                events = json.loads(val_str)
+                for e in events:
+                    if e.get("is_active") == False:
+                        continue
+                    title = e.get("title", "")
+                    summary = e.get("summary", "")
+                    if q_clean in title.lower() or q_clean in summary.lower():
+                        path = "/eventlist-2"
+                        if locale == "en-US":
+                            path = f"/en{path}"
+                        url = f"{path}?title={urllib.parse.quote(title)}"
+                        search_hits.append({
+                            "title": title,
+                            "type": "活動消息" if locale == "zh-TW" else "Event",
+                            "url": url,
+                            "snippet": summary[:60] + "..." if len(summary) > 60 else summary
+                        })
+            except Exception:
+                pass
+            continue
+
+        # 2. 處理校友分享清單 (alumni_list)
+        if field.field_key in ["alumni_list", "alumni_sharing"]:
+            try:
+                alumni = json.loads(val_str)
+                for a in alumni:
+                    if a.get("is_active") == False:
+                        continue
+                    title = a.get("title", "")
+                    if q_clean in title.lower():
+                        link = a.get("link")
+                        if link:
+                            url = link
+                        else:
+                            path = "/alumni-detail"
+                            if locale == "en-US":
+                                path = f"/en{path}"
+                            url = f"{path}?title={urllib.parse.quote(title)}"
+                        search_hits.append({
+                            "title": title,
+                            "type": "校友分享" if locale == "zh-TW" else "Alumni",
+                            "url": url,
+                            "snippet": ""
+                        })
+            except Exception:
+                pass
+            continue
+
+        # 3. 處理一般的 blocks 區塊 (如 admission, degree, learning)
+        if "blocks" in field.field_key or field.field_key == "blocks":
+            try:
+                blocks = json.loads(val_str)
+                matched_text = ""
+                for b in blocks:
+                    if b.get("type") == "text" and b.get("text"):
+                        txt = b.get("text")
+                        if q_clean in txt.lower():
+                            matched_text = txt
+                            break
+                if matched_text:
+                    path = f"/{page.slug}" if page.slug != "home" else "/"
+                    if locale == "en-US":
+                        path = f"/en{path}" if path != "/" else "/en"
+                    
+                    if not any(h["url"] == path for h in search_hits):
+                        search_hits.append({
+                            "title": page.title,
+                            "type": "頁面" if locale == "zh-TW" else "Page",
+                            "url": path,
+                            "snippet": matched_text[:60] + "..." if len(matched_text) > 60 else matched_text
+                        })
+            except Exception:
+                pass
+            continue
+
+        # 4. 一般的一對一文字欄位 (如 title, description, content)
+        if "image" in field.field_key or "logo" in field.field_key or val_str in ["true", "false"]:
+            continue
+
+        if q_clean in val_str.lower():
+            path = f"/{page.slug}" if page.slug != "home" else "/"
+            if locale == "en-US":
+                path = f"/en{path}" if path != "/" else "/en"
+            
+            if not any(h["url"] == path for h in search_hits):
+                search_hits.append({
+                    "title": page.title,
+                    "type": "頁面" if locale == "zh-TW" else "Page",
+                    "url": path,
+                    "snippet": val_str[:60] + "..." if len(val_str) > 60 else val_str
+                })
+
+    return search_hits[:8]
