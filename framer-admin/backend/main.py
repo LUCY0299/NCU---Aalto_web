@@ -190,6 +190,8 @@ async def upload_image(
 # ─────────────────────────────────────────
 MYMEMORY_URL = "https://api.mymemory.translated.net/get"
 MYMEMORY_CHUNK_SIZE = 450  # MyMemory 單次請求長度限制，超過要切段分別翻譯
+# 帶上這組 Email 讓 MyMemory 把每日免費額度從 5000 字提升到 50000 字（不需註冊，純粹是它們的規則）
+MYMEMORY_CONTACT_EMAIL = os.getenv("MYMEMORY_CONTACT_EMAIL", "")
 
 
 def _split_text_for_translation(text: str) -> list[str]:
@@ -228,13 +230,21 @@ async def translate_text(
     async with httpx.AsyncClient(timeout=15) as client:
         for chunk in chunks:
             try:
-                res = await client.get(
-                    MYMEMORY_URL,
-                    params={"q": chunk, "langpair": "zh-TW|en-US"},
-                )
+                params = {"q": chunk, "langpair": "zh-TW|en-US"}
+                if MYMEMORY_CONTACT_EMAIL:
+                    params["de"] = MYMEMORY_CONTACT_EMAIL
+                res = await client.get(MYMEMORY_URL, params=params)
                 data = res.json()
                 translated = data.get("responseData", {}).get("translatedText", "")
-                translated_chunks.append(translated or chunk)
+
+                # MyMemory 額度用完時，不會回傳錯誤狀態碼，而是把警告文字
+                # 直接塞在 translatedText 裡，要特別偵測出來，避免把警告文字
+                # 誤存成「翻譯結果」，把原本的內容覆蓋掉
+                if not translated or "MYMEMORY WARNING" in translated.upper():
+                    print(f"翻譯額度異常，保留原文：{translated[:100]}")
+                    translated_chunks.append(chunk)
+                else:
+                    translated_chunks.append(translated)
             except Exception as e:
                 print(f"翻譯失敗（保留原文）：{e}")
                 translated_chunks.append(chunk)

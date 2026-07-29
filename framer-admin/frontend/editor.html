@@ -31,6 +31,7 @@
       <div class="nav-section-label">主選單</div>
       <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> 儀表板</a>
       <div class="nav-section-label" style="margin-top:8px">頁面管理</div>
+      <a href="editor.html?page=layout"           class="nav-item" id="nav-layout"><span class="nav-icon">⚓</span> 全站導覽列</a>
       <a href="editor.html?page=home"             class="nav-item" id="nav-home"><span class="nav-icon">🏠</span> 首頁</a>
       <a href="editor.html?page=about"            class="nav-item" id="nav-about"><span class="nav-icon">🏫</span> 關於 Aalto EMBA</a>
       <a href="editor.html?page=about-aalto-emba" class="nav-item sub">關於 Aalto EMBA</a>
@@ -343,10 +344,12 @@
   // ─── 圖片裁切共用邏輯 ───
   let cropperInstance = null;
   let cropperOnConfirm = null; // 目前這次裁切完成後要執行的 callback(croppedBlob)
+  let currentCropFileType = 'image/png'; // 記錄當前裁切檔案的類型，用於保留 PNG 透明底
 
   /** 選好檔案後，先跳出裁切視窗，裁切完再呼叫 onConfirm(croppedBlob, originalFile) */
   function openCropModal(file, onConfirm) {
     if (!file) return;
+    currentCropFileType = file.type || 'image/png';
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = document.getElementById('cropImage');
@@ -402,11 +405,18 @@
 
   function confirmCrop() {
     if (!cropperInstance || !cropperOnConfirm) return;
+    
+    // 智慧型透明底保留：如果原圖是 PNG 或 GIF，裁切時輸出為 PNG 以保留透明背景；否則輸出為 JPEG 以節省空間。
+    let outputType = 'image/jpeg';
+    if (currentCropFileType === 'image/png' || currentCropFileType === 'image/gif') {
+      outputType = 'image/png';
+    }
+
     cropperInstance.getCroppedCanvas().toBlob((blob) => {
       const callback = cropperOnConfirm;
       closeCropModal();
       callback(blob);
-    }, 'image/jpeg', 0.92);
+    }, outputType, outputType === 'image/jpeg' ? 0.92 : undefined);
   }
 
   function cancelCrop() {
@@ -1506,6 +1516,73 @@
       }
 
       // ==========================================
+      // 專屬 UI：全站導覽列 (navbar_links) - 巢狀層級版
+      // ==========================================
+      if (fieldKey === 'navbar_links') {
+        const subItems = item.dropdown || [];
+        const subItemsHtml = subItems.map((sub, sIdx) => {
+          return `
+          <div style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px; padding:10px; margin-bottom:8px; display:grid; grid-template-columns: 1fr 1fr auto; gap:10px; align-items:center;">
+            <div>
+              <label style="font-size:11px; font-weight:bold; display:block; margin-bottom:2px; color:#555;">子選單文字</label>
+              <input type="text" value="${escape(sub.title)}" oninput="updateSubListItem('${fieldKey}', ${index}, ${sIdx}, 'title', this.value)" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px;" placeholder="例如: 關於Aalto">
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:bold; display:block; margin-bottom:2px; color:#555;">連結網址 (Framer 路徑)</label>
+              <input type="text" value="${escape(sub.link_url)}" oninput="updateSubListItem('${fieldKey}', ${index}, ${sIdx}, 'link_url', this.value)" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px;" placeholder="例如: /about-aalto">
+            </div>
+            <div style="display:flex; gap:3px; margin-top:14px;">
+              <button type="button" class="btn btn-secondary" style="padding:2px 6px; font-size:11px;" onclick="moveSubListItem('${fieldKey}', ${index}, ${sIdx}, -1)" ${sIdx === 0 ? 'disabled' : ''}>▲</button>
+              <button type="button" class="btn btn-secondary" style="padding:2px 6px; font-size:11px;" onclick="moveSubListItem('${fieldKey}', ${index}, ${sIdx}, 1)" ${sIdx === subItems.length - 1 ? 'disabled' : ''}>▼</button>
+              <button type="button" class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="removeSubListItem('${fieldKey}', ${index}, ${sIdx})">🗑</button>
+            </div>
+          </div>`;
+        }).join('');
+
+        return `
+        <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h4 style="margin:0; color:var(--color-primary); font-size:15px; font-weight:bold;">⚓ 主選單項目 #${index + 1}：${escape(item.title || '未命名')}</h4>
+            <div style="display:flex; gap:4px;">
+              <button class="btn btn-secondary" style="padding:2px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲</button>
+              <button class="btn btn-secondary" style="padding:2px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, 1)" ${index === items.length - 1 ? 'disabled' : ''}>▼</button>
+              <button class="btn btn-danger" style="padding:2px 8px; font-size:12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">主選單文字</label>
+              <input type="text" value="${escape(item.title)}" oninput="updateListItem('${fieldKey}', ${index}, 'title', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="例如: 關於 Aalto EMBA">
+            </div>
+            <div>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">連結網址 (第一層選單若有子選單，可填 "#")</label>
+              <input type="text" value="${escape(item.link_url)}" oninput="updateListItem('${fieldKey}', ${index}, 'link_url', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="例如: /about-aalto-emba">
+            </div>
+          </div>
+          
+          <!-- 子選單編輯器區塊 -->
+          <div style="background:#f1f3f5; padding:12px; border-radius:6px; margin-top:12px; border:1px dashed #ced4da;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:12px; font-weight:bold; color:#495057;">📂 子選單項目 (${subItems.length} 個)</span>
+              <button type="button" class="btn btn-secondary" style="padding:3px 10px; font-size:12px;" onclick="addSubListItem('${fieldKey}', ${index})">＋ 新增子選單</button>
+            </div>
+            <div style="max-height: 300px; overflow-y: auto; margin-top: 8px;">
+              ${subItemsHtml ? subItemsHtml : '<div style="text-align:center; font-size:12px; color:#adb5bd; padding:8px 0;">目前無子選單，此按鈕點擊後將作為一般單一連結</div>'}
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; align-items:center; margin-top:12px; border-top:1px solid #eee; padding-top:8px;">
+            <div style="width:120px;">
+              <select onchange="updateListItem('${fieldKey}', ${index}, 'is_active', this.value === 'true')" style="width:100%; padding:4px 8px; font-size:12px; border:1px solid #ccc; border-radius:4px;">
+                <option value="true" ${item.is_active !== false ? 'selected' : ''}>🟢 顯示</option>
+                <option value="false" ${item.is_active === false ? 'selected' : ''}>🔴 隱藏</option>
+              </select>
+            </div>
+          </div>
+        </div>`;
+      }
+
+      // ==========================================
       // 專屬 UI：圖片連結 (包含 about_links, ncu_links)
       // ==========================================
       if (fieldKey.includes('links')) {
@@ -1684,13 +1761,69 @@
     showToast('✅ 已依照日期重新排序！', 'success');
   }
   
+  /** 上下移動清單項目 */
+  function moveListItem(fieldKey, index, direction) {
+    const items = listFieldStates[fieldKey];
+    if (!items) return;
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= items.length) return;
+    const tmp = items[index];
+    items[index] = items[newIndex];
+    items[newIndex] = tmp;
+    saveListToPending(fieldKey);
+    renderListItems(fieldKey);
+  }
+
+  /** 更新子選單項目欄位 */
+  function updateSubListItem(fieldKey, parentIndex, subIndex, key, value) {
+    const parent = listFieldStates[fieldKey][parentIndex];
+    if (!parent.dropdown) parent.dropdown = [];
+    parent.dropdown[subIndex][key] = value;
+    saveListToPending(fieldKey);
+  }
+
+  /** 新增一個子選單項目 */
+  function addSubListItem(fieldKey, parentIndex) {
+    const parent = listFieldStates[fieldKey][parentIndex];
+    if (!parent.dropdown) parent.dropdown = [];
+    parent.dropdown.push({ title: '', link_url: '', is_active: true });
+    saveListToPending(fieldKey);
+    renderListItems(fieldKey);
+  }
+
+  /** 刪除一個子選單項目 */
+  function removeSubListItem(fieldKey, parentIndex, subIndex) {
+    if (!confirm('確定刪除此子選單項目？（需按下方儲存才會生效）')) return;
+    const parent = listFieldStates[fieldKey][parentIndex];
+    if (parent.dropdown) {
+      parent.dropdown.splice(subIndex, 1);
+    }
+    saveListToPending(fieldKey);
+    renderListItems(fieldKey);
+  }
+
+  /** 上下移動子選單項目 */
+  function moveSubListItem(fieldKey, parentIndex, subIndex, direction) {
+    const parent = listFieldStates[fieldKey][parentIndex];
+    if (!parent || !parent.dropdown) return;
+    const newIndex = subIndex + direction;
+    if (newIndex < 0 || newIndex >= parent.dropdown.length) return;
+    const tmp = parent.dropdown[subIndex];
+    parent.dropdown[subIndex] = parent.dropdown[newIndex];
+    parent.dropdown[newIndex] = tmp;
+    saveListToPending(fieldKey);
+    renderListItems(fieldKey);
+  }
+
   /** 新增一張空卡片 */
   function addListItem(fieldKey) {
     if (!listFieldStates[fieldKey]) listFieldStates[fieldKey] = [];
     
     // 1. 根據不同的 fieldKey，塞入不同結構的空資料
     let newItem = {};
-    if (fieldKey.includes('intro') || fieldKey.includes('features')) {
+    if (fieldKey === 'navbar_links') {
+      newItem = { title: '', link_url: '', is_active: true, dropdown: [] };
+    } else if (fieldKey.includes('intro') || fieldKey.includes('features')) {
       newItem = { title: '', desc: '', is_active: true };
     } else if (fieldKey.includes('links')) {
       newItem = { title: '', image_url: '', link_url: '', is_active: true };
@@ -1706,8 +1839,8 @@
 
     // 2. 新增位置邏輯
     let newIndex = 0;
-    if (fieldKey.includes('intro') || fieldKey.includes('features') || fieldKey.includes('links') || fieldKey.includes('yt') || fieldKey.includes('alumni')) {
-      // 校友分享因為改成手動排序，新增時統一加在最下面
+if (fieldKey === 'navbar_links' || fieldKey.includes('intro') || fieldKey.includes('features') || fieldKey.includes('links') || fieldKey.includes('yt') || fieldKey.includes('alumni')) {
+      // 導覽列、特色、圖片、YT、校友分享：加在最下面 (順序或手動排序新增)
       listFieldStates[fieldKey].push(newItem);
       newIndex = listFieldStates[fieldKey].length - 1; 
     } else {

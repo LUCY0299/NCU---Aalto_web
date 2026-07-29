@@ -54,6 +54,7 @@ PAGES = [
     # {"slug": "faq",             "title": "FAQ 常見問題",    "parent_slug": "courses", "order": 5,  "active": True},
     {"slug": "contact",         "title": "聯絡方式",        "parent_slug": None,      "order": 5,  "active": True},
     {"slug": "search",          "title": "搜尋引擎",        "parent_slug": None,      "order": 6,  "active": True},
+    {"slug": "layout",          "title": "全站版面管理",     "parent_slug": None,      "order": 7,  "active": True},
 ]
 
 
@@ -102,8 +103,31 @@ SECTIONS_DATA = [
             
             # 圖片存放欄位
             {"key": "image_url", "label": "計畫圖片", "type": "image",
-             "zh": "", 
+             "zh": "",
              "en": ""}
+        ]
+    },
+
+    # ════════════════════
+    # 首頁 (home) — 最新文章
+    # ════════════════════
+    {
+        "page_slug": "home", "key": "latest_articles", "name": "最新文章", "type": "list", "order": 3,
+        "fields": [
+            {"key": "section_title", "label": "區塊標題", "type": "text",
+             "zh": "最新文章", "en": "Latest Articles"},
+            {
+                "key": "article_list",
+                "label": "文章清單",
+                "type": "list",
+                "items": [
+                    {"key": "title", "label": "文章標題", "type": "text"},
+                    {"key": "author", "label": "作者", "type": "text"},
+                    {"key": "date", "label": "日期", "type": "date"},
+                    {"key": "link_url", "label": "外部連結網址", "type": "text"},
+                    {"key": "is_active", "label": "狀態", "type": "boolean"},
+                ]
+            }
         ]
     },
 
@@ -547,6 +571,51 @@ SECTIONS_DATA = [
              "en": "No. 300, Zhongda Rd., Zhongli Dist., Taoyuan City"},
         ]
     },
+    # ════════════════════
+    # 全站版面管理 (layout)
+    # ════════════════════
+    {
+        "page_slug": "layout", "key": "navbar", "name": "全站導覽列", "type": "list", "order": 1,
+        "fields": [
+            {
+                "key": "navbar_links",
+                "label": "導覽選單項目",
+                "type": "list",
+                "zh": '[]',
+                "en": '[]'
+            }
+        ]
+    },
+    {
+        "page_slug": "layout", "key": "navbar-logo", "name": "導覽列 Logo", "type": "image", "order": 2,
+        "fields": [
+            {
+                "key": "logo_image",
+                "label": "導覽列 Logo 圖片",
+                "type": "image",
+                "zh": "/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png",
+                "en": "/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png"
+            }
+        ]
+    },
+    {
+        "page_slug": "layout", "key": "footer", "name": "全站頁尾 (Footer)", "type": "footer", "order": 3,
+        "fields": [
+            {"key": "phone",   "label": "電話 (Phone)", "type": "text",
+             "zh": "+886-3-422-7151 ext.66075",
+             "en": "+886-3-422-7151 ext. 57601"},
+            {"key": "email",   "label": "Email", "type": "text",
+             "zh": "sharlin@ncu.edu.tw",
+             "en": "emba@cc.ncu.edu.tw"},
+            {"key": "address", "label": "地址 (Address)", "type": "text",
+             "zh": "桃園市中壢區中大路300號 管理學院一館 志希館10樓辦公室",
+             "en": "No. 300, Zhongda Rd., Zhongli Dist., Taoyuan City"},
+            {"key": "logo_image", "label": "頁尾 Logo 圖片 (White logo)", "type": "image",
+             "zh": "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png",
+             "en": "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png"}
+        ]
+    }
+
 ]
 
 
