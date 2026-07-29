@@ -85,7 +85,7 @@ SECTIONS_DATA = [
              "en": ""}
         ]
     },
-    
+
     {
         "page_slug": "home", "key": "intro", "name": "計畫介紹", "type": "text", "order": 2,
         "fields": [
@@ -112,7 +112,7 @@ SECTIONS_DATA = [
     {
         "page_slug": "home", 
         "key": "home_video", 
-        "name": "首頁影片區塊", 
+        "name": "首頁影片", 
         "type": "text", 
         "order": 3,
         "fields": [
