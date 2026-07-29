@@ -42,7 +42,6 @@ export default function Footer(props) {
 
     useEffect(() => {
         const timestamp = new Date().getTime()
-        // 🚀 從 全站版面管理 (layout) 的 footer 區塊載入頁尾資料與 Logo
         fetch(
             `${BASE_URL}/api/v1/content/layout/footer?locale=${currentLocale}&t=${timestamp}`,
             {
@@ -68,7 +67,6 @@ export default function Footer(props) {
             })
     }, [currentLocale])
 
-    // 優先使用後台資料庫上傳的頁尾 Logo，否則使用 Framer 屬性面版備用 Logo，最後使用預設白底 Logo 網址
     const resolvedLogoUrl = getImageUrl(contact.logoUrl) || logoImage || "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png"
 
     return (
@@ -105,23 +103,29 @@ export default function Footer(props) {
                     padding: 0px;
                 }
 
+                /* 🎯 為了配合 absolute 內文，標籤容器改為相對定位與指定大小 */
                 .contact-tag {
-                    display: flex;
-                    flex-direction: row;
-                    align-items: flex-start;
-                    gap: 12px;
+                    position: relative;
+                    width: 249px; /* 圖示 20px + 間距 12px + 內文 217px = 249px */
+                    height: 80px; /* 確保折行時有足夠高度 */
+                    box-sizing: border-box;
                 }
 
                 .contact-icon {
-                    flex-shrink: 0;
+                    position: absolute;
+                    left: 0;
+                    top: 2px; /* 對齊第一行文字 */
+                    color: ${iconColor};
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    margin-top: 2px;
                 }
 
-                /* 🎯 套用您指定的字體樣式 */
+                /* 🎯 完美套用您指定的 CSS 絕對定位與字體樣式 */
                 .contact-text {
+                    position: absolute;
+                    left: 32px; /* 圖示 20px + 間距 12px */
+                    top: 0;
                     width: 217px;
                     height: auto;
                     white-space: pre-wrap;
@@ -131,8 +135,8 @@ export default function Footer(props) {
                     text-align: left;
                     line-height: 1.2;
                     margin: 0;
-                    font-size: 16px;
-                    font-weight: 500;
+                    font-size: 18px !important; /* P Body\\18\\Medium */
+                    font-weight: 500 !important;
                 }
 
                 /* 下方 Logo 條 */
@@ -170,7 +174,7 @@ export default function Footer(props) {
                 <div className="contact-row">
                     {/* 電話 */}
                     <div className="contact-tag">
-                        <div className="contact-icon" style={{ color: iconColor }}>
+                        <div className="contact-icon">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                             </svg>
@@ -182,7 +186,7 @@ export default function Footer(props) {
 
                     {/* Email */}
                     <div className="contact-tag">
-                        <div className="contact-icon" style={{ color: iconColor }}>
+                        <div className="contact-icon">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                                 <polyline points="22,6 12,13 2,6"></polyline>
@@ -195,7 +199,7 @@ export default function Footer(props) {
 
                     {/* 地址 */}
                     <div className="contact-tag">
-                        <div className="contact-icon" style={{ color: iconColor }}>
+                        <div className="contact-icon">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                                 <circle cx="12" cy="10" r="3"></circle>
