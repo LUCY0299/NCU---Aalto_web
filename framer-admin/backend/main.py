@@ -236,7 +236,15 @@ async def translate_text(
                 res = await client.get(MYMEMORY_URL, params=params)
                 data = res.json()
                 translated = data.get("responseData", {}).get("translatedText", "")
-                translated_chunks.append(translated or chunk)
+
+                # MyMemory 額度用完時，不會回傳錯誤狀態碼，而是把警告文字
+                # 直接塞在 translatedText 裡，要特別偵測出來，避免把警告文字
+                # 誤存成「翻譯結果」，把原本的內容覆蓋掉
+                if not translated or "MYMEMORY WARNING" in translated.upper():
+                    print(f"翻譯額度異常，保留原文：{translated[:100]}")
+                    translated_chunks.append(chunk)
+                else:
+                    translated_chunks.append(translated)
             except Exception as e:
                 print(f"翻譯失敗（保留原文）：{e}")
                 translated_chunks.append(chunk)
