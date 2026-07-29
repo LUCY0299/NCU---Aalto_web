@@ -125,7 +125,7 @@ SECTIONS_DATA = [
             },
             {
                 "key": "video_url", 
-                "label": "YouTube 影片網址 (請貼上一般觀看網址即可)", 
+                "label": "YouTube 影片網址", 
                 "type": "text",
                 "zh": "https://www.youtube.com/watch?v=...", 
                 "en": "https://www.youtube.com/watch?v=..."
