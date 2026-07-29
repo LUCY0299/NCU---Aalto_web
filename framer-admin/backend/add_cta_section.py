@@ -26,8 +26,8 @@ try:
     
     if not section_row:
         cursor.execute("""
-            INSERT INTO sections (page_id, section_key, name, section_type, display_order)
-            VALUES (%s, 'cta_section', '全站 CTA 區塊 (CTA Section)', 'cta', 4)
+            INSERT INTO sections (page_id, section_key, name, section_type, display_order, is_active)
+            VALUES (%s, 'cta_section', '全站 CTA 區塊 (CTA Section)', 'cta', 4, true)
             RETURNING id
         """, (page_id,))
         section_id = cursor.fetchone()[0]
