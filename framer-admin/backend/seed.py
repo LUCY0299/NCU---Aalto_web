@@ -600,7 +600,25 @@ SECTIONS_DATA = [
                 "en": "/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png"
             }
         ]
+    },
+    {
+        "page_slug": "layout", "key": "footer", "name": "全站頁尾 (Footer)", "type": "footer", "order": 3,
+        "fields": [
+            {"key": "phone",   "label": "電話 (Phone)", "type": "text",
+             "zh": "+886-3-422-7151 ext.66075",
+             "en": "+886-3-422-7151 ext. 57601"},
+            {"key": "email",   "label": "Email", "type": "text",
+             "zh": "sharlin@ncu.edu.tw",
+             "en": "emba@cc.ncu.edu.tw"},
+            {"key": "address", "label": "地址 (Address)", "type": "text",
+             "zh": "桃園市中壢區中大路300號 管理學院一館 志希館10樓辦公室",
+             "en": "No. 300, Zhongda Rd., Zhongli Dist., Taoyuan City"},
+            {"key": "logo_image", "label": "頁尾 Logo 圖片 (White logo)", "type": "image",
+             "zh": "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png",
+             "en": "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png"}
+        ]
     }
+
 ]
 
 
