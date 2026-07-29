@@ -54,6 +54,7 @@ PAGES = [
     # {"slug": "faq",             "title": "FAQ 常見問題",    "parent_slug": "courses", "order": 5,  "active": True},
     {"slug": "contact",         "title": "聯絡方式",        "parent_slug": None,      "order": 5,  "active": True},
     {"slug": "search",          "title": "搜尋引擎",        "parent_slug": None,      "order": 6,  "active": True},
+    {"slug": "layout",          "title": "全站版面管理",     "parent_slug": None,      "order": 7,  "active": True},
 ]
 
 
@@ -573,6 +574,33 @@ SECTIONS_DATA = [
              "en": "No. 300, Zhongda Rd., Zhongli Dist., Taoyuan City"},
         ]
     },
+    # ════════════════════
+    # 全站版面管理 (layout)
+    # ════════════════════
+    {
+        "page_slug": "layout", "key": "navbar", "name": "全站導覽列", "type": "list", "order": 1,
+        "fields": [
+            {
+                "key": "navbar_links",
+                "label": "導覽選單項目",
+                "type": "list",
+                "zh": '[]',
+                "en": '[]'
+            }
+        ]
+    },
+    {
+        "page_slug": "layout", "key": "navbar-logo", "name": "導覽列 Logo", "type": "image", "order": 2,
+        "fields": [
+            {
+                "key": "logo_image",
+                "label": "導覽列 Logo 圖片",
+                "type": "image",
+                "zh": "/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png",
+                "en": "/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png"
+            }
+        ]
+    }
 ]
 
 
