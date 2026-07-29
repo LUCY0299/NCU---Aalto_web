@@ -344,10 +344,12 @@
   // ─── 圖片裁切共用邏輯 ───
   let cropperInstance = null;
   let cropperOnConfirm = null; // 目前這次裁切完成後要執行的 callback(croppedBlob)
+  let currentCropFileType = 'image/png'; // 記錄當前裁切檔案的類型，用於保留 PNG 透明底
 
   /** 選好檔案後，先跳出裁切視窗，裁切完再呼叫 onConfirm(croppedBlob, originalFile) */
   function openCropModal(file, onConfirm) {
     if (!file) return;
+    currentCropFileType = file.type || 'image/png';
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = document.getElementById('cropImage');
@@ -403,11 +405,18 @@
 
   function confirmCrop() {
     if (!cropperInstance || !cropperOnConfirm) return;
+    
+    // 智慧型透明底保留：如果原圖是 PNG 或 GIF，裁切時輸出為 PNG 以保留透明背景；否則輸出為 JPEG 以節省空間。
+    let outputType = 'image/jpeg';
+    if (currentCropFileType === 'image/png' || currentCropFileType === 'image/gif') {
+      outputType = 'image/png';
+    }
+
     cropperInstance.getCroppedCanvas().toBlob((blob) => {
       const callback = cropperOnConfirm;
       closeCropModal();
       callback(blob);
-    }, 'image/jpeg', 0.92);
+    }, outputType, outputType === 'image/jpeg' ? 0.92 : undefined);
   }
 
   function cancelCrop() {
