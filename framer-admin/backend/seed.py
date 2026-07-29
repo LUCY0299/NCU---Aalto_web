@@ -85,6 +85,7 @@ SECTIONS_DATA = [
              "en": ""}
         ]
     },
+    
     {
         "page_slug": "home", "key": "intro", "name": "計畫介紹", "type": "text", "order": 2,
         "fields": [
@@ -108,11 +109,35 @@ SECTIONS_DATA = [
         ]
     },
 
+    {
+        "page_slug": "home", 
+        "key": "home_video", 
+        "name": "首頁影片區塊", 
+        "type": "text", 
+        "order": 3,
+        "fields": [
+            {
+                "key": "title", 
+                "label": "區塊標題", 
+                "type": "text",
+                "zh": "Aalto EE - Mindset That Shapes the Future",
+                "en": "Aalto EE - Mindset That Shapes the Future"
+            },
+            {
+                "key": "video_url", 
+                "label": "YouTube 影片網址 (請貼上一般觀看網址即可)", 
+                "type": "text",
+                "zh": "https://www.youtube.com/watch?v=...", 
+                "en": "https://www.youtube.com/watch?v=..."
+            }
+        ]
+    },
+
     # ════════════════════
     # 首頁 (home) — 最新文章
     # ════════════════════
     {
-        "page_slug": "home", "key": "latest_articles", "name": "最新文章", "type": "list", "order": 3,
+        "page_slug": "home", "key": "latest_articles", "name": "最新文章", "type": "list", "order": 4,
         "fields": [
             {"key": "section_title", "label": "區塊標題", "type": "text",
              "zh": "最新文章", "en": "Latest Articles"},
