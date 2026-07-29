@@ -32,6 +32,7 @@
       <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> 儀表板</a>
       <div class="nav-section-label" style="margin-top:8px">頁面管理</div>
       <a href="editor.html?page=home"             class="nav-item" id="nav-home"><span class="nav-icon">🏠</span> 首頁</a>
+      <a href="editor.html?page=layout"           class="nav-item" id="nav-layout"><span class="nav-icon">⚓</span> 全站導覽列</a>
       <a href="editor.html?page=about"            class="nav-item" id="nav-about"><span class="nav-icon">🏫</span> 關於 Aalto EMBA</a>
       <a href="editor.html?page=about-aalto-emba" class="nav-item sub">關於 Aalto EMBA</a>
       <a href="editor.html?page=about-aalto"      class="nav-item sub">關於阿爾托大學</a>
@@ -1460,6 +1461,56 @@
       }
 
       // ==========================================
+      // 專屬 UI：全站導覽列 (navbar_links)
+      // ==========================================
+      if (fieldKey === 'navbar_links') {
+        const parentOptions = items
+          .filter((it, idx) => idx !== index && !it.parent_title)
+          .map(it => `<option value="${escape(it.title)}" ${item.parent_title === it.title ? 'selected' : ''}>${escape(it.title)}</option>`)
+          .join('');
+
+        return `
+        <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h4 style="margin:0; color:var(--color-primary); font-size:15px; font-weight:bold;">⚓ 導覽項目 #${index + 1}：${escape(item.title || '未命名')}</h4>
+            <div style="display:flex; gap:4px;">
+              <button class="btn btn-secondary" style="padding:2px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲</button>
+              <button class="btn btn-secondary" style="padding:2px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, 1)" ${index === items.length - 1 ? 'disabled' : ''}>▼</button>
+              <button class="btn btn-danger" style="padding:2px 8px; font-size:12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+            <div>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">選單文字</label>
+              <input type="text" value="${escape(item.title)}" oninput="updateListItem('${fieldKey}', ${index}, 'title', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="例如: 關於Aalto">
+            </div>
+            <div>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">連結網址 (Framer 頁面路徑)</label>
+              <input type="text" value="${escape(item.link_url)}" oninput="updateListItem('${fieldKey}', ${index}, 'link_url', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="例如: /about-aalto">
+            </div>
+            <div>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">隸屬主選單 (選下拉則為子選單)</label>
+              <select onchange="updateListItem('${fieldKey}', ${index}, 'parent_title', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                <option value="">── 無 (第一層選單) ──</option>
+                ${parentOptions}
+              </select>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; border-top:1px dashed #eee; padding-top:8px;">
+            <div style="font-size:11px; color:#888;">
+              💡 第一層若要作為下拉選單的容器，連結網址可填 "#" 或該分類的預設頁面。
+            </div>
+            <div style="width:120px;">
+              <select onchange="updateListItem('${fieldKey}', ${index}, 'is_active', this.value === 'true')" style="width:100%; padding:4px 8px; font-size:12px; border:1px solid #ccc; border-radius:4px;">
+                <option value="true" ${item.is_active !== false ? 'selected' : ''}>🟢 顯示</option>
+                <option value="false" ${item.is_active === false ? 'selected' : ''}>🔴 隱藏</option>
+              </select>
+            </div>
+          </div>
+        </div>`;
+      }
+
+      // ==========================================
       // 專屬 UI：圖片連結 (包含 about_links, ncu_links)
       // ==========================================
       if (fieldKey.includes('links')) {
@@ -1635,13 +1686,28 @@
     showToast('✅ 已依照日期重新排序！', 'success');
   }
   
+  /** 上下移動清單項目 */
+  function moveListItem(fieldKey, index, direction) {
+    const items = listFieldStates[fieldKey];
+    if (!items) return;
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= items.length) return;
+    const tmp = items[index];
+    items[index] = items[newIndex];
+    items[newIndex] = tmp;
+    saveListToPending(fieldKey);
+    renderListItems(fieldKey);
+  }
+
   /** 新增一張空卡片 */
   function addListItem(fieldKey) {
     if (!listFieldStates[fieldKey]) listFieldStates[fieldKey] = [];
     
     // 1. 根據不同的 fieldKey，塞入不同結構的空資料
     let newItem = {};
-    if (fieldKey.includes('intro') || fieldKey.includes('features')) {
+    if (fieldKey === 'navbar_links') {
+      newItem = { title: '', link_url: '', parent_title: '', is_active: true };
+    } else if (fieldKey.includes('intro') || fieldKey.includes('features')) {
       newItem = { title: '', desc: '', is_active: true };
     } else if (fieldKey.includes('links')) {
       newItem = { title: '', image_url: '', link_url: '', is_active: true };
@@ -1653,8 +1719,8 @@
 
     // 2. 智慧判斷：要加在上面還是下面？
     let newIndex = 0;
-    if (fieldKey.includes('intro') || fieldKey.includes('features') || fieldKey.includes('links') || fieldKey.includes('yt')) {
-      // 特色、圖片、YT：加在最下面 (順序新增)
+    if (fieldKey === 'navbar_links' || fieldKey.includes('intro') || fieldKey.includes('features') || fieldKey.includes('links') || fieldKey.includes('yt')) {
+      // 特色、圖片、YT、導覽列：加在最下面 (順序新增)
       listFieldStates[fieldKey].push(newItem);
       newIndex = listFieldStates[fieldKey].length - 1; 
     } else {
