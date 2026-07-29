@@ -184,7 +184,7 @@
         <div class="topbar-breadcrumb">NCU × Aalto EMBA 後台管理系統</div>
       </div>
       <div class="topbar-actions">
-        <button class="btn btn-accent" onclick="openCreateModal(null)">＋ 新增頂層頁面</button>
+        <!-- <button class="btn btn-accent" onclick="openCreateModal(null)">＋ 新增頂層頁面</button> -->
         <a href="/docs" target="_blank" class="btn btn-secondary btn-sm">API 文件 ↗</a>
       </div>
     </div>
@@ -212,11 +212,11 @@
       <div style="background:rgba(96,42,128,0.05); border:1px solid rgba(96,42,128,0.15); border-radius:var(--radius-sm); padding:12px 16px; margin-bottom:20px; font-size:13px; color:var(--color-text-muted); display:flex; gap:16px; align-items:center;">
         <span style="font-size:20px;">💡</span>
         <span>
-          <strong>使用方式：</strong>將滑鼠移到頁面列上，會出現操作按鈕。
-          <span style="color:var(--color-primary);">✏️ 編輯</span>：修改頁面標題、slug、啟用狀態 ·
+          <strong>使用方式：</strong>將滑鼠移到頁面列上，點擊 <span style="color:white; background:var(--color-primary); padding:1px 6px; border-radius:4px;">→ 進入編輯內容</span> 即可修改各區塊資料。
+          <!-- <span style="color:var(--color-primary);">✏️ 編輯</span>：修改頁面標題、slug、啟用狀態 ·
           <span style="color:var(--color-accent);">＋ 子頁</span>：在此頁面下新增子頁面 ·
           <span style="color:#c62828;">🗑 刪除</span>：刪除頁面及所有內容 ·
-          <span style="color:white; background:var(--color-primary); padding:1px 6px; border-radius:4px;">→ 進入</span>：開啟內容編輯器
+          <span style="color:white; background:var(--color-primary); padding:1px 6px; border-radius:4px;">→ 進入</span>：開啟內容編輯器 -->
         </span>
       </div>
 
@@ -429,7 +429,8 @@
     const childrenHtml = hasChildren
       ? `<div class="tree-children" id="children-${node.slug}">
           ${node.children.map(child => renderChildNode(child, node.slug)).join('')}
-          <!-- 在此子層新增頁面的按鈕 -->
+          
+          <!-- 鎖定架構：暫時隱藏新增子頁面按鈕
           <div style="padding:6px 0 2px;">
             <button class="btn-tree btn-tree-add"
               onclick="openCreateModal('${node.slug}')"
@@ -437,6 +438,7 @@
               ＋ 在「${node.title}」下新增子頁面
             </button>
           </div>
+          -->
         </div>`
       : '';
 
@@ -464,6 +466,12 @@
 
           <!-- 操作按鈕（hover 才顯示）-->
           <div class="tree-node-actions" onclick="event.stopPropagation()">
+            <button class="btn-tree btn-tree-go"
+              onclick="window.location.href='editor.html?page=${node.slug}'">
+              → 進入編輯內容
+            </button>
+            
+            <!-- 鎖定架構：暫時隱藏編輯/刪除等架構按鈕
             <button class="btn-tree btn-tree-edit"
               onclick="openEditModal('${node.slug}')">
               ✏️ 編輯
@@ -472,14 +480,11 @@
               onclick="openCreateModal('${node.slug}')">
               ＋ 子頁
             </button>
-            <button class="btn-tree btn-tree-go"
-              onclick="window.location.href='editor.html?page=${node.slug}'">
-              → 進入編輯內容
-            </button>
             <button class="btn-tree btn-tree-delete"
               onclick="deletePage('${node.slug}', '${node.title.replace(/'/g,"\\'")}')">
               🗑
             </button>
+            -->
           </div>
         </div>
         ${childrenHtml}
@@ -513,6 +518,12 @@
           </div>
         </div>
         <div class="tree-child-actions">
+          <button class="btn-tree btn-tree-go"
+            onclick="window.location.href='editor.html?page=${child.slug}'">
+            → 進入編輯內容
+          </button>
+          
+          <!-- 鎖定架構：暫時隱藏編輯/刪除等架構按鈕
           <button class="btn-tree btn-tree-edit"
             onclick="openEditModal('${child.slug}')">
             ✏️ 編輯
@@ -521,14 +532,11 @@
             onclick="openCreateModal('${child.slug}')">
             ＋ 子頁
           </button>
-          <button class="btn-tree btn-tree-go"
-            onclick="window.location.href='editor.html?page=${child.slug}'">
-            → 進入
-          </button>
           <button class="btn-tree btn-tree-delete"
             onclick="deletePage('${child.slug}', '${child.title.replace(/'/g,"\\'")}')">
             🗑
           </button>
+          -->
         </div>
       </div>
       ${hasGrandChildren ? child.children.map(gc => renderChildNode(gc, child.slug)).join('') : ''}

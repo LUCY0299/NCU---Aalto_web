@@ -85,6 +85,7 @@ SECTIONS_DATA = [
              "en": ""}
         ]
     },
+
     {
         "page_slug": "home", "key": "intro", "name": "計畫介紹", "type": "text", "order": 2,
         "fields": [
@@ -108,11 +109,35 @@ SECTIONS_DATA = [
         ]
     },
 
+    {
+        "page_slug": "home", 
+        "key": "home_video", 
+        "name": "首頁影片", 
+        "type": "text", 
+        "order": 3,
+        "fields": [
+            {
+                "key": "title", 
+                "label": "區塊標題", 
+                "type": "text",
+                "zh": "Aalto EE - Mindset That Shapes the Future",
+                "en": "Aalto EE - Mindset That Shapes the Future"
+            },
+            {
+                "key": "video_url", 
+                "label": "YouTube 影片網址", 
+                "type": "text",
+                "zh": "https://www.youtube.com/watch?v=...", 
+                "en": "https://www.youtube.com/watch?v=..."
+            }
+        ]
+    },
+
     # ════════════════════
     # 首頁 (home) — 最新文章
     # ════════════════════
     {
-        "page_slug": "home", "key": "latest_articles", "name": "最新文章", "type": "list", "order": 3,
+        "page_slug": "home", "key": "latest_articles", "name": "最新文章", "type": "list", "order": 4,
         "fields": [
             {"key": "section_title", "label": "區塊標題", "type": "text",
              "zh": "最新文章", "en": "Latest Articles"},
@@ -292,6 +317,11 @@ SECTIONS_DATA = [
         "page_slug": "about-ncu", "key": "about_ncu_features", "name": "關於中大(管理學院特色與優勢)", "type": "list", "order": 3,
         "fields": [
             {
+                "key": "section_title", "label": "區塊標題", "type": "text",
+                "zh": "管理學院特色與優勢",
+                "en": "Features & Advantages of College of Management"
+            },
+            {
                 "key": "features_list", "label": "特色與優勢清單", "type": "list",
                 "items": [
                     {"key": "title", "label": "左側特色標題 (紫色)", "type": "text"},
@@ -390,12 +420,12 @@ SECTIONS_DATA = [
     },
     
     # ════════════════════
-    # 校友分享 (卡片)
+    # 校友分享 (卡片外部連結)
     # ════════════════════
     {
         "page_slug": "alumni",
         "key": "alumni_sharing",
-        "name": "校友分享(卡片)",
+        "name": "校友分享(卡片外部連結)",
         "type": "list",
         "order": 2,
         "fields": [
@@ -405,12 +435,9 @@ SECTIONS_DATA = [
                 "type": "list",
                 "items": [
                     {"key": "title", "label": "標題", "type": "text"},
-                    {"key": "summary", "label": "內容大綱", "type": "text"},
                     {"key": "is_active", "label": "狀態", "type": "boolean"},
                     {"key": "image_url", "label": "照片", "type": "image"},
-                    {"key": "image_caption", "label": "圖說", "type": "text"},
-                    {"key": "date", "label": "日期", "type": "date"},
-                    {"key": "content", "label": "完整內容", "type": "richtext"}
+                    {"key": "link", "label": "外部連結網址 (點擊後直接外連)", "type": "text"}
                 ]
             }
         ]
