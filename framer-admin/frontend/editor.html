@@ -885,6 +885,8 @@
     if (hasUnsavedChanges && !confirm('切換語系前請先儲存。確定切換嗎？')) return;
     currentLocale = locale;
     pendingChanges = {};
+    listFieldStates = {};
+    blocksFieldStates = {};
     hasUnsavedChanges = false;
     document.getElementById('tab-zh').classList.toggle('active', locale === 'zh-TW');
     document.getElementById('tab-en').classList.toggle('active', locale === 'en-US');
