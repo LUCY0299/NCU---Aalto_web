@@ -54,7 +54,7 @@ PAGES = [
     # {"slug": "faq",             "title": "FAQ 常見問題",    "parent_slug": "courses", "order": 5,  "active": True},
     {"slug": "contact",         "title": "聯絡方式",        "parent_slug": None,      "order": 5,  "active": True},
     {"slug": "search",          "title": "搜尋引擎",        "parent_slug": None,      "order": 6,  "active": True},
-    {"slug": "layout",          "title": "全站版面管理",     "parent_slug": None,      "order": 7,  "active": True},
+    {"slug": "layout",          "title": "導覽列",           "parent_slug": None,      "order": 7,  "active": True},
 ]
 
 
@@ -444,17 +444,28 @@ SECTIONS_DATA = [
     },
 
     # ════════════════════
-    # 活動訊息 (event_news)
+    # 活動訊息 (events)
     # ════════════════════
+    {
+        "page_slug": "events",
+        "key": "event_header",
+        "name": "活動訊息(標題連結)",
+        "type": "text",
+        "order": 1,
+        "fields": [
+            {"key": "section_title", "label": "區塊標題", "type": "text", "zh": "活動訊息", "en": "Events & News"},
+            {"key": "show_button", "label": "顯示更多按鈕", "type": "boolean", "zh": "true", "en": "true"},
+            {"key": "button_text", "label": "按鈕文字", "type": "text", "zh": "未來增加", "en": "To be added"},
+            {"key": "button_link", "label": "按鈕連結", "type": "text", "zh": "未來增加", "en": "To be added"}
+        ]
+    },
     {
         "page_slug": "events",
         "key": "event_news",
         "name": "活動訊息",
         "type": "list",
-        "order": 1,
+        "order": 2,
         "fields": [
-            {"key": "section_title", "label": "區塊標題（同一份資料，活動頁面跟首頁會一起更新）", "type": "text",
-             "zh": "活動訊息", "en": "Events"},
             {
                 "key": "event_list",
                 "label": "活動清單",

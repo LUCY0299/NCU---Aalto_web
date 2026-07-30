@@ -157,11 +157,23 @@
       <div class="nav-section-label">主選單</div>
       <a href="dashboard.html" class="nav-item active"><span class="nav-icon">📊</span> 儀表板</a>
       <div class="nav-section-label" style="margin-top:8px">快速導覽</div>
-      <a href="editor.html?page=layout"  class="nav-item"><span class="nav-icon">⚓</span> 全站導覽列</a>
-      <a href="editor.html?page=home"    class="nav-item"><span class="nav-icon">🏠</span> 首頁</a>
-      <a href="editor.html?page=alumni"  class="nav-item"><span class="nav-icon">🎓</span> 校友分享</a>
-      <a href="editor.html?page=events"  class="nav-item"><span class="nav-icon">📢</span> 活動訊息</a>
-      <a href="editor.html?page=contact" class="nav-item"><span class="nav-icon">📞</span> 聯絡方式</a>
+      <a href="editor.html?page=home"             class="nav-item"><span class="nav-icon">🏠</span> 首頁</a>
+      <a href="editor.html?page=about"            class="nav-item"><span class="nav-icon">🏫</span> 關於 Aalto EMBA</a>
+      <a href="editor.html?page=about-aalto-emba" class="nav-item sub">關於 Aalto EMBA</a>
+      <a href="editor.html?page=about-aalto"      class="nav-item sub">關於阿爾托大學</a>
+      <a href="editor.html?page=about-ncu"        class="nav-item sub">關於中央大學</a>
+      <a href="editor.html?page=learning"         class="nav-item"><span class="nav-icon">📖</span> 學習資訊</a>
+      <a href="editor.html?page=alumni"           class="nav-item sub">校友分享</a>
+      <a href="editor.html?page=events"           class="nav-item sub">活動訊息</a>
+      <a href="editor.html?page=courses"          class="nav-item"><span class="nav-icon">📚</span> 課程相關</a>
+      <a href="editor.html?page=admission"        class="nav-item sub">招生資訊</a>
+      <a href="editor.html?page=degree"           class="nav-item sub">修業與學位</a>
+      <!-- 配合要求，隱藏入學申請、學費與獎學金、FAQ -->
+      <!-- <a href="editor.html?page=application"      class="nav-item sub">入學申請</a> -->
+      <!-- <a href="editor.html?page=tuition"          class="nav-item sub">學費與獎學金</a> -->
+      <!-- <a href="editor.html?page=faq"              class="nav-item sub">FAQ 常見問題</a> -->
+      <a href="editor.html?page=contact"          class="nav-item"><span class="nav-icon">📞</span> 聯絡方式</a>
+      <a href="editor.html?page=layout"           class="nav-item"><span class="nav-icon">⚓</span> 導覽列</a>
       <div class="nav-section-label" style="margin-top:8px">系統</div>
       <a href="/docs" target="_blank" class="nav-item"><span class="nav-icon">📖</span> API 文件</a>
     </nav>
@@ -316,9 +328,9 @@
     { id:8,  slug:"courses", title:"課程相關", parent_slug:null, display_order:4, is_active:true, section_count:0, children:[
       { id:9,  slug:"admission",   title:"招生資訊",    parent_slug:"courses", display_order:1, is_active:true, section_count:2, children:[] },
       { id:10, slug:"degree",      title:"修業與學位",  parent_slug:"courses", display_order:2, is_active:true, section_count:0, children:[] },
-      { id:11, slug:"application", title:"入學申請",    parent_slug:"courses", display_order:3, is_active:true, section_count:0, children:[] },
-      { id:12, slug:"tuition",     title:"學費與獎學金",parent_slug:"courses", display_order:4, is_active:true, section_count:0, children:[] },
-      { id:13, slug:"faq",         title:"FAQ 常見問題",parent_slug:"courses", display_order:5, is_active:true, section_count:0, children:[] }
+      // { id:11, slug:"application", title:"入學申請",    parent_slug:"courses", display_order:3, is_active:true, section_count:0, children:[] },
+      // { id:12, slug:"tuition",     title:"學費與獎學金",parent_slug:"courses", display_order:4, is_active:true, section_count:0, children:[] },
+      // { id:13, slug:"faq",         title:"FAQ 常見問題",parent_slug:"courses", display_order:5, is_active:true, section_count:0, children:[] }
     ]},
     { id:14, slug:"contact", title:"聯絡方式", parent_slug:null, display_order:5, is_active:true, section_count:1, children:[] },
     { id:15, slug:"search",  title:"搜尋引擎",  parent_slug:null, display_order:6, is_active:true, section_count:0, children:[] }
@@ -382,11 +394,21 @@
       });
       if (!res.ok) throw new Error('API error');
       const tree = await res.json();
+      
+      // 排除「入學申請 (application)」、「學費與獎學金 (tuition)」、「FAQ (faq)」
+      tree.forEach(node => {
+        if (node.slug === "courses") {
+          node.children = (node.children || []).filter(child => 
+            !["application", "tuition", "faq"].includes(child.slug)
+          );
+        }
+      });
 
       const flatRes = await fetch(`${API_BASE}/api/v1/pages?include_inactive=true`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      allPages = flatRes.ok ? await flatRes.json() : [];
+      let rawPages = flatRes.ok ? await flatRes.json() : [];
+      allPages = rawPages.filter(p => !["application", "tuition", "faq"].includes(p.slug));
 
       document.getElementById('totalPages').textContent = allPages.length;
       document.getElementById('totalActive').textContent = allPages.filter(p => p.is_active).length;

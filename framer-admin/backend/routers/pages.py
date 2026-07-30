@@ -365,6 +365,18 @@ def get_section_content(
 
     fields_dict = {field.field_key: field.field_value for field in fields}
 
+    # 確保前端相容性：如果是活動清單區塊且沒有標題，則自動繼承活動頂部(event_header)的標題
+    if slug == "events" and section_key == "event_news" and "section_title" not in fields_dict:
+        header_sec = db.query(Section).filter(Section.page_id == page.id, Section.section_key == "event_header").first()
+        if header_sec:
+            title_cf = db.query(ContentField).filter(
+                ContentField.section_id == header_sec.id,
+                ContentField.field_key == "section_title",
+                ContentField.locale == locale
+            ).first()
+            if title_cf:
+                fields_dict["section_title"] = title_cf.field_value
+
     return {
         "page": slug,
         "section": section_key,
