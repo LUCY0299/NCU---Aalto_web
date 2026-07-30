@@ -1337,7 +1337,7 @@
     if (!container) return;
     const blocks = blocksFieldStates[fieldKey] || [];
     const escape = (str) => escapeHtml(str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    const typeLabel = { text: '📝 文字', image: '🖼️ 圖片' };
+    const typeLabel = { text: '📝 文字', image: '🖼️ 圖片', 'two-columns': '📊 兩列' };
 
     const blocksHtml = blocks.length === 0
       ? '<div style="text-align:center; color:#adb5bd; padding:12px; font-size:13px;">尚無內容區塊，用下方按鈕新增</div>'
@@ -1348,6 +1348,39 @@
             bodyHtml = `
               <input type="file" accept="image/*" onchange="uploadStandaloneBlockImage(this, '${fieldKey}', ${bi})" style="margin-bottom:8px; font-size:12px;">
               ${imgUrl ? `<img src="${imgUrl}" style="max-height:100px; border-radius:4px; border:1px solid #ccc; display:block;">` : ''}
+            `;
+          } else if (block.type === 'two-columns') {
+            const col0 = block.columns?.[0] || { title: '', items: [] };
+            const col1 = block.columns?.[1] || { title: '', items: [] };
+            bodyHtml = `
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div style="border:1px solid #ddd; padding:12px; border-radius:4px;">
+                  <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:8px;">左欄標題</label>
+                  <input type="text" value="${escape(col0.title)}" oninput="updateTwoColumnsTitle('${fieldKey}', ${bi}, 0, this.value)" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px; margin-bottom:8px;">
+                  <div style="max-height:200px; overflow-y:auto; border:1px solid #eee; border-radius:4px; padding:8px;">
+                    ${(col0.items || []).map((item, i) => `
+                      <div style="display:flex; gap:4px; margin-bottom:4px;">
+                        <input type="text" value="${escape(item)}" oninput="updateTwoColumnsItem('${fieldKey}', ${bi}, 0, ${i}, this.value)" style="flex:1; padding:4px; font-size:12px; border:1px solid #ddd;">
+                        <button type="button" class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="removeTwoColumnsItem('${fieldKey}', ${bi}, 0, ${i})">🗑️</button>
+                      </div>
+                    `).join('')}
+                  </div>
+                  <button type="button" class="btn btn-secondary" style="width:100%; font-size:11px; padding:4px; margin-top:6px;" onclick="addTwoColumnsItem('${fieldKey}', ${bi}, 0)">＋ 新增項目</button>
+                </div>
+                <div style="border:1px solid #ddd; padding:12px; border-radius:4px;">
+                  <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:8px;">右欄標題</label>
+                  <input type="text" value="${escape(col1.title)}" oninput="updateTwoColumnsTitle('${fieldKey}', ${bi}, 1, this.value)" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px; margin-bottom:8px;">
+                  <div style="max-height:200px; overflow-y:auto; border:1px solid #eee; border-radius:4px; padding:8px;">
+                    ${(col1.items || []).map((item, i) => `
+                      <div style="display:flex; gap:4px; margin-bottom:4px;">
+                        <input type="text" value="${escape(item)}" oninput="updateTwoColumnsItem('${fieldKey}', ${bi}, 1, ${i}, this.value)" style="flex:1; padding:4px; font-size:12px; border:1px solid #ddd;">
+                        <button type="button" class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="removeTwoColumnsItem('${fieldKey}', ${bi}, 1, ${i})">🗑️</button>
+                      </div>
+                    `).join('')}
+                  </div>
+                  <button type="button" class="btn btn-secondary" style="width:100%; font-size:11px; padding:4px; margin-top:6px;" onclick="addTwoColumnsItem('${fieldKey}', ${bi}, 1)">＋ 新增項目</button>
+                </div>
+              </div>
             `;
           } else {
             bodyHtml = `<textarea rows="3" oninput="updateBlockItemText('${fieldKey}', ${bi}, this.value)" style="width:100%;" placeholder="輸入段落文字...">${escape(block.text)}</textarea>`;
@@ -1373,6 +1406,7 @@
         <div style="display:flex; gap:8px; margin-top:8px;">
           <button type="button" class="btn btn-secondary" style="font-size:12px;" onclick="addBlockItem('${fieldKey}', 'text')">＋ 文字</button>
           <button type="button" class="btn btn-secondary" style="font-size:12px;" onclick="addBlockItem('${fieldKey}', 'image')">＋ 圖片</button>
+          <button type="button" class="btn btn-secondary" style="font-size:12px;" onclick="addBlockItem('${fieldKey}', 'two-columns')">＋ 兩列</button>
         </div>
       </div>`;
   }
@@ -1383,7 +1417,21 @@
 
   function addBlockItem(fieldKey, type) {
     if (!blocksFieldStates[fieldKey]) blocksFieldStates[fieldKey] = [];
-    blocksFieldStates[fieldKey].push(type === 'image' ? { type, image_url: '' } : { type, text: '' });
+    let newBlock;
+    if (type === 'image') {
+      newBlock = { type, image_url: '' };
+    } else if (type === 'two-columns') {
+      newBlock = {
+        type,
+        columns: [
+          { title: '', items: [] },
+          { title: '', items: [] }
+        ]
+      };
+    } else {
+      newBlock = { type, text: '' };
+    }
+    blocksFieldStates[fieldKey].push(newBlock);
     saveBlocksToPending(fieldKey);
     renderBlocksField(fieldKey);
   }
@@ -1408,6 +1456,34 @@
   function updateBlockItemText(fieldKey, index, value) {
     blocksFieldStates[fieldKey][index].text = value;
     saveBlocksToPending(fieldKey);
+  }
+
+  function updateTwoColumnsTitle(fieldKey, blockIndex, columnIndex, value) {
+    if (!blocksFieldStates[fieldKey][blockIndex].columns) {
+      blocksFieldStates[fieldKey][blockIndex].columns = [{ title: '', items: [] }, { title: '', items: [] }];
+    }
+    blocksFieldStates[fieldKey][blockIndex].columns[columnIndex].title = value;
+    saveBlocksToPending(fieldKey);
+  }
+
+  function updateTwoColumnsItem(fieldKey, blockIndex, columnIndex, itemIndex, value) {
+    if (!blocksFieldStates[fieldKey][blockIndex].columns) return;
+    blocksFieldStates[fieldKey][blockIndex].columns[columnIndex].items[itemIndex] = value;
+    saveBlocksToPending(fieldKey);
+  }
+
+  function addTwoColumnsItem(fieldKey, blockIndex, columnIndex) {
+    if (!blocksFieldStates[fieldKey][blockIndex].columns) return;
+    blocksFieldStates[fieldKey][blockIndex].columns[columnIndex].items.push('');
+    saveBlocksToPending(fieldKey);
+    renderBlocksField(fieldKey);
+  }
+
+  function removeTwoColumnsItem(fieldKey, blockIndex, columnIndex, itemIndex) {
+    if (!blocksFieldStates[fieldKey][blockIndex].columns) return;
+    blocksFieldStates[fieldKey][blockIndex].columns[columnIndex].items.splice(itemIndex, 1);
+    saveBlocksToPending(fieldKey);
+    renderBlocksField(fieldKey);
   }
 
   function uploadStandaloneBlockImage(fileInput, fieldKey, index) {
