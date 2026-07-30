@@ -214,42 +214,49 @@ def _split_text_for_translation(text: str) -> list[str]:
     return chunks
 
 
-@app.post("/api/v1/translate", tags=["翻譯"])
-async def translate_text(
-    payload: dict,
-    current_user: User = Depends(verify_token),
-):
-    """把中文文字翻譯成英文（用 MyMemory 免費 API），需要登入"""
-    text = (payload.get("text") or "").strip()
-    if not text:
-        return {"translated": ""}
+# ⚠️ MyMemory API 翻譯功能已停用
+# 原因：Render 共享 IP，導致免費額度快速用盡（50,000 字/天被數千個網站瓜分）
+# 未來改用 Google Cloud Translation 或其他付費方案
 
-    chunks = _split_text_for_translation(text)
-    translated_chunks = []
-
-    async with httpx.AsyncClient(timeout=15) as client:
-        for chunk in chunks:
-            try:
-                params = {"q": chunk, "langpair": "zh-TW|en-US"}
-                if MYMEMORY_CONTACT_EMAIL:
-                    params["de"] = MYMEMORY_CONTACT_EMAIL
-                res = await client.get(MYMEMORY_URL, params=params)
-                data = res.json()
-                translated = data.get("responseData", {}).get("translatedText", "")
-
-                # MyMemory 額度用完時，不會回傳錯誤狀態碼，而是把警告文字
-                # 直接塞在 translatedText 裡，要特別偵測出來，避免把警告文字
-                # 誤存成「翻譯結果」，把原本的內容覆蓋掉
-                if not translated or "MYMEMORY WARNING" in translated.upper():
-                    print(f"翻譯額度異常，保留原文：{translated[:100]}")
-                    translated_chunks.append(chunk)
-                else:
-                    translated_chunks.append(translated)
-            except Exception as e:
-                print(f"翻譯失敗（保留原文）：{e}")
-                translated_chunks.append(chunk)
-
-    return {"translated": "\n".join(translated_chunks)}
+# @app.post("/api/v1/translate", tags=["翻譯"])
+# async def translate_text(
+#     payload: dict,
+#     current_user: User = Depends(verify_token),
+# ):
+#     """把中文文字翻譯成英文（用 MyMemory 免費 API），需要登入"""
+#     text = (payload.get("text") or "").strip()
+#     if not text:
+#         return {"translated": ""}
+#
+#     chunks = _split_text_for_translation(text)
+#     translated_chunks = []
+#
+#     async with httpx.AsyncClient(timeout=15) as client:
+#         for chunk in chunks:
+#             try:
+#                 params = {"q": chunk, "langpair": "zh-TW|en-US"}
+#                 if MYMEMORY_CONTACT_EMAIL:
+#                     params["de"] = MYMEMORY_CONTACT_EMAIL
+#                 res = await client.get(MYMEMORY_URL, params=params)
+#                 data = res.json()
+#                 translated = data.get("responseData", {}).get("translatedText", "")
+#
+#                 if not translated or "MYMEMORY WARNING" in translated.upper():
+#                     raise HTTPException(
+#                         status_code=429,
+#                         detail="翻譯服務額度已達上限（MyMemory 免費配額已用盡）。請稍後重試，或手動輸入英文內容。"
+#                     )
+#                 else:
+#                     translated_chunks.append(translated)
+#             except HTTPException:
+#                 raise
+#             except Exception as e:
+#                 raise HTTPException(
+#                     status_code=503,
+#                     detail=f"翻譯服務暫時無法使用，請稍後重試。錯誤：{str(e)[:100]}"
+#                 )
+#
+#     return {"translated": "\n".join(translated_chunks)}
 
 # ─────────────────────────────────────────
 # 健康檢查端點（部署平台用）

@@ -81,7 +81,8 @@
           <button class="locale-tab active" id="tab-zh" onclick="switchLocale('zh-TW')">🇹🇼 繁體中文</button>
           <button class="locale-tab" id="tab-en" onclick="switchLocale('en-US')">🇺🇸 English</button>
         </div>
-        <button class="btn btn-secondary btn-sm" id="btnAutoTranslate" style="display:none;" onclick="autoTranslateSection()">🌐 自動翻譯成英文</button>
+        <!-- ⚠️ 自動翻譯功能已停用：MyMemory API 在 Render 共享 IP 導致額度快速用盡 -->
+        <!-- <button class="btn btn-secondary btn-sm" id="btnAutoTranslate" style="display:none;" onclick="autoTranslateSection()">🌐 自動翻譯成英文</button> -->
         <a href="https://crowded-pictogram-488999.framer.app/" target="_blank" class="btn btn-secondary btn-sm">前台預覽 ↗</a>
       </div>
     </div>
@@ -892,153 +893,183 @@
     if (sec) { renderFieldEditor(sec); updateSaveStatus(false); }
   }
 
-  /** 呼叫後端翻譯 API，把中文文字翻成英文 */
-  async function callTranslateAPI(text) {
-    if (!text || !text.trim()) return '';
-    const res = await fetch(`${API_BASE}/api/v1/translate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
-      },
-      body: JSON.stringify({ text }),
-    });
-    if (!res.ok) throw new Error(`翻譯 API 回應 ${res.status}`);
-    const data = await res.json();
-    return data.translated || '';
-  }
+  // ⚠️ 翻譯功能已停用：MyMemory API 在 Render 共享 IP 導致額度快速用盡
+  // /** 呼叫後端翻譯 API，把中文文字翻成英文 */
+  // async function callTranslateAPI(text) {
+  //   if (!text || !text.trim()) return '';
+  //   const res = await fetch(`${API_BASE}/api/v1/translate`, {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //       'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+  //     },
+  //     body: JSON.stringify({ text }),
+  //   });
+  //
+  //   if (res.status === 429) {
+  //     throw new Error('TRANSLATION_QUOTA_EXCEEDED');
+  //   }
+  //   if (res.status === 503) {
+  //     throw new Error('TRANSLATION_SERVICE_UNAVAILABLE');
+  //   }
+  //   if (!res.ok) {
+  //     throw new Error(`翻譯 API 回應 ${res.status}`);
+  //   }
+  //
+  //   const data = await res.json();
+  //   return data.translated || '';
+  // }
 
-  /**
-   * 翻譯富文本 HTML 內容（例如校友分享的「完整內容」）：
-   * 用瀏覽器內建的 DOMParser 把 HTML 拆開，只抓出裡面真正的文字節點去翻譯，
-   * <p>、<img>、<blockquote> 等標籤本身完全不動，翻完再放回原本的標籤結構裡。
-   */
-  async function translateHtmlContent(html) {
-    if (!html || !html.trim()) return html;
+  // ⚠️ 翻譯功能已停用：MyMemory API 在 Render 共享 IP 導致額度快速用盡
+  // /**
+  //  * 翻譯富文本 HTML 內容（例如校友分享的「完整內容」）：
+  //  * 用瀏覽器內建的 DOMParser 把 HTML 拆開，只抓出裡面真正的文字節點去翻譯，
+  //  * <p>、<img>、<blockquote> 等標籤本身完全不動，翻完再放回原本的標籤結構裡。
+  //  */
+  // async function translateHtmlContent(html) {
+  //   if (!html || !html.trim()) return html;
+  //
+  //   const doc = new DOMParser().parseFromString(html, 'text/html');
+  //   const walker = document.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null);
+  //   const textNodes = [];
+  //   let node;
+  //   while ((node = walker.nextNode())) {
+  //     if (node.textContent.trim()) textNodes.push(node);
+  //   }
+  //
+  //   for (const textNode of textNodes) {
+  //     const original = textNode.textContent;
+  //     try {
+  //       const translated = await callTranslateAPI(original);
+  //       textNode.textContent = translated || original;
+  //     } catch (e) {
+  //       console.error('HTML 內文字翻譯失敗，保留原文：', e);
+  //     }
+  //   }
+  //
+  //   return doc.body.innerHTML;
+  // }
 
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    const walker = document.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null);
-    const textNodes = [];
-    let node;
-    while ((node = walker.nextNode())) {
-      if (node.textContent.trim()) textNodes.push(node);
-    }
+  // ⚠️ 翻譯功能已停用：MyMemory API 在 Render 共享 IP 導致額度快速用盡
+  // /** 翻譯清單型欄位（活動清單/校友清單）：複製整個中文陣列的結構，把可翻譯的文字換成英文，圖片/日期/狀態維持不變 */
+  // async function translateListField(field) {
+  //   let zhItems;
+  //   try { zhItems = JSON.parse(field.field_value || '[]'); } catch (e) { zhItems = []; }
+  //   if (!Array.isArray(zhItems) || zhItems.length === 0) return null;
+  //
+  //   const translatedItems = [];
+  //   for (const item of zhItems) {
+  //     const newItem = { ...item };
+  //     if (item.title) newItem.title = await callTranslateAPI(item.title);
+  //     if (item.summary) newItem.summary = await callTranslateAPI(item.summary);
+  //     if (item.image_caption) newItem.image_caption = await callTranslateAPI(item.image_caption);
+  //     if (item.content) newItem.content = await translateHtmlContent(item.content);
+  //     if (Array.isArray(item.blocks)) {
+  //       const newBlocks = [];
+  //       for (const block of item.blocks) {
+  //         if ((block.type === 'text' || block.type === 'caption') && block.text) {
+  //           newBlocks.push({ ...block, text: await callTranslateAPI(block.text) });
+  //         } else {
+  //           newBlocks.push(block);
+  //         }
+  //       }
+  //       newItem.blocks = newBlocks;
+  //     }
+  //     translatedItems.push(newItem);
+  //   }
+  //   return translatedItems;
+  // }
 
-    for (const textNode of textNodes) {
-      const original = textNode.textContent;
-      try {
-        const translated = await callTranslateAPI(original);
-        textNode.textContent = translated || original;
-      } catch (e) {
-        console.error('HTML 內文字翻譯失敗，保留原文：', e);
-      }
-    }
+  // ⚠️ 翻譯功能已停用：MyMemory API 在 Render 共享 IP 導致額度快速用盡
+  // /** 翻譯自由區塊欄位（招生資訊等）：文字/圖說區塊翻譯，圖片區塊維持不變 */
+  // async function translateBlocksField(field) {
+  //   let zhBlocks;
+  //   try { zhBlocks = JSON.parse(field.field_value || '[]'); } catch (e) { zhBlocks = []; }
+  //   if (!Array.isArray(zhBlocks) || zhBlocks.length === 0) return null;
+  //
+  //   const translatedBlocks = [];
+  //   for (const block of zhBlocks) {
+  //     if ((block.type === 'text' || block.type === 'caption') && block.text) {
+  //       translatedBlocks.push({ ...block, text: await callTranslateAPI(block.text) });
+  //     } else {
+  //       translatedBlocks.push(block);
+  //     }
+  //   }
+  //   return translatedBlocks;
+  // }
 
-    return doc.body.innerHTML;
-  }
-
-  /** 翻譯清單型欄位（活動清單/校友清單）：複製整個中文陣列的結構，把可翻譯的文字換成英文，圖片/日期/狀態維持不變 */
-  async function translateListField(field) {
-    let zhItems;
-    try { zhItems = JSON.parse(field.field_value || '[]'); } catch (e) { zhItems = []; }
-    if (!Array.isArray(zhItems) || zhItems.length === 0) return null;
-
-    const translatedItems = [];
-    for (const item of zhItems) {
-      const newItem = { ...item };
-      if (item.title) newItem.title = await callTranslateAPI(item.title);
-      if (item.summary) newItem.summary = await callTranslateAPI(item.summary);
-      if (item.image_caption) newItem.image_caption = await callTranslateAPI(item.image_caption);
-      if (item.content) newItem.content = await translateHtmlContent(item.content);
-      if (Array.isArray(item.blocks)) {
-        const newBlocks = [];
-        for (const block of item.blocks) {
-          if ((block.type === 'text' || block.type === 'caption') && block.text) {
-            newBlocks.push({ ...block, text: await callTranslateAPI(block.text) });
-          } else {
-            newBlocks.push(block);
-          }
-        }
-        newItem.blocks = newBlocks;
-      }
-      translatedItems.push(newItem);
-    }
-    return translatedItems;
-  }
-
-  /** 翻譯自由區塊欄位（招生資訊等）：文字/圖說區塊翻譯，圖片區塊維持不變 */
-  async function translateBlocksField(field) {
-    let zhBlocks;
-    try { zhBlocks = JSON.parse(field.field_value || '[]'); } catch (e) { zhBlocks = []; }
-    if (!Array.isArray(zhBlocks) || zhBlocks.length === 0) return null;
-
-    const translatedBlocks = [];
-    for (const block of zhBlocks) {
-      if ((block.type === 'text' || block.type === 'caption') && block.text) {
-        translatedBlocks.push({ ...block, text: await callTranslateAPI(block.text) });
-      } else {
-        translatedBlocks.push(block);
-      }
-    }
-    return translatedBlocks;
-  }
-
-  /**
-   * 自動翻譯目前這個區塊的所有欄位：把中文分頁的內容翻譯成英文，填入英文分頁。
-   * 支援單純文字欄位、清單型（活動/校友清單）、自由區塊（招生資訊等）。
-   * 例外：富文本 HTML（校友分享的「完整內容」）不會自動翻譯，需要手動處理，避免翻壞 HTML 標籤。
-   */
-  async function autoTranslateSection() {
-    const section = window._currentSection;
-    if (!section) return;
-
-    const zhFields = (section.content_fields || []).filter(f => f.locale === 'zh-TW');
-    if (zhFields.length === 0) {
-      showToast('這個區塊沒有中文內容可以翻譯', '');
-      return;
-    }
-
-    showToast(`⏳ 翻譯中...（欄位較多時可能需要一點時間，請耐心等候）`, '');
-
-    let successCount = 0;
-    for (const field of zhFields) {
-      try {
-        if (['text', 'textarea'].includes(field.field_type)) {
-          if (!field.field_value) continue;
-          const translated = await callTranslateAPI(field.field_value);
-          const enField = (section.content_fields || []).find(
-            f => f.locale === 'en-US' && f.field_key === field.field_key
-          );
-          if (enField) {
-            const input = document.getElementById(`field-${enField.id}`);
-            if (input) input.value = translated;
-            markChanged(field.field_key, translated);
-            successCount++;
-          }
-        } else if (['list', 'global_list'].includes(field.field_type)) {
-          const translatedItems = await translateListField(field);
-          if (translatedItems) {
-            listFieldStates[field.field_key] = translatedItems;
-            saveListToPending(field.field_key);
-            renderListItems(field.field_key);
-            successCount++;
-          }
-        } else if (field.field_type === 'blocks') {
-          const translatedBlocks = await translateBlocksField(field);
-          if (translatedBlocks) {
-            blocksFieldStates[field.field_key] = translatedBlocks;
-            saveBlocksToPending(field.field_key);
-            renderBlocksField(field.field_key);
-            successCount++;
-          }
-        }
-      } catch (e) {
-        console.error(`欄位 ${field.field_key} 翻譯失敗：`, e);
-      }
-    }
-
-    showToast(`✅ 已翻譯 ${successCount} 個欄位，請檢查內容後記得按「儲存」`, 'success');
-  }
+  // ⚠️ 翻譯功能已停用：MyMemory API 在 Render 共享 IP 導致額度快速用盡
+  // /**
+  //  * 自動翻譯目前這個區塊的所有欄位：把中文分頁的內容翻譯成英文，填入英文分頁。
+  //  * 支援單純文字欄位、清單型（活動/校友清單）、自由區塊（招生資訊等）。
+  //  * 例外：富文本 HTML（校友分享的「完整內容」）不會自動翻譯，需要手動處理，避免翻壞 HTML 標籤。
+  //  */
+  // async function autoTranslateSection() {
+  //   const section = window._currentSection;
+  //   if (!section) return;
+  //
+  //   const zhFields = (section.content_fields || []).filter(f => f.locale === 'zh-TW');
+  //   if (zhFields.length === 0) {
+  //     showToast('這個區塊沒有中文內容可以翻譯', '');
+  //     return;
+  //   }
+  //
+  //   showToast(`⏳ 翻譯中...（欄位較多時可能需要一點時間，請耐心等候）`, '');
+  //
+  //   let successCount = 0;
+  //   let quotaExceeded = false;
+  //
+  //   for (const field of zhFields) {
+  //     try {
+  //       if (['text', 'textarea'].includes(field.field_type)) {
+  //         if (!field.field_value) continue;
+  //         const translated = await callTranslateAPI(field.field_value);
+  //         const enField = (section.content_fields || []).find(
+  //           f => f.locale === 'en-US' && f.field_key === field.field_key
+  //         );
+  //         if (enField) {
+  //           const input = document.getElementById(`field-${enField.id}`);
+  //           if (input) input.value = translated;
+  //           markChanged(field.field_key, translated);
+  //           successCount++;
+  //         }
+  //       } else if (['list', 'global_list'].includes(field.field_type)) {
+  //         const translatedItems = await translateListField(field);
+  //         if (translatedItems) {
+  //           listFieldStates[field.field_key] = translatedItems;
+  //           saveListToPending(field.field_key);
+  //           renderListItems(field.field_key);
+  //           successCount++;
+  //         }
+  //       } else if (field.field_type === 'blocks') {
+  //         const translatedBlocks = await translateBlocksField(field);
+  //         if (translatedBlocks) {
+  //           blocksFieldStates[field.field_key] = translatedBlocks;
+  //           saveBlocksToPending(field.field_key);
+  //           renderBlocksField(field.field_key);
+  //           successCount++;
+  //         }
+  //       }
+  //     } catch (e) {
+  //       if (e.message === 'TRANSLATION_QUOTA_EXCEEDED') {
+  //         quotaExceeded = true;
+  //         showToast('⚠️ 翻譯服務額度已達上限，請稍後再試或手動輸入英文內容', 'error');
+  //         break;
+  //       }
+  //       if (e.message === 'TRANSLATION_SERVICE_UNAVAILABLE') {
+  //         showToast('⚠️ 翻譯服務暫時無法使用，請稍後再試', 'error');
+  //         break;
+  //       }
+  //       console.error(`欄位 ${field.field_key} 翻譯失敗：`, e);
+  //     }
+  //   }
+  //
+  //   if (!quotaExceeded && successCount > 0) {
+  //     showToast(`✅ 已翻譯 ${successCount} 個欄位，請檢查內容後記得按「儲存」`, 'success');
+  //   } else if (!quotaExceeded) {
+  //     showToast('翻譯過程中發生錯誤，請查看控制台並稍後重試', 'error');
+  //   }
+  // }
 
   /** 切換區塊的啟用/停用狀態 */
   async function toggleSectionStatus(sectionId, newStatus) {
