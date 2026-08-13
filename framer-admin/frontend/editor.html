@@ -15,9 +15,159 @@
     .editor-layout { display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; }
     .section-panel { position: sticky; top: 88px; }
     .unsaved-dot { width:8px; height:8px; border-radius:50%; background:var(--color-warning); display:inline-block; margin-right:4px; }
+
+    /* 浮動編輯框樣式 */
+    .expand-editor-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .expand-editor-modal.open {
+      display: flex;
+    }
+
+    .expand-editor-box {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+      width: 90%;
+      max-width: 800px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .expand-editor-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--color-border-soft);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .expand-editor-header h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0;
+      color: var(--color-primary);
+    }
+
+    .expand-editor-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--color-text-muted);
+      transition: color 0.2s;
+    }
+
+    .expand-editor-close:hover {
+      color: var(--color-text);
+    }
+
+    .expand-editor-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .expand-editor-content textarea {
+      width: 100%;
+      min-height: 300px;
+      padding: 12px;
+      border: 1px solid var(--color-border-soft);
+      border-radius: 6px;
+      font-family: var(--font-main);
+      font-size: 14px;
+      line-height: 1.6;
+      resize: vertical;
+    }
+
+    .expand-editor-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--color-border-soft);
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .expand-editor-footer button {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .expand-editor-save {
+      background: var(--color-primary);
+      color: white;
+    }
+
+    .expand-editor-save:hover {
+      background: var(--color-primary-dark);
+    }
+
+    .expand-editor-cancel {
+      background: transparent;
+      color: var(--color-text-muted);
+      border: 1px solid var(--color-border-soft);
+    }
+
+    .expand-editor-cancel:hover {
+      background: var(--color-bg);
+    }
+
+    /* 雙擊編輯提示 */
+    textarea.editable-field {
+      cursor: text;
+      position: relative;
+    }
+
+    textarea.editable-field:hover {
+      border-color: var(--color-primary) !important;
+    }
   </style>
 </head>
 <body>
+
+<!-- 浮動編輯框模態 -->
+<div class="expand-editor-modal" id="expandEditorModal">
+  <div class="expand-editor-box">
+    <div class="expand-editor-header">
+      <h3 id="expandEditorTitle">編輯內容</h3>
+      <button class="expand-editor-close" onclick="closeExpandEditor()">✕</button>
+    </div>
+    <div class="expand-editor-content">
+      <textarea id="expandEditorTextarea" placeholder="編輯內容..."></textarea>
+    </div>
+    <div class="expand-editor-footer">
+      <button class="expand-editor-cancel" onclick="closeExpandEditor()">取消</button>
+      <button class="expand-editor-save" onclick="saveExpandedContent()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
 <div class="admin-layout">
 
   <!-- ═══════════ 側邊欄 ═══════════ -->
@@ -77,8 +227,8 @@
       <div class="topbar-actions">
         <!-- Locale 切換 Tab -->
         <div class="locale-tabs">
-          <button class="locale-tab active" id="tab-zh" onclick="switchLocale('zh-TW')">🇹🇼 繁體中文</button>
-          <button class="locale-tab" id="tab-en" onclick="switchLocale('en-US')">🇺🇸 English</button>
+          <button class="locale-tab active" id="tab-zh">🇹🇼 繁體中文</button>
+          <button class="locale-tab" id="tab-en">🇺🇸 English</button>
         </div>
         <!-- ⚠️ 自動翻譯功能已停用：MyMemory API 在 Render 共享 IP 導致額度快速用盡 -->
         <!-- <button class="btn btn-secondary btn-sm" id="btnAutoTranslate" style="display:none;" onclick="autoTranslateSection()">🌐 自動翻譯成英文</button> -->
@@ -459,6 +609,10 @@
 
     highlightNavItem();
     await loadPageData();
+
+    // 語系切換按鈕事件監聽
+    document.getElementById('tab-zh').addEventListener('click', () => switchLocale('zh-TW'));
+    document.getElementById('tab-en').addEventListener('click', () => switchLocale('en-US'));
   });
 
   /** 高亮側邊欄目前頁面 */
@@ -474,7 +628,7 @@
   async function loadPageData() {
     // 🔒【上鎖】：開始載入與填入資料，忽略所有變更監聽
     isRendering = true;
-    
+
     try {
         let pageData;
 
@@ -513,8 +667,14 @@
 
         // 重新渲染左側選單與右側內容
         renderSectionList(pageData.sections);
-        if (pageData.sections?.length > 0) {
-            selectSection(pageData.sections[0]);
+
+        // 保持當前選中的區塊，如果沒有則選第一個
+        const targetSection = currentSectionId
+            ? pageData.sections?.find(s => s.id === currentSectionId)
+            : pageData.sections?.[0];
+
+        if (targetSection) {
+            selectSection(targetSection);
         }
 
     } finally {
@@ -615,6 +775,8 @@
           renderBlocksField(f.field_key);
         }
       });
+      // 為所有 textarea 啟用雙擊放大編輯
+      setupExpandableFields();
     }, 0);
 
     window._currentSection = section;
@@ -654,14 +816,20 @@
       inputHtml = `<div id="blocks-field-${field.field_key}"></div>`;
 
     } else if (['textarea','richtext'].includes(field.field_type)) {
-      inputHtml = `<textarea id="field-${field.id}" rows="4"
-        placeholder="請輸入 ${field.label || field.field_key}"
-        oninput="markChanged('${field.field_key}', this.value)">${val}</textarea>`;
+      inputHtml = `<textarea id="field-${field.id}" class="editable-field" rows="4"
+        data-field-key="${field.field_key}"
+        data-field-label="${field.label || field.field_key}"
+        placeholder="請輸入 ${field.label || field.field_key}（雙擊放大編輯）"
+        oninput="markChanged('${field.field_key}', this.value)"
+        title="雙擊放大編輯">${val}</textarea>`;
     } else if (field.field_type === 'json') {
-      inputHtml = `<textarea id="field-${field.id}" rows="8"
+      inputHtml = `<textarea id="field-${field.id}" class="editable-field" rows="8"
+        data-field-key="${field.field_key}"
+        data-field-label="JSON (${field.label || field.field_key})"
         style="font-family:monospace; font-size:13px;"
-        placeholder='[{"key":"value"}]'
-        oninput="markChanged('${field.field_key}', this.value)">${val}</textarea>
+        placeholder='[{"key":"value"}]（雙擊放大編輯）'
+        oninput="markChanged('${field.field_key}', this.value)"
+        title="雙擊放大編輯">${val}</textarea>
         <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px;">⚠️ JSON 格式，請確保語法正確</div>`;
     } else if (field.field_type === 'image') {
       const fullImageUrl = val ? (val.startsWith('http') ? val : `${API_BASE}${val}`) : '';
@@ -871,6 +1039,63 @@
     }
   }
 
+  // ════════════════════════════════════════
+  // 浮動編輯框邏輯
+  // ════════════════════════════════════════
+
+  let currentExpandingFieldId = null;
+  let currentExpandingFieldKey = null;
+
+  /** 打開浮動編輯框 */
+  function openExpandEditor(fieldId, fieldKey, fieldLabel, initialValue) {
+    currentExpandingFieldId = fieldId;
+    currentExpandingFieldKey = fieldKey;
+
+    document.getElementById('expandEditorTitle').textContent = `編輯：${fieldLabel || fieldKey}`;
+    document.getElementById('expandEditorTextarea').value = initialValue;
+    document.getElementById('expandEditorModal').classList.add('open');
+
+    // 聚焦到 textarea
+    setTimeout(() => {
+      document.getElementById('expandEditorTextarea').focus();
+    }, 100);
+  }
+
+  /** 關閉浮動編輯框 */
+  function closeExpandEditor() {
+    document.getElementById('expandEditorModal').classList.remove('open');
+    currentExpandingFieldId = null;
+    currentExpandingFieldKey = null;
+  }
+
+  /** 保存展開編輯的內容 */
+  function saveExpandedContent() {
+    if (!currentExpandingFieldKey) return;
+
+    const newValue = document.getElementById('expandEditorTextarea').value;
+    const originalTextarea = document.getElementById(`field-${currentExpandingFieldId}`);
+
+    if (originalTextarea) {
+      originalTextarea.value = newValue;
+      // 觸發 change 事件
+      markChanged(currentExpandingFieldKey, newValue);
+    }
+
+    closeExpandEditor();
+  }
+
+  /** 雙擊 textarea 時打開浮動編輯框 */
+  function setupExpandableFields() {
+    document.querySelectorAll('textarea.editable-field').forEach(textarea => {
+      textarea.addEventListener('dblclick', function() {
+        const fieldId = this.id.replace('field-', '');
+        const fieldKey = this.getAttribute('data-field-key');
+        const fieldLabel = this.getAttribute('data-field-label');
+        openExpandEditor(fieldId, fieldKey, fieldLabel, this.value);
+      });
+    });
+  }
+
   /** 放棄變更 */
   function discardChanges() {
     if (!confirm('確定放棄所有未儲存的變更？')) return;
@@ -890,7 +1115,13 @@
     hasUnsavedChanges = false;
     document.getElementById('tab-zh').classList.toggle('active', locale === 'zh-TW');
     document.getElementById('tab-en').classList.toggle('active', locale === 'en-US');
-    document.getElementById('btnAutoTranslate').style.display = locale === 'en-US' ? 'inline-flex' : 'none';
+
+    // 只在按鈕存在時才設定
+    const btnAutoTranslate = document.getElementById('btnAutoTranslate');
+    if (btnAutoTranslate) {
+      btnAutoTranslate.style.display = locale === 'en-US' ? 'inline-flex' : 'none';
+    }
+
     const sec = window._pageData?.sections?.find(s => s.id === currentSectionId);
     if (sec) { renderFieldEditor(sec); updateSaveStatus(false); }
   }

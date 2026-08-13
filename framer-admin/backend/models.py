@@ -115,6 +115,9 @@ class ContentField(Base):
     # 欄位說明（後台用工具提示）
     hint = Column(String(500), nullable=True)
 
+    # 欄位顯示順序（同一區塊內，數字越小越前面）
+    display_order = Column(Integer, default=0)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
