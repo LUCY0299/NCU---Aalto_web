@@ -13,6 +13,7 @@ API 設計原則：
 from pydantic import BaseModel
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
 from database import get_db
