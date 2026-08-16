@@ -82,37 +82,25 @@ def get_page(
     """
     取得指定頁面的完整內容（含所有區塊與欄位）。
     可用 locale 參數篩選語系。
-
-    **Framer Code Component 用法：**
-    ```javascript
-    // 取得首頁的繁體中文內容
-    const response = await fetch(
-      'http://localhost:8000/api/v1/pages/home?locale=zh-TW'
-    );
-    const page = await response.json();
-
-    // 取得第一個區塊的標題
-    const heroTitle = page.sections
-      .find(s => s.section_key === 'hero')
-      ?.content_fields
-      .find(f => f.field_key === 'title')
-      ?.field_value;
-    ```
     """
     page = db.query(Page).filter(Page.slug == slug, Page.is_active == True).first()
 
     if not page:
         raise HTTPException(status_code=404, detail=f"找不到頁面：{slug}")
 
-    # 如果有指定 locale，過濾欄位
+    # 🚀 修正 500 錯誤：先將 SQLAlchemy ORM 物件轉換為 Pydantic 模型
+    # 這樣後續過濾欄位時，就不會意外觸發資料庫的關聯更新而導致當機
+    page_data = PageOut.model_validate(page)
+
+    # 如果有指定 locale，在安全的 Pydantic 模型上過濾欄位
     if locale:
-        for section in page.sections:
+        for section in page_data.sections:
             section.content_fields = [
                 f for f in section.content_fields
                 if f.locale == locale
             ]
 
-    return page
+    return page_data
 
 
 @router.post("/pages", response_model=PageOut, status_code=status.HTTP_201_CREATED,
@@ -615,4 +603,4 @@ def global_search(
                     "snippet": val_str[:60] + "..." if len(val_str) > 60 else val_str
                 })
 
-    return search_hits[:8]
+    return search_hits[:8]
