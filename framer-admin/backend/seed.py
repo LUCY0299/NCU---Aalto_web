@@ -615,27 +615,27 @@ SECTIONS_DATA = [
     # ════════════════════
     # 全站版面管理 (layout)
     # ════════════════════
-    # 品牌 Logo 管理（新增）
+    # Logo 管理（新增）
     {
-        "page_slug": "layout", "key": "branding", "name": "品牌 Logo 管理", "type": "branding", "order": 0,
+        "page_slug": "layout", "key": "branding", "name": "Logo 管理", "type": "branding", "order": 0,
         "fields": [
             {
                 "key": "admin_logo",
-                "label": "後台管理 Logo（左上角）",
+                "label": "【後台】瀏覽器標籤圖示（Favicon）",
                 "type": "image",
                 "zh": "",
                 "en": ""
             },
             {
                 "key": "navbar_logo",
-                "label": "前台導覽列 Logo",
+                "label": "【前台】導覽列 Logo",
                 "type": "image",
                 "zh": "/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png",
                 "en": "/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png"
             },
             {
                 "key": "favicon",
-                "label": "瀏覽器標籤圖示（Favicon）",
+                "label": "【前台】瀏覽器標籤圖示（Favicon）",
                 "type": "image",
                 "zh": "",
                 "en": ""
@@ -740,6 +740,22 @@ def seed_database():
                 page_objects[p["slug"]] = existing
                 print(f"⏭️  頁面已存在：{p['slug']}，跳過")
 
+        # ─── 清理舊的遺留 sections ───
+        layout_page = page_objects.get("layout")
+        if layout_page:
+            # 刪除舊的 navbar-logo section（已合併到 branding 中）
+            old_navbar_logo = db.query(Section).filter(
+                Section.page_id == layout_page.id,
+                Section.section_key == "navbar-logo"
+            ).first()
+            if old_navbar_logo:
+                # 先刪除相關的內容欄位
+                db.query(ContentField).filter(ContentField.section_id == old_navbar_logo.id).delete()
+                # 再刪除 section 本身
+                db.delete(old_navbar_logo)
+                db.commit()
+                print("  🗑️  已刪除舊 section：navbar-logo（已合併到 branding）")
+
         # ─── 建立區塊與內容欄位 ───
         for sec_data in SECTIONS_DATA:
             page = page_objects.get(sec_data["page_slug"])
@@ -766,11 +782,28 @@ def seed_database():
                 print(f"  ✅ 區塊已建立：{sec_data['name']}")
             else:
                 section = existing_section
-                print(f"  ⏭️  區塊已存在：{sec_data['key']}，跳過")
+                # 更新區塊名稱（以防名稱有改動）
+                if section.name != sec_data["name"]:
+                    section.name = sec_data["name"]
+                    db.commit()
+                    print(f"  ✏️  區塊名稱已更新：{sec_data['key']} → {sec_data['name']}")
+                else:
+                    print(f"  ⏭️  區塊已存在：{sec_data['key']}，跳過")
+
+            # 特殊處理：branding section 需要重新排列欄位，刪除舊欄位再重建
+            if sec_data["key"] == "branding" and existing_section:
+                old_fields = db.query(ContentField).filter(
+                    ContentField.section_id == section.id
+                ).all()
+                if old_fields:
+                    for old_field in old_fields:
+                        db.delete(old_field)
+                    db.commit()
+                    print(f"  🗑️  已刪除舊欄位：{section.section_key}（準備重新排列）")
 
             # 建立欄位（zh-TW 和 en-US 各一份）
-            for field_data in sec_data.get("fields", []):
-                
+            for field_index, field_data in enumerate(sec_data.get("fields", [])):
+
                 # 👇 1. 判斷欄位類型，給予正確的初始值
                 if field_data.get("type") in ["list", "global_list", "blocks"]:
                     # 如果是清單類型或自由區塊類型，初始值給一個空的 JSON 陣列
@@ -797,8 +830,15 @@ def seed_database():
                             field_type=field_data["type"],
                             locale=locale,
                             label=field_data["label"],
+                            display_order=field_index,
                         )
                         db.add(field)
+                    else:
+                        # 更新已存在欄位的 label 和 display_order（以防有改動）
+                        if existing_field.label != field_data["label"]:
+                            existing_field.label = field_data["label"]
+                        if existing_field.display_order != field_index:
+                            existing_field.display_order = field_index
 
             db.commit()
 
