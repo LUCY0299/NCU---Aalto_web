@@ -998,6 +998,11 @@
     document.getElementById('saveBtnSpinner').style.display = 'inline-block';
     saveBtn.disabled = true;
 
+    // 新增：依照目前的語系，決定儲存成功後的提示文字
+    const successMsg = currentLocale === 'zh-TW' 
+        ? '✅ 儲存成功，記得修改英文版內容' 
+        : '✅ 儲存成功，記得修改中文版內容';
+
     if (DEMO_MODE) {
       await new Promise(r => setTimeout(r, 500));
       // 更新記憶體內的 mock 資料，讓放棄變更可以正確還原
@@ -1011,7 +1016,10 @@
       pendingChanges = {};
       hasUnsavedChanges = false;
       updateSaveStatus(false);
-      showToast('✅ 儲存成功！（展示模式）', 'success');
+      
+      // 套用動態提示訊息（展示模式）
+      showToast(`${successMsg}（展示模式）`, 'success');
+      
       document.getElementById('saveBtnText').textContent = '💾 儲存';
       document.getElementById('saveBtnSpinner').style.display = 'none';
       saveBtn.disabled = false;
@@ -1030,7 +1038,10 @@
         pendingChanges = {};
         hasUnsavedChanges = false;
         updateSaveStatus(false);
-        showToast('✅ 儲存成功！Framer 前台可讀取到最新內容', 'success');
+        
+        // 🚀 套用動態提示訊息（正式連線）
+        showToast(successMsg, 'success');
+        
         await loadPageData();
       } else {
         const err = await res.json();
