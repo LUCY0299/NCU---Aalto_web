@@ -374,12 +374,14 @@ async def update_logo(
                 }
             else:
                 # Framer API 失敗，但數據庫已更新
+                error_detail = f"HTTP {response.status_code}: {response.text[:300]}"
+                print(f"🔴 Framer API 錯誤：{error_detail}")
                 return {
                     "status": "partial_success",
                     "message": f"成功更新 {logo_type}，但 Framer 同步失敗",
                     "logo_type": logo_type,
                     "logo_url": logo_url,
-                    "framer_error": response.text[:200]
+                    "framer_error": error_detail
                 }
         except Exception as e:
             # Framer API 異常，但數據庫已更新
