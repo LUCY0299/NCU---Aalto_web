@@ -615,6 +615,33 @@ SECTIONS_DATA = [
     # ════════════════════
     # 全站版面管理 (layout)
     # ════════════════════
+    # 品牌 Logo 管理（新增）
+    {
+        "page_slug": "layout", "key": "branding", "name": "品牌 Logo 管理", "type": "branding", "order": 0,
+        "fields": [
+            {
+                "key": "admin_logo",
+                "label": "後台管理 Logo（左上角）",
+                "type": "image",
+                "zh": "",
+                "en": ""
+            },
+            {
+                "key": "navbar_logo",
+                "label": "前台導覽列 Logo",
+                "type": "image",
+                "zh": "/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png",
+                "en": "/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png"
+            },
+            {
+                "key": "favicon",
+                "label": "瀏覽器標籤圖示（Favicon）",
+                "type": "image",
+                "zh": "",
+                "en": ""
+            }
+        ]
+    },
     {
         "page_slug": "layout", "key": "navbar", "name": "全站導覽列", "type": "list", "order": 1,
         "fields": [
@@ -624,18 +651,6 @@ SECTIONS_DATA = [
                 "type": "list",
                 "zh": '[]',
                 "en": '[]'
-            }
-        ]
-    },
-    {
-        "page_slug": "layout", "key": "navbar-logo", "name": "導覽列 Logo", "type": "image", "order": 2,
-        "fields": [
-            {
-                "key": "logo_image",
-                "label": "導覽列 Logo 圖片",
-                "type": "image",
-                "zh": "/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png",
-                "en": "/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png"
             }
         ]
     },

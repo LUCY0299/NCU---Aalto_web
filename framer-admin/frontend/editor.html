@@ -380,6 +380,38 @@
 
 <script>
   const API_BASE = 'https://ncu-aalto-web.onrender.com';
+
+  // ─────────────────────────────────────────
+  // 動態加載 Admin Logo
+  // ─────────────────────────────────────────
+  async function loadAdminLogo() {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/pages/layout`);
+      if (!res.ok) return;
+
+      const page = await res.json();
+      const branding = page.sections?.find(s => s.section_key === 'branding');
+
+      if (!branding) return;
+
+      // 找 admin_logo 字段
+      const adminLogoField = branding.content_fields?.find(f => f.field_key === 'admin_logo');
+
+      if (adminLogoField && adminLogoField.field_value) {
+        const sidebarHeader = document.querySelector('.sidebar-header > div');
+        if (sidebarHeader) {
+          sidebarHeader.innerHTML = `
+            <img src="${adminLogoField.field_value}"
+                 alt="Admin Logo"
+                 style="max-width: 200px; max-height: 60px; margin-bottom: 8px; object-fit: contain;">
+          `;
+        }
+      }
+    } catch(e) {
+      console.log('Admin logo 加載失敗（使用預設文字）', e.message);
+    }
+  }
+
   // 定義富文本編輯器的工具列 (對應你的截圖需求)
   const quillToolbarOptions = [
     [{ 'header': [1, 2, 3, false] }], // Paragraph 下拉選單 (H1, H2, H3, 一般段落)
@@ -612,6 +644,7 @@
 
     highlightNavItem();
     await loadPageData();
+    await loadAdminLogo();
 
     // 語系切換按鈕事件監聽
     document.getElementById('tab-zh').addEventListener('click', () => switchLocale('zh-TW'));

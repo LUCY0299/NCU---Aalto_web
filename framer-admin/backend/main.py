@@ -28,6 +28,12 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
 SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET", "uploads")
 
+# ─────────────────────────────────────────
+# Framer API 設定（動態更新網站圖片）
+# ─────────────────────────────────────────
+FRAMER_API_KEY = os.getenv("FRAMER_API_KEY", "")
+FRAMER_SITE_ID = os.getenv("FRAMER_SITE_ID", "")
+
 # 匯入資料庫設定
 from database import engine, Base
 
@@ -37,8 +43,10 @@ import models  # noqa: F401
 # 匯入路由器
 from routers import auth, pages
 from routers.auth import verify_token
-from models import User
+from models import User, Section, ContentField
 from fastapi import Depends
+from database import get_db
+from sqlalchemy.orm import Session
 
 # ─────────────────────────────────────────
 # 建立 FastAPI 應用程式實例
@@ -257,6 +265,215 @@ def _split_text_for_translation(text: str) -> list[str]:
 #                 )
 #
 #     return {"translated": "\n".join(translated_chunks)}
+
+# ─────────────────────────────────────────
+# Logo 管理 API（更新 branding section）
+# ─────────────────────────────────────────
+@app.post("/api/v1/update-logo", tags=["Logo 管理"])
+async def update_logo(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(verify_token),
+):
+    """
+    更新網站 Logo（admin_logo、navbar_logo、favicon）
+
+    請求格式：
+    {
+        "logo_type": "admin_logo" | "navbar_logo" | "favicon",
+        "logo_url": "https://...",
+        "locale": "zh-TW"  # 可選，預設 zh-TW
+    }
+    """
+    logo_type = payload.get("logo_type", "").strip()
+    logo_url = payload.get("logo_url", "").strip()
+    locale = payload.get("locale", "zh-TW")
+
+    # 驗證參數
+    if logo_type not in ("admin_logo", "navbar_logo", "favicon"):
+        raise HTTPException(
+            status_code=400,
+            detail="logo_type 必須是 'admin_logo'、'navbar_logo' 或 'favicon'"
+        )
+
+    if not logo_url:
+        raise HTTPException(status_code=400, detail="logo_url 不能為空")
+
+    # 取得 layout page 中的 branding section
+    from sqlalchemy.orm import Session as SessionType
+    db_session: SessionType = db
+
+    branding_section = db_session.query(Section).filter(
+        Section.section_key == "branding",
+        Section.page.has(slug="layout")
+    ).first()
+
+    if not branding_section:
+        raise HTTPException(status_code=404, detail="找不到 branding section")
+
+    # 找或建立對應的 ContentField
+    content_field = db_session.query(ContentField).filter(
+        ContentField.section_id == branding_section.id,
+        ContentField.field_key == logo_type,
+        ContentField.locale == locale
+    ).first()
+
+    if content_field:
+        content_field.field_value = logo_url
+    else:
+        content_field = ContentField(
+            section_id=branding_section.id,
+            field_key=logo_type,
+            field_value=logo_url,
+            field_type="image",
+            locale=locale,
+            label=f"{logo_type} ({locale})"
+        )
+        db_session.add(content_field)
+
+    db_session.commit()
+    db_session.refresh(content_field)
+
+    # 如果是更新 favicon，同時呼叫 Framer API
+    if logo_type == "favicon":
+        try:
+            if not FRAMER_API_KEY or not FRAMER_SITE_ID:
+                # 如果沒有設定 Framer API，仍然返回成功（只更新數據庫）
+                return {
+                    "status": "success",
+                    "message": f"成功更新 {logo_type}（尚未設定 Framer API）",
+                    "logo_type": logo_type,
+                    "logo_url": logo_url
+                }
+
+            headers = {
+                "Authorization": f"Bearer {FRAMER_API_KEY}",
+                "Content-Type": "application/json"
+            }
+
+            framer_payload = {
+                "siteImage": {
+                    "favicon": logo_url
+                }
+            }
+
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                response = await client.patch(
+                    f"https://api.framer.com/v1/sites/{FRAMER_SITE_ID}",
+                    json=framer_payload,
+                    headers=headers,
+                )
+
+            if response.status_code == 200:
+                return {
+                    "status": "success",
+                    "message": f"成功更新 {logo_type} 並同步到 Framer",
+                    "logo_type": logo_type,
+                    "logo_url": logo_url,
+                    "framer_synced": True
+                }
+            else:
+                # Framer API 失敗，但數據庫已更新
+                return {
+                    "status": "partial_success",
+                    "message": f"成功更新 {logo_type}，但 Framer 同步失敗",
+                    "logo_type": logo_type,
+                    "logo_url": logo_url,
+                    "framer_error": response.text[:200]
+                }
+        except Exception as e:
+            # Framer API 異常，但數據庫已更新
+            return {
+                "status": "partial_success",
+                "message": f"成功更新 {logo_type}，但無法連接 Framer API",
+                "logo_type": logo_type,
+                "logo_url": logo_url,
+                "error": str(e)[:100]
+            }
+
+    return {
+        "status": "success",
+        "message": f"成功更新 {logo_type}",
+        "logo_type": logo_type,
+        "logo_url": logo_url
+    }
+
+
+# ─────────────────────────────────────────
+# Framer 網站圖片更新 API（保留向後相容）
+# ─────────────────────────────────────────
+@app.post("/api/v1/update-framer-image", tags=["Framer"])
+async def update_framer_image(
+    payload: dict,
+    current_user: User = Depends(verify_token),
+):
+    """
+    動態更新 Framer 網站的 Favicon 或 Social Preview 圖片
+
+    需要登入，支援 SEO 和社交分享
+
+    請求格式：
+    {
+        "image_type": "favicon" 或 "socialPreview",
+        "image_url": "https://supabase-url.com/images/xxxxx.png"
+    }
+    """
+    if not FRAMER_API_KEY or not FRAMER_SITE_ID:
+        raise HTTPException(
+            status_code=500,
+            detail="尚未設定 FRAMER_API_KEY / FRAMER_SITE_ID 環境變數"
+        )
+
+    image_type = payload.get("image_type", "").strip()
+    image_url = payload.get("image_url", "").strip()
+
+    if not image_type or image_type not in ("favicon", "socialPreview"):
+        raise HTTPException(
+            status_code=400,
+            detail="image_type 必須是 'favicon' 或 'socialPreview'"
+        )
+
+    if not image_url:
+        raise HTTPException(status_code=400, detail="image_url 不能為空")
+
+    headers = {
+        "Authorization": f"Bearer {FRAMER_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    update_payload = {
+        "siteImage": {
+            image_type: image_url
+        }
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.patch(
+                f"https://api.framer.com/v1/sites/{FRAMER_SITE_ID}",
+                json=update_payload,
+                headers=headers,
+            )
+
+        if response.status_code == 200:
+            return {
+                "status": "success",
+                "message": f"成功更新 {image_type}",
+                "image_type": image_type,
+                "image_url": image_url
+            }
+        else:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"Framer API 回應錯誤：{response.text[:200]}"
+            )
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="Framer API 請求超時")
+    except Exception as e:
+        raise HTTPException(
+            status_code=503,
+            detail=f"無法連接到 Framer API：{str(e)[:100]}"
+        )
 
 # ─────────────────────────────────────────
 # 健康檢查端點（部署平台用）

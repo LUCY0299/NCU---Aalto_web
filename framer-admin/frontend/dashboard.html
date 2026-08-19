@@ -449,6 +449,38 @@
   // ─────────────────────────────────────────
   const DEMO_MODE = false;
 
+  // ─────────────────────────────────────────
+  // 動態加載 Admin Logo
+  // ─────────────────────────────────────────
+  async function loadAdminLogo() {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/pages/layout`);
+      if (!res.ok) return;
+
+      const page = await res.json();
+      const branding = page.sections?.find(s => s.section_key === 'branding');
+
+      if (!branding) return;
+
+      // 找 admin_logo 字段
+      const adminLogoField = branding.content_fields?.find(f => f.field_key === 'admin_logo');
+
+      if (adminLogoField && adminLogoField.field_value) {
+        // 如果有 admin_logo，顯示為圖片
+        const sidebarHeader = document.querySelector('.sidebar-header > div');
+        if (sidebarHeader) {
+          sidebarHeader.innerHTML = `
+            <img src="${adminLogoField.field_value}"
+                 alt="Admin Logo"
+                 style="max-width: 200px; max-height: 60px; margin-bottom: 8px; object-fit: contain;">
+          `;
+        }
+      }
+    } catch(e) {
+      console.log('Admin logo 加載失敗（使用預設文字）', e.message);
+    }
+  }
+
   const MOCK_PAGE_TREE = [
     { id:1,  slug:"home",    title:"首頁",           parent_slug:null,      display_order:1, is_active:true, section_count:3, children:[] },
     { id:2,  slug:"about",   title:"關於 Aalto EMBA", parent_slug:null,      display_order:2, is_active:true, section_count:0, children:[
@@ -535,6 +567,7 @@
     } catch(e) { /* 繼續 */ }
 
     await loadPageTree();
+    await loadAdminLogo();
   });
 
   // ─────────────────────────────────────────
