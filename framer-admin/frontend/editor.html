@@ -689,7 +689,6 @@
   }
 
   /** 渲染左側區塊列表 */
-  /** 渲染左側區塊列表 */
   function renderSectionList(sections) {
     const list = document.getElementById('sectionList');
     if (!sections?.length) {
@@ -700,14 +699,14 @@
       // 判斷目前的狀態
       const isActive = sec.is_active !== false; 
       const btnClass = isActive ? 'btn-secondary' : 'btn-success';
-      
       const btnText = isActive ? '啟用中' : '啟用';
-      
       const itemOpacity = isActive ? '1' : '0.5';
       const statusText = isActive 
           ? '<span style="color:#28a745; font-size:12px; font-weight:600; margin-left:8px;">(已啟用)</span>' 
           : '<span style="color:#dc3545; font-size:12px; font-weight:600; margin-left:8px;">(已停用)</span>';
           
+      const btnColor = isActive ? 'var(--color-primary)' : 'white';
+
       return `
       <div class="section-item" id="sec-item-${sec.id}" style="opacity: ${itemOpacity};"
             onclick="selectSectionById(${sec.id})">
@@ -715,7 +714,7 @@
           <div class="section-item-name">${sec.name} ${statusText}</div>
           <div class="section-item-type">${sec.section_type} · ${sec.section_key}</div>
         </div>
-        <button class="btn ${btnClass}" style="padding: 4px 12px; font-size: 12px;"
+        <button class="btn ${btnClass}" style="padding: 4px 12px; font-size: 12px; color: ${btnColor} !important;"
           onclick="event.stopPropagation(); toggleSectionStatus(${sec.id}, ${!isActive}, '${sec.name}')">
           ${btnText}
         </button>
