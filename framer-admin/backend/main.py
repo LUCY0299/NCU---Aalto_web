@@ -357,12 +357,19 @@ async def update_logo(
                 }
             }
 
+            framer_url = f"https://api.framer.com/v1/sites/{FRAMER_SITE_ID}"
+            print(f"📡 Framer API 請求：")
+            print(f"   URL: {framer_url}")
+            print(f"   Payload: {framer_payload}")
+            print(f"   Site ID: {FRAMER_SITE_ID}")
+
             async with httpx.AsyncClient(timeout=15.0) as client:
                 response = await client.patch(
-                    f"https://api.framer.com/v1/sites/{FRAMER_SITE_ID}",
+                    framer_url,
                     json=framer_payload,
                     headers=headers,
                 )
+                print(f"📤 Framer API 響應：Status {response.status_code}, Body: {response.text[:500]}")
 
             if response.status_code == 200:
                 return {
