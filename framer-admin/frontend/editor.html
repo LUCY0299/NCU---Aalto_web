@@ -702,8 +702,10 @@
       const btnClass = isActive ? 'btn-secondary' : 'btn-success';
       const btnText = isActive ? '停用' : '啟用';
       const itemOpacity = isActive ? '1' : '0.5';
-      const statusText = isActive ? '' : '<span style="color:red; font-size:12px; margin-left:8px;">(已停用)</span>';
-
+      const statusText = isActive 
+          ? '<span style="color:#28a745; font-size:12px; font-weight:600; margin-left:8px;">(已啟用)</span>' 
+          : '<span style="color:#dc3545; font-size:12px; font-weight:600; margin-left:8px;">(已停用)</span>';
+          
       // 👇 關鍵修復：這裡原本塞了整包 JSON，現在只傳乾淨的 sec.id
       return `
       <div class="section-item" id="sec-item-${sec.id}" style="opacity: ${itemOpacity};"

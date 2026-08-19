@@ -549,8 +549,6 @@ body {
 /* 欄位編輯區 */
 .field-editor { display: flex; flex-direction: column; gap: 20px; }
 
-.field-group { }
-
 .field-label {
   display: flex;
   align-items: center;
