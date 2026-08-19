@@ -8,7 +8,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/admin.css">
-  <link rel="stylesheet" href="css/admin.css">
   <!-- 引入 Quill.js 富文本編輯器主題與核心 -->
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
   <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
@@ -690,6 +689,7 @@
   }
 
   /** 渲染左側區塊列表 */
+  /** 渲染左側區塊列表 */
   function renderSectionList(sections) {
     const list = document.getElementById('sectionList');
     if (!sections?.length) {
@@ -700,16 +700,14 @@
       // 判斷目前的狀態
       const isActive = sec.is_active !== false; 
       const btnClass = isActive ? 'btn-secondary' : 'btn-success';
+      
       const btnText = isActive ? '啟用中' : '啟用';
+      
       const itemOpacity = isActive ? '1' : '0.5';
       const statusText = isActive 
           ? '<span style="color:#28a745; font-size:12px; font-weight:600; margin-left:8px;">(已啟用)</span>' 
           : '<span style="color:#dc3545; font-size:12px; font-weight:600; margin-left:8px;">(已停用)</span>';
           
-      const btnStyle = isActive 
-          ? 'padding: 4px 12px; font-size: 12px; color: var(--color-primary); background: transparent; border: 1.5px solid var(--color-primary); border-radius: 6px; cursor: pointer;'
-          : 'padding: 4px 12px; font-size: 12px; color: white; background: #28a745; border: 1.5px solid #28a745; border-radius: 6px; cursor: pointer;';
-
       return `
       <div class="section-item" id="sec-item-${sec.id}" style="opacity: ${itemOpacity};"
             onclick="selectSectionById(${sec.id})">
@@ -717,7 +715,7 @@
           <div class="section-item-name">${sec.name} ${statusText}</div>
           <div class="section-item-type">${sec.section_type} · ${sec.section_key}</div>
         </div>
-        <button style="${btnStyle}"
+        <button class="btn ${btnClass}" style="padding: 4px 12px; font-size: 12px;"
           onclick="event.stopPropagation(); toggleSectionStatus(${sec.id}, ${!isActive}, '${sec.name}')">
           ${btnText}
         </button>
