@@ -698,15 +698,15 @@
     list.innerHTML = sections.sort((a,b) => a.display_order - b.display_order).map(sec => {
       // 判斷目前的狀態
       const isActive = sec.is_active !== false; 
+      
       const btnClass = isActive ? 'btn-secondary' : 'btn-success';
       const btnText = isActive ? '啟用中' : '啟用';
+      
       const itemOpacity = isActive ? '1' : '0.5';
       const statusText = isActive 
           ? '<span style="color:#28a745; font-size:12px; font-weight:600; margin-left:8px;">(已啟用)</span>' 
           : '<span style="color:#dc3545; font-size:12px; font-weight:600; margin-left:8px;">(已停用)</span>';
           
-      const btnColor = isActive ? 'var(--color-primary)' : 'white';
-
       return `
       <div class="section-item" id="sec-item-${sec.id}" style="opacity: ${itemOpacity};"
             onclick="selectSectionById(${sec.id})">
@@ -714,7 +714,8 @@
           <div class="section-item-name">${sec.name} ${statusText}</div>
           <div class="section-item-type">${sec.section_type} · ${sec.section_key}</div>
         </div>
-        <button class="btn ${btnClass}" style="padding: 4px 12px; font-size: 12px; color: ${btnColor} !important;"
+       
+        <button class="btn ${btnClass}" style="padding: 4px 12px; font-size: 12px; white-space: nowrap; flex-shrink: 0;"
           onclick="event.stopPropagation(); toggleSectionStatus(${sec.id}, ${!isActive}, '${sec.name}')">
           ${btnText}
         </button>
