@@ -707,6 +707,8 @@
           ? '<span style="color:#28a745; font-size:12px; font-weight:600; margin-left:8px;">(已啟用)</span>' 
           : '<span style="color:#dc3545; font-size:12px; font-weight:600; margin-left:8px;">(已停用)</span>';
           
+      const textColor = isActive ? 'var(--color-primary)' : 'white';
+
       return `
       <div class="section-item" id="sec-item-${sec.id}" style="opacity: ${itemOpacity};"
             onclick="selectSectionById(${sec.id})">
@@ -715,7 +717,7 @@
           <div class="section-item-type">${sec.section_type} · ${sec.section_key}</div>
         </div>
        
-        <button class="btn ${btnClass}" style="padding: 4px 12px; font-size: 12px; white-space: nowrap; flex-shrink: 0;"
+        <button class="btn ${btnClass}" style="padding: 4px 12px; font-size: 12px; white-space: nowrap; flex-shrink: 0; color: ${textColor} !important;"
           onclick="event.stopPropagation(); toggleSectionStatus(${sec.id}, ${!isActive}, '${sec.name}')">
           ${btnText}
         </button>
