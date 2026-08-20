@@ -2095,7 +2095,7 @@
       }
 
       // ==========================================
-      // 專屬 UI：檔案下載清單
+      // 專屬 UI：檔案下載清單 (file_list)
       // ==========================================
       if (fieldKey === 'file_list') {
         return `
@@ -2108,12 +2108,14 @@
               <button class="btn btn-danger" style="padding:4px 8px; font-size:12px; margin-left: 12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
             </div>
           </div>
-          <div style="display:grid; grid-template-columns: 1fr 120px; gap: 16px; margin-bottom: 12px;">
-            <div>
-              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">檔案標題 (前台顯示名稱)</label>
+
+          <div style="display:flex; gap: 16px; align-items: flex-start; margin-bottom: 12px;">
+            <div style="flex: 2;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">檔案名稱 (前台顯示標題)</label>
+              <!-- 這裡改成單行 input，而不是巨大的 textarea -->
               <input type="text" value="${escape(item.title)}" oninput="updateListItem('${fieldKey}', ${index}, 'title', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="例如: 113學年度招生簡章">
             </div>
-            <div>
+            <div style="flex: 1;">
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">狀態</label>
               <select onchange="updateListItem('${fieldKey}', ${index}, 'is_active', this.value === 'true')" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
                 <option value="true" ${item.is_active !== false ? 'selected' : ''}>🟢 顯示</option>
@@ -2121,10 +2123,16 @@
               </select>
             </div>
           </div>
-          <div>
-            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">上傳檔案 (支援 PDF, Word 等)</label>
-            <input type="file" onchange="uploadListFile(this, '${fieldKey}', ${index})" style="margin-bottom:8px; font-size:12px;">
-            ${item.file_url ? `<div style="font-size:12px; color:#198754; background:#e9ecef; padding:6px 10px; border-radius:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">✅ 已上傳：${item.file_url}</div>` : `<div style="font-size:12px; color:#dc3545;">尚未上傳檔案</div>`}
+
+          <div style="background: #f8f9fa; padding: 12px; border-radius: 4px; border: 1px dashed #ccc;">
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:8px;">上傳檔案 (支援 PDF, Word, PPT, Excel, ZIP 等格式)</label>
+            <input type="file" onchange="uploadListFile(this, '${fieldKey}', ${index})" style="font-size:12px; width: 100%;">
+            
+            <div style="margin-top: 8px;">
+              ${item.file_url 
+                ? `<div style="font-size:12px; color:#0f5132; background:#d1e7dd; padding:6px 10px; border-radius:4px; word-break: break-all;">✅ 目前檔案：${item.file_url}</div>` 
+                : `<div style="font-size:12px; color:#842029; background:#f8d7da; padding:6px 10px; border-radius:4px;">⚠️ 尚未上傳檔案</div>`}
+            </div>
           </div>
         </div>`;
       }
@@ -2417,32 +2425,40 @@
   }
 
 
-  /** 清單專用的純檔案上傳 (不開啟裁切) */
+  /** 清單專用的純檔案上傳 (不開啟圖片裁切，直接上傳) */
   function uploadListFile(fileInput, fieldKey, index) {
     const file = fileInput.files[0];
     if (!file) return;
     doUploadListFile(file, fieldKey, index);
-    fileInput.value = '';
+    fileInput.value = ''; // 允許之後重新選同一個檔案
   }
 
   async function doUploadListFile(file, fieldKey, index) {
     showToast('⏳ 檔案上傳中...', '');
     const formData = new FormData();
+    // 這裡直接把檔案塞進去，不上演裁切邏輯
     formData.append("file", file, file.name);
     formData.append("page_slug", currentPageSlug);
+    
     try {
       const res = await fetch(`${API_BASE}/api/v1/upload`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` },
         body: formData
       });
+      
       if (res.ok) {
         const data = await res.json();
+        // 將回傳的網址存入 file_url 欄位
         updateListItem(fieldKey, index, 'file_url', data.url);
-        renderListItems(fieldKey); 
-        showToast('✅ 檔案上傳成功！', 'success');
-      } else { showToast('❌ 上傳失敗', 'error'); }
-    } catch(e) { showToast('❌ 無法連線到伺服器', 'error'); }
+        renderListItems(fieldKey); // 重新渲染畫面顯示「✅ 已上傳」
+        showToast('✅ 檔案上傳成功！記得按下方儲存。', 'success');
+      } else { 
+        showToast('❌ 檔案上傳失敗', 'error'); 
+      }
+    } catch(e) { 
+      showToast('❌ 無法連線到伺服器', 'error'); 
+    }
   }
   
   // ─── 工具函數 ───
