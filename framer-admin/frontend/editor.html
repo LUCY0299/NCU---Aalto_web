@@ -1069,13 +1069,32 @@
       });
 
       if (res.ok) {
+        // 若是 branding section，額外調用 /api/v1/update-logo 來同步 Framer
+        const section = window._pageData?.sections?.find(s => s.id === currentSectionId);
+        if (section?.section_key === 'branding') {
+          // 針對 favicon、admin_logo、navbar_logo 分別同步到 Framer
+          for (const [key, value] of Object.entries(pendingChanges)) {
+            if (['favicon', 'admin_logo', 'navbar_logo'].includes(key) && value) {
+              await fetch(`${API_BASE}/api/v1/update-logo`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                  logo_type: key,
+                  logo_url: value,
+                  locale: currentLocale
+                })
+              }).catch(err => console.warn(`⚠️  Logo Framer 同步失敗 (${key}):`, err));
+            }
+          }
+        }
+
         pendingChanges = {};
         hasUnsavedChanges = false;
         updateSaveStatus(false);
-        
+
         // 🚀 套用動態提示訊息（正式連線）
         showToast(successMsg, 'success');
-        
+
         await loadPageData();
       } else {
         const err = await res.json();
