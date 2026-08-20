@@ -161,14 +161,25 @@ export default function Navbar(props) {
                     setMenuItems(getDefaultMenu(locale))
                 }
 
-                // ✅ 從 branding section 加載 navbar_logo
+                // ✅ 從 branding section 加載 navbar_logo（優先選擇有值的版本）
                 const brandingSec = data.sections.find(
                     (s) => s.section_key === "branding"
                 )
                 if (brandingSec && brandingSec.content_fields) {
-                    const logoField = brandingSec.content_fields.find(
+                    const logoFields = brandingSec.content_fields.filter(
                         (f) => f.field_key === "navbar_logo"
                     )
+
+                    // 1️⃣ 先找當前 locale 且有值的 logo
+                    let logoField = logoFields.find(
+                        (f) => f.locale === locale && f.field_value
+                    )
+
+                    // 2️⃣ 如果沒找到，找任何有值的版本
+                    if (!logoField) {
+                        logoField = logoFields.find((f) => f.field_value)
+                    }
+
                     if (logoField && logoField.field_value) {
                         setLogoUrl(logoField.field_value)
                     }
