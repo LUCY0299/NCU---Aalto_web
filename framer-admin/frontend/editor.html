@@ -815,7 +815,7 @@
 
     setTimeout(() => {
       fields.forEach(f => {
-        if (['list', 'global_list'].includes(f.field_type)) {
+        if (['list', 'global_list', 'yt_list'].includes(f.field_type)) {
           renderListItems(f.field_key);
         }
         if (f.field_type === 'blocks') {
@@ -835,7 +835,7 @@
     // 強化 escape 避免引號破壞 HTML 屬性
     const val = escapeHtml(field.field_value || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-    if (['list', 'global_list'].includes(field.field_type)) {
+    if (['list', 'global_list', 'yt_list'].includes(field.field_type)) {
       try {
         listFieldStates[field.field_key] = JSON.parse(field.field_value || '[]');
       } catch(e) {
@@ -846,6 +846,7 @@
       if (field.field_key === 'event_list') addBtnLabel = '➕ 新增活動卡片';
       else if (field.field_key === 'alumni_list') addBtnLabel = '➕ 新增校友卡片';
       else if (field.field_key === 'event_sharing_list') addBtnLabel = '➕ 新增活動分享卡片';
+      else if (field.field_key.includes('yt')) addBtnLabel = '➕ 新增影片';
 
       inputHtml = `
         <div id="list-container-${field.field_key}" style="background:#f8f9fa; padding:16px; border-radius:8px; border:1px solid #e9ecef; max-height: 600px; overflow-y: auto;">
@@ -1352,7 +1353,7 @@
   //           markChanged(field.field_key, translated);
   //           successCount++;
   //         }
-  //       } else if (['list', 'global_list'].includes(field.field_type)) {
+  //       } else if (['list', 'global_list', 'yt_list'].includes(field.field_type)) {
   //         const translatedItems = await translateListField(field);
   //         if (translatedItems) {
   //           listFieldStates[field.field_key] = translatedItems;
@@ -2062,6 +2063,10 @@
               <button class="btn btn-danger" style="padding:4px 8px; font-size:12px; margin-left: 12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
             </div>
           </div>
+          <div style="margin-bottom: 12px;">
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">影片標題</label>
+            <input type="text" value="${escape(item.title)}" oninput="updateListItem('${fieldKey}', ${index}, 'title', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="例如: EMBA 計畫介紹">
+          </div>
           <div style="display:flex; gap: 16px; align-items: flex-end;">
             <div style="flex:1;">
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">YouTube 網址 (直接貼上即可)</label>
@@ -2262,7 +2267,7 @@
     } else if (fieldKey.includes('links')) {
       newItem = { title: '', image_url: '', link_url: '', is_active: true };
     } else if (fieldKey.includes('yt')) {
-      newItem = { yt_url: '', is_active: true };
+      newItem = { title: '', yt_url: '', is_active: true };
     } else if (fieldKey.includes('alumni') || fieldKey.includes('sharing')) {
       // 校友卡片極簡化：只有標題、連結、圖片、狀態
       newItem = { title: '', link: '', image_url: '', is_active: true };

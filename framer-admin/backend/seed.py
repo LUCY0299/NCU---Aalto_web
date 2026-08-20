@@ -111,24 +111,17 @@ SECTIONS_DATA = [
 
     {
         "page_slug": "home", 
-        "key": "home_video", 
+        "key": "home_yt_videos",
         "name": "首頁影片", 
-        "type": "text", 
+        "type": "yt_list",
         "order": 3,
         "fields": [
             {
-                "key": "title", 
-                "label": "區塊標題", 
-                "type": "text",
-                "zh": "Aalto EE - Mindset That Shapes the Future",
-                "en": "Aalto EE - Mindset That Shapes the Future"
-            },
-            {
-                "key": "video_url", 
-                "label": "YouTube 影片網址", 
-                "type": "text",
-                "zh": "https://www.youtube.com/watch?v=...", 
-                "en": "https://www.youtube.com/watch?v=..."
+                "key": "home_yt", 
+                "label": "首頁YouTube影片清單", 
+                "type": "yt_list",
+                "zh": "[]", 
+                "en": "[]"
             }
         ]
     },
