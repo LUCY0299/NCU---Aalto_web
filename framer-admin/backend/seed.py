@@ -118,7 +118,7 @@ SECTIONS_DATA = [
         "fields": [
             {
                 "key": "home_yt", 
-                "label": "YouTube影片清單", 
+                "label": "首頁YouTube影片清單", 
                 "type": "yt_list",
                 "zh": "[]", 
                 "en": "[]"
