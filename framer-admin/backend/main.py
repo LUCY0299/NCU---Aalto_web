@@ -15,6 +15,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 import os
 from fastapi import UploadFile, File, Form, HTTPException
 import shutil
@@ -99,6 +100,21 @@ app.add_middleware(
     allow_methods=["*"],          # 允許所有 HTTP 方法（GET/POST/PUT/DELETE）
     allow_headers=["*"],          # 允許所有 Header（包含 Authorization）
 )
+
+# ─────────────────────────────────────────
+# 快取控制中間件：確保內容頁面總是取最新資料
+# ─────────────────────────────────────────
+class NoCacheMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        # 針對所有 /api/v1/pages 和 /api/v1/content 的 GET 請求，禁用快取
+        if request.url.path.startswith(('/api/v1/pages', '/api/v1/content')):
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
+
+app.add_middleware(NoCacheMiddleware)
 
 # ─────────────────────────────────────────
 # 啟動事件：自動建立資料庫資料表

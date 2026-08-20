@@ -387,7 +387,13 @@
   // ─────────────────────────────────────────
   async function loadAdminLogo() {
     try {
-      const res = await fetch(`${API_BASE}/api/v1/pages/layout`);
+      const res = await fetch(`${API_BASE}/api/v1/pages/layout?t=${new Date().getTime()}`, {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0"
+        }
+      });
       if (!res.ok) return;
 
       const page = await res.json();
@@ -402,6 +408,7 @@
         // 更新瀏覽器標籤的 favicon
         const favicon = document.getElementById('adminFavicon');
         if (favicon) {
+          console.log('📌 加載 admin_logo:', adminLogoField.field_value);
           favicon.href = adminLogoField.field_value;
         }
       }
@@ -1069,6 +1076,10 @@
       });
 
       if (res.ok) {
+        // 記錄是否更新了 admin_logo（在 pendingChanges 清空之前）
+        const isBrandingSection = window._pageData?.sections?.find(s => s.id === currentSectionId)?.section_key === 'branding';
+        const updatedAdminLogo = isBrandingSection && pendingChanges.admin_logo;
+
         // 若是 branding section，額外調用 /api/v1/update-logo 來同步 Framer
         const section = window._pageData?.sections?.find(s => s.id === currentSectionId);
         if (section?.section_key === 'branding') {
@@ -1096,6 +1107,11 @@
         showToast(successMsg, 'success');
 
         await loadPageData();
+
+        // 若更新了 admin_logo，重新加載瀏覽器 favicon
+        if (updatedAdminLogo) {
+          setTimeout(() => loadAdminLogo(), 100);
+        }
       } else {
         const err = await res.json();
         showToast(`❌ 儲存失敗：${err.detail}`, 'error');
