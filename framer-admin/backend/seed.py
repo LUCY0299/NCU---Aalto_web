@@ -532,7 +532,7 @@ SECTIONS_DATA = [
              "en": "Downloads"},
             {
                 "key": "file_list",
-                "label": "檔案清單",
+                "label": "上傳檔案清單",
                 "type": "list",
                 "zh": "[]",
                 "en": "[]"
