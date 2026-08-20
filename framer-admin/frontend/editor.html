@@ -387,7 +387,13 @@
   // ─────────────────────────────────────────
   async function loadAdminLogo() {
     try {
-      const res = await fetch(`${API_BASE}/api/v1/pages/layout`);
+      const res = await fetch(`${API_BASE}/api/v1/pages/layout?t=${new Date().getTime()}`, {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0"
+        }
+      });
       if (!res.ok) return;
 
       const page = await res.json();
@@ -395,15 +401,26 @@
 
       if (!branding) return;
 
-      // 找 admin_logo 字段，設置為後台的 favicon
-      const adminLogoField = branding.content_fields?.find(f => f.field_key === 'admin_logo');
+      // 找 admin_logo 字段，優先選擇有值的版本（避免選中空值）
+      const adminLogoFields = branding.content_fields?.filter(f => f.field_key === 'admin_logo') || [];
 
-      if (adminLogoField && adminLogoField.field_value) {
+      // 1️⃣ 先找有值的 admin_logo（任何 locale）
+      let adminLogoField = adminLogoFields.find(f => f.field_value);
+
+      // 2️⃣ 如果沒有有值的，至少用 zh-TW 版本（避免 en-US 空值）
+      if (!adminLogoField) {
+        adminLogoField = adminLogoFields.find(f => f.locale === 'zh-TW');
+      }
+
+      if (adminLogoField?.field_value) {
         // 更新瀏覽器標籤的 favicon
         const favicon = document.getElementById('adminFavicon');
         if (favicon) {
+          console.log('📌 加載 admin_logo:', adminLogoField.field_value);
           favicon.href = adminLogoField.field_value;
         }
+      } else {
+        console.log('⚠️  admin_logo 沒有有效值，保持預設圖示');
       }
     } catch(e) {
       console.log('Admin favicon 加載失敗（使用預設圖示）', e.message);
@@ -1071,6 +1088,10 @@
       });
 
       if (res.ok) {
+        // 記錄是否更新了 admin_logo（在 pendingChanges 清空之前）
+        const isBrandingSection = window._pageData?.sections?.find(s => s.id === currentSectionId)?.section_key === 'branding';
+        const updatedAdminLogo = isBrandingSection && pendingChanges.admin_logo;
+
         // 若是 branding section，額外調用 /api/v1/update-logo 來同步 Framer
         const section = window._pageData?.sections?.find(s => s.id === currentSectionId);
         if (section?.section_key === 'branding') {
@@ -1098,6 +1119,11 @@
         showToast(successMsg, 'success');
 
         await loadPageData();
+
+        // 若更新了 admin_logo，重新加載瀏覽器 favicon
+        if (updatedAdminLogo) {
+          setTimeout(() => loadAdminLogo(), 100);
+        }
       } else {
         const err = await res.json();
         showToast(`❌ 儲存失敗：${err.detail}`, 'error');

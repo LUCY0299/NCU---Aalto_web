@@ -114,6 +114,87 @@ export default function Navbar(props) {
         }
     }, [searchKeyword, currentLocale])
 
+    // 抓取 layout 頁面資料的函數（提取為獨立函數便於重複使用）
+    const fetchLayoutData = async (locale) => {
+        try {
+            const res = await fetch(
+                `${BASE_URL}/api/v1/pages/layout?locale=${locale}&t=${new Date().getTime()}`,
+                {
+                    headers: {
+                        "Cache-Control": "no-cache, no-store, must-revalidate",
+                        Pragma: "no-cache",
+                        Expires: "0",
+                    },
+                }
+            )
+
+            if (!res.ok) {
+                setMenuItems(getDefaultMenu(locale))
+                return
+            }
+
+            const data = await res.json()
+
+            if (data && data.sections) {
+                // 處理導覽列選單
+                const navSec = data.sections.find((s) => s.section_key === "navbar")
+                if (navSec && navSec.content_fields) {
+                    const navField = navSec.content_fields.find(
+                        (f) => f.field_key === "navbar_links"
+                    )
+                    if (navField && navField.field_value) {
+                        let parsed =
+                            typeof navField.field_value === "string"
+                                ? JSON.parse(navField.field_value)
+                                : navField.field_value
+                        if (Array.isArray(parsed)) {
+                            setMenuItems(
+                                parsed.filter((item) => item.is_active !== false)
+                            )
+                        } else {
+                            setMenuItems(getDefaultMenu(locale))
+                        }
+                    } else {
+                        setMenuItems(getDefaultMenu(locale))
+                    }
+                } else {
+                    setMenuItems(getDefaultMenu(locale))
+                }
+
+                // ✅ 從 branding section 加載 navbar_logo（優先選擇有值的版本）
+                const brandingSec = data.sections.find(
+                    (s) => s.section_key === "branding"
+                )
+                if (brandingSec && brandingSec.content_fields) {
+                    const logoFields = brandingSec.content_fields.filter(
+                        (f) => f.field_key === "navbar_logo"
+                    )
+
+                    // 1️⃣ 先找當前 locale 且有值的 logo
+                    let logoField = logoFields.find(
+                        (f) => f.locale === locale && f.field_value
+                    )
+
+                    // 2️⃣ 如果沒找到，找任何有值的版本
+                    if (!logoField) {
+                        logoField = logoFields.find((f) => f.field_value)
+                    }
+
+                    if (logoField && logoField.field_value) {
+                        setLogoUrl(logoField.field_value)
+                    }
+                }
+            } else {
+                setMenuItems(getDefaultMenu(locale))
+            }
+        } catch (err) {
+            console.error("Navbar layout page fetch failed:", err)
+            setMenuItems(getDefaultMenu(locale))
+        } finally {
+            setLoading(false)
+        }
+    }
+
     useEffect(() => {
         const locale = detectLocale()
         setCurrentLocale(locale)
@@ -124,72 +205,15 @@ export default function Navbar(props) {
             return
         }
 
-        fetch(
-            `${BASE_URL}/api/v1/pages/layout?locale=${locale}&t=${new Date().getTime()}`,
-            {
-                headers: {
-                    "Cache-Control": "no-cache",
-                    Pragma: "no-cache",
-                },
-            }
-        )
-            .then((res) => (res.ok ? res.json() : null))
-            .then((data) => {
-                if (data && data.sections) {
-                    const navSec = data.sections.find(
-                        (s) => s.section_key === "navbar"
-                    )
-                    if (navSec && navSec.content_fields) {
-                        const navField = navSec.content_fields.find(
-                            (f) => f.field_key === "navbar_links"
-                        )
-                        if (navField && navField.field_value) {
-                            let parsed =
-                                typeof navField.field_value === "string"
-                                    ? JSON.parse(navField.field_value)
-                                    : navField.field_value
-                            if (Array.isArray(parsed)) {
-                                setMenuItems(
-                                    parsed.filter(
-                                        (item) => item.is_active !== false
-                                    )
-                                )
-                            } else {
-                                setMenuItems(getDefaultMenu(locale))
-                            }
-                        } else {
-                            setMenuItems(getDefaultMenu(locale))
-                        }
-                    } else {
-                        setMenuItems(getDefaultMenu(locale))
-                    }
+        // 初次加載
+        fetchLayoutData(locale)
 
-                    // ✅ 改為從 branding section 加載 navbar_logo
-                    const brandingSec = data.sections.find(
-                        (s) => s.section_key === "branding"
-                    )
-                    if (brandingSec && brandingSec.content_fields) {
-                        const logoField = brandingSec.content_fields.find(
-                            (f) => f.field_key === "navbar_logo"
-                        )
-                        if (logoField && logoField.field_value) {
-                            setLogoUrl(logoField.field_value)
-                        }
-                    }
-                } else {
-                    setMenuItems(getDefaultMenu(locale))
-                }
-            })
-            .catch((err) => {
-                console.error(
-                    "Navbar layout page fetch failed, loading default fallback:",
-                    err
-                )
-                setMenuItems(getDefaultMenu(locale))
-            })
-            .finally(() => {
-                setLoading(false)
-            })
+        // 🔄 每 30 秒自動檢查一次後端資料，確保 Logo 更新能被抓取
+        const refreshInterval = setInterval(() => {
+            fetchLayoutData(locale)
+        }, 30000) // 30 秒
+
+        return () => clearInterval(refreshInterval)
     }, [isCanvas])
 
     const handleLanguageChange = (targetLang) => {

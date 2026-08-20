@@ -648,6 +648,13 @@ SECTIONS_DATA = [
                 "type": "image",
                 "zh": "",
                 "en": ""
+            },
+            {
+                "key": "favicon_title",
+                "label": "【前台】瀏覽器標籤標題",
+                "type": "text",
+                "zh": "NCU × Aalto EMBA",
+                "en": "NCU × Aalto EMBA"
             }
         ]
     },
