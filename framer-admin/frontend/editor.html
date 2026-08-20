@@ -808,7 +808,7 @@
 
     setTimeout(() => {
       fields.forEach(f => {
-        if (['list', 'global_list'].includes(f.field_type)) {
+        if (['list', 'global_list', 'yt_list'].includes(f.field_type)) {
           renderListItems(f.field_key);
         }
         if (f.field_type === 'blocks') {
