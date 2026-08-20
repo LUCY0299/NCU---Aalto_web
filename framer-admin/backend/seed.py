@@ -524,6 +524,22 @@ SECTIONS_DATA = [
         ]
     },
 
+    {
+        "page_slug": "admission", "key": "admission-downloads", "name": "下載區塊", "type": "list", "order": 4,
+        "fields": [
+            {"key": "title", "label": "區塊標題", "type": "text",
+             "zh": "下載",
+             "en": "Downloads"},
+            {
+                "key": "file_list",
+                "label": "檔案清單",
+                "type": "list",
+                "zh": "[]",
+                "en": "[]"
+            }
+        ]
+    },
+
     # ════════════════════
     # 修業與學位 (degree)
     # ════════════════════

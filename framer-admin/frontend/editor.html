@@ -840,6 +840,7 @@
       else if (field.field_key === 'alumni_list') addBtnLabel = '➕ 新增校友卡片';
       else if (field.field_key === 'event_sharing_list') addBtnLabel = '➕ 新增活動分享卡片';
       else if (field.field_key.includes('yt')) addBtnLabel = '➕ 新增影片';
+      else if (field.field_key === 'file_list') addBtnLabel = '➕ 新增檔案';
 
       inputHtml = `
         <div id="list-container-${field.field_key}" style="background:#f8f9fa; padding:16px; border-radius:8px; border:1px solid #e9ecef; max-height: 600px; overflow-y: auto;">
@@ -2068,6 +2069,41 @@
       }
 
       // ==========================================
+      // 專屬 UI：檔案下載清單
+      // ==========================================
+      if (fieldKey === 'file_list') {
+        return `
+        <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h4 style="margin:0; color:#0d6efd; font-size:16px;">📄 檔案項目 #${index + 1}</h4>
+            <div style="display:flex; gap:4px;">
+              <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲ 上移</button>
+              <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, 1)" ${index === items.length - 1 ? 'disabled' : ''}>▼ 下移</button>
+              <button class="btn btn-danger" style="padding:4px 8px; font-size:12px; margin-left: 12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 120px; gap: 16px; margin-bottom: 12px;">
+            <div>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">檔案標題 (前台顯示名稱)</label>
+              <input type="text" value="${escape(item.title)}" oninput="updateListItem('${fieldKey}', ${index}, 'title', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="例如: 113學年度招生簡章">
+            </div>
+            <div>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">狀態</label>
+              <select onchange="updateListItem('${fieldKey}', ${index}, 'is_active', this.value === 'true')" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                <option value="true" ${item.is_active !== false ? 'selected' : ''}>🟢 顯示</option>
+                <option value="false" ${item.is_active === false ? 'selected' : ''}>🔴 隱藏</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">上傳檔案 (支援 PDF, Word 等)</label>
+            <input type="file" onchange="uploadListFile(this, '${fieldKey}', ${index})" style="margin-bottom:8px; font-size:12px;">
+            ${item.file_url ? `<div style="font-size:12px; color:#198754; background:#e9ecef; padding:6px 10px; border-radius:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">✅ 已上傳：${item.file_url}</div>` : `<div style="font-size:12px; color:#dc3545;">尚未上傳檔案</div>`}
+          </div>
+        </div>`;
+      }
+
+      // ==========================================
       // 預設 UI：只剩下「活動卡片 (Event)」會用到這個最複雜的介面
       // ==========================================
       return `
@@ -2252,6 +2288,8 @@
       newItem = { title: '', image_url: '', link_url: '', is_active: true };
     } else if (fieldKey.includes('yt')) {
       newItem = { title: '', yt_url: '', is_active: true };
+    } else if (fieldKey === 'file_list') {
+      newItem = { title: '', file_url: '', is_active: true };
     } else if (fieldKey.includes('alumni') || fieldKey.includes('sharing')) {
       // 校友卡片極簡化：只有標題、連結、圖片、狀態
       newItem = { title: '', link: '', image_url: '', is_active: true };
@@ -2262,7 +2300,7 @@
 
     // 2. 新增位置邏輯
     let newIndex = 0;
-if (fieldKey === 'navbar_links' || fieldKey.includes('intro') || fieldKey.includes('features') || fieldKey.includes('links') || fieldKey.includes('yt') || fieldKey.includes('alumni') || fieldKey.includes('sharing')) {
+    if (fieldKey === 'navbar_links' || fieldKey.includes('intro') || fieldKey.includes('features') || fieldKey.includes('links') || fieldKey.includes('yt') || fieldKey.includes('alumni') || fieldKey.includes('sharing') || fieldKey === 'file_list') {
       // 導覽列、特色、圖片、YT、校友分享：加在最下面 (順序或手動排序新增)
       listFieldStates[fieldKey].push(newItem);
       newIndex = listFieldStates[fieldKey].length - 1; 
@@ -2352,6 +2390,35 @@ if (fieldKey === 'navbar_links' || fieldKey.includes('intro') || fieldKey.includ
     } catch(e) { showToast('❌ 無法連線到上傳伺服器', 'error'); }
   }
 
+
+  /** 清單專用的純檔案上傳 (不開啟裁切) */
+  function uploadListFile(fileInput, fieldKey, index) {
+    const file = fileInput.files[0];
+    if (!file) return;
+    doUploadListFile(file, fieldKey, index);
+    fileInput.value = '';
+  }
+
+  async function doUploadListFile(file, fieldKey, index) {
+    showToast('⏳ 檔案上傳中...', '');
+    const formData = new FormData();
+    formData.append("file", file, file.name);
+    formData.append("page_slug", currentPageSlug);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/upload`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` },
+        body: formData
+      });
+      if (res.ok) {
+        const data = await res.json();
+        updateListItem(fieldKey, index, 'file_url', data.url);
+        renderListItems(fieldKey); 
+        showToast('✅ 檔案上傳成功！', 'success');
+      } else { showToast('❌ 上傳失敗', 'error'); }
+    } catch(e) { showToast('❌ 無法連線到伺服器', 'error'); }
+  }
+  
   // ─── 工具函數 ───
   function escapeHtml(text) {
     const d = document.createElement('div');
