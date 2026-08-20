@@ -825,6 +825,7 @@
   /** 渲染單一欄位 */
   function renderField(field) {
     let inputHtml;
+    // 強化 escape 避免引號破壞 HTML 屬性
     const val = escapeHtml(field.field_value || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
     if (['list', 'global_list', 'yt_list'].includes(field.field_type)) {
