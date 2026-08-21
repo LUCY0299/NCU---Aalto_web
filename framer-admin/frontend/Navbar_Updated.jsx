@@ -161,27 +161,56 @@ export default function Navbar(props) {
                     setMenuItems(getDefaultMenu(locale))
                 }
 
-                // ✅ 從 branding section 加載 navbar_logo（優先選擇有值的版本）
+                // ✅ 從 branding section 加載 navbar_logo、favicon_title、favicon
                 const brandingSec = data.sections.find(
                     (s) => s.section_key === "branding"
                 )
                 if (brandingSec && brandingSec.content_fields) {
+                    // 1️⃣ 處理 navbar_logo（優先選擇有值的版本）
                     const logoFields = brandingSec.content_fields.filter(
                         (f) => f.field_key === "navbar_logo"
                     )
 
-                    // 1️⃣ 先找當前 locale 且有值的 logo
                     let logoField = logoFields.find(
                         (f) => f.locale === locale && f.field_value
                     )
 
-                    // 2️⃣ 如果沒找到，找任何有值的版本
                     if (!logoField) {
                         logoField = logoFields.find((f) => f.field_value)
                     }
 
                     if (logoField && logoField.field_value) {
                         setLogoUrl(logoField.field_value)
+                    }
+
+                    // 2️⃣ 處理 favicon_title（更新瀏覽器標籤標題）
+                    const faviconTitleField = brandingSec.content_fields.find(
+                        (f) => f.field_key === "favicon_title" && f.locale === locale
+                    )
+
+                    if (faviconTitleField && faviconTitleField.field_value) {
+                        document.title = faviconTitleField.field_value
+                    }
+
+                    // 3️⃣ 處理 favicon（更新瀏覽器標籤圖示）
+                    const faviconField = brandingSec.content_fields.find(
+                        (f) => f.field_key === "favicon" && f.locale === locale
+                    )
+
+                    if (faviconField && faviconField.field_value) {
+                        const fullFaviconUrl = faviconField.field_value.startsWith(
+                            "http"
+                        )
+                            ? faviconField.field_value
+                            : `${BASE_URL}${faviconField.field_value}`
+
+                        let link = document.querySelector("link[rel~='icon']")
+                        if (!link) {
+                            link = document.createElement("link")
+                            link.rel = "icon"
+                            document.head.appendChild(link)
+                        }
+                        link.href = fullFaviconUrl
                     }
                 }
             } else {

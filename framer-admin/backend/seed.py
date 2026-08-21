@@ -806,16 +806,8 @@ def seed_database():
                 else:
                     print(f"  ⏭️  區塊已存在：{sec_data['key']}，跳過")
 
-            # 特殊處理：branding section 需要重新排列欄位，刪除舊欄位再重建
-            if sec_data["key"] == "branding" and existing_section:
-                old_fields = db.query(ContentField).filter(
-                    ContentField.section_id == section.id
-                ).all()
-                if old_fields:
-                    for old_field in old_fields:
-                        db.delete(old_field)
-                    db.commit()
-                    print(f"  🗑️  已刪除舊欄位：{section.section_key}（準備重新排列）")
+            # ⚠️ 不再刪除舊欄位，避免覆蓋用戶上傳的圖片
+            # branding section 已存在時，只建立缺少的欄位，不刪除現有欄位
 
             # 建立欄位（zh-TW 和 en-US 各一份）
             for field_index, field_data in enumerate(sec_data.get("fields", [])):
