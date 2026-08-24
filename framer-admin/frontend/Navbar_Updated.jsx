@@ -188,8 +188,27 @@ export default function Navbar(props) {
                         (f) => f.field_key === "favicon_title" && f.locale === locale
                     )
 
+                    console.log('🔍 favicon_title 搜尋結果:', faviconTitleField)
+                    console.log('📍 當前 locale:', locale)
+                    console.log('📋 所有 branding content_fields:', brandingSec.content_fields)
+
                     if (faviconTitleField && faviconTitleField.field_value) {
+                        console.log('✅ 設定瀏覽器標題:', faviconTitleField.field_value)
                         document.title = faviconTitleField.field_value
+
+                        // 防止 Framer 改變 title，設置監視器
+                        const observer = new MutationObserver(() => {
+                            if (document.title !== faviconTitleField.field_value) {
+                                console.log('⚠️ Title 被改變，重新設定:', faviconTitleField.field_value)
+                                document.title = faviconTitleField.field_value
+                            }
+                        })
+                        observer.observe(document.querySelector('head'), {
+                            childList: true,
+                            subtree: true
+                        })
+                    } else {
+                        console.log('❌ 沒有找到 favicon_title 或值為空')
                     }
 
                     // 3️⃣ 處理 favicon（更新瀏覽器標籤圖示）
@@ -306,13 +325,11 @@ export default function Navbar(props) {
 
                 .nav-container {
                     width: 100%;
-                    max-width: 1348px;
                     height: 100px;
                     display: flex;
                     flex-direction: row;
                     justify-content: space-between;
                     align-items: center;
-                    margin: 0 auto;
                     padding: 0 24px;
                     box-sizing: border-box;
                     position: relative;
@@ -1103,6 +1120,8 @@ const headerStyle = {
     position: "sticky",
     top: 0,
     zIndex: 1000,
+    display: "flex",
+    justifyContent: "center",
 }
 
 addPropertyControls(Navbar, {
