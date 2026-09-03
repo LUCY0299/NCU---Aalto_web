@@ -3,7 +3,7 @@
 set -e
 
 # 移動到前端靜態資料夾
-cd framer-admin/frontend
+cd admin/frontend
 
 git init
 git add -A

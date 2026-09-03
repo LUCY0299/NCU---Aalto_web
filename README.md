@@ -21,6 +21,7 @@
 - [登入帳密](#登入帳密)
 - [API 文件](#api-文件)
 - [資料模型](#資料模型)
+- [Framer Code Components](#framer-code-components)
 - [環境切換](#環境切換)
 - [部署指南](#部署指南)
 - [Git 協作流程](#git-協作流程)
@@ -48,15 +49,15 @@
 
 | 項目 | 技術 |
 |------|------|
-| **框架** | FastAPI 0.111.0 |
+| **後端框架** | FastAPI 0.111.0 |
 | **伺服器** | Uvicorn (ASGI) |
 | **ORM** | SQLAlchemy 2.0 |
 | **資料庫（開發）** | SQLite |
 | **資料庫（正式）** | PostgreSQL (Supabase) |
 | **認證** | JWT + passlib/bcrypt |
 | **驗證** | Pydantic |
-| **前端** | 原生 HTML/CSS/JS |
-| **設計工具** | Framer |
+| **後台介面** | 原生 HTML/CSS/JS |
+| **前台設計** | Framer + React (TypeScript) |
 
 ---
 
@@ -71,7 +72,7 @@
 
 ```bash
 git clone https://github.com/LUCY0299/NCU---Aalto_web.git
-cd NCU---Aalto_web/framer-admin/backend
+cd NCU---Aalto_web/admin/backend
 ```
 
 ### 2. 建立虛擬環境
@@ -201,6 +202,36 @@ Page（頁面）
 - **Page**：頁面（首頁、校友分享等），支援無限層級
 - **Section**：頁面內的區塊（Hero、介紹文字等）
 - **ContentField**：區塊內的文字欄位，每個欄位有中英文兩份
+
+---
+
+## Framer Code Components
+
+前台有 **16 個 React (TypeScript) Code Components**，每個都對應後台的不同頁面和區塊。
+
+完整的對應表請查看：**[FRAMER_MAPPING.md](./FRAMER_MAPPING.md)**
+
+### 快速查詢
+
+| Component | 頁面 | 區塊 | 用途 |
+|-----------|------|------|------|
+| LearningInfo.tsx | learning | learning_header | 學習資訊區塊 |
+| EventList.tsx | events | event_news | 活動列表 |
+| EventDetail.tsx | events | event_news | 活動詳情頁 |
+| AlumniList.tsx | alumni | alumni_sharing | 校友分享清單 |
+| ConnectHomeHero.tsx | home | hero | 首頁 Hero |
+| ConnectHomeIntro.tsx | home | intro | 首頁介紹 |
+| Contact.tsx | contact | contact_info | 聯絡資訊 |
+| ... | ... | ... | [詳見 FRAMER_MAPPING.md](./FRAMER_MAPPING.md) |
+
+### FRAMER_MAPPING.md 包含
+
+- ✅ 所有 16 個 Components 的完整清單
+- ✅ 每個 Component 的對應 API 端點
+- ✅ 多語系處理方式
+- ✅ 圖片 URL 處理方法
+- ✅ 常見問題快速除錯
+- ✅ 新增 Component 檢查清單
 
 ---
 
