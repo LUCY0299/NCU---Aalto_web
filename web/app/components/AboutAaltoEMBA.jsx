@@ -1,57 +1,71 @@
-import React, { useState, useEffect } from "react"
-import { addPropertyControls, ControlType } from "framer"
+"use client"; // Next.js 標記為客戶端元件 (因為有使用 useState 和 useEffect)
 
-const BASE_URL = "https://ncu-aalto-web.onrender.com"
+import React, { useState, useEffect } from "react";
+
+const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
 // 自動偵測網址是否為英文版頁面
 const detectLocale = () => {
     if (typeof window !== "undefined") {
-        const path = window.location.pathname.toLowerCase()
+        const path = window.location.pathname.toLowerCase();
         if (path.includes("/en") || path.includes("-en")) {
-            return "en-US"
+            return "en-US";
         }
     }
-    return "zh-TW"
-}
+    return "zh-TW";
+};
 
 // 確認對應最新的 API 路由
-const API_HEADER = `${BASE_URL}/api/v1/content/about-aalto-emba/about_header`
-const API_INTRO = `${BASE_URL}/api/v1/content/about-aalto-emba/about_intro_sec`
-const API_LINKS = `${BASE_URL}/api/v1/content/about-aalto-emba/about_links_sec`
+const API_HEADER = `${BASE_URL}/api/v1/content/about-aalto-emba/about_header`;
+const API_INTRO = `${BASE_URL}/api/v1/content/about-aalto-emba/about_intro_sec`;
+const API_LINKS = `${BASE_URL}/api/v1/content/about-aalto-emba/about_links_sec`;
+const API_YT = `${BASE_URL}/api/v1/content/about-aalto-emba/about_yt_sec`;
 
-export default function AboutAaltoEMBA(props) {
-    const { topPadding, bottomPadding, locale: propLocale } = props
+// 解析 YouTube 網址的工具
+const getYoutubeId = (url) => {
+    if (!url) return null;
+    const regExp =
+        /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+};
 
-    // 若面板設定為 auto，才使用自動偵測網址語系，否則以面板指定為主
+export default function AboutAaltoEMBA({
+    // 將 Framer 的 Property Controls 轉為預設 Props
+    topPadding = 120,
+    bottomPadding = 120,
+    locale: propLocale = "auto",
+}) {
+    // 若設定為 auto，才使用自動偵測網址語系
     const currentLocale =
-        !propLocale || propLocale === "auto" ? detectLocale() : propLocale
+        !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
 
     const [header, setHeader] = useState({
         title: "",
         intro: "",
         heroImage: "",
-    })
-    const [features, setFeatures] = useState({ items: [] })
-    const [links, setLinks] = useState([])
-    const [loading, setLoading] = useState(true)
+    });
+    const [features, setFeatures] = useState({ items: [] });
+    const [links, setLinks] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // 1. 新增：分別控制 3 個區塊的啟用狀態
-    const [isHeaderActive, setIsHeaderActive] = useState(true)
-    const [isIntroActive, setIsIntroActive] = useState(true)
-    const [isLinksActive, setIsLinksActive] = useState(true)
+    // 分別控制 3 個區塊的啟用狀態
+    const [isHeaderActive, setIsHeaderActive] = useState(true);
+    const [isIntroActive, setIsIntroActive] = useState(true);
+    const [isLinksActive, setIsLinksActive] = useState(true);
 
     const getImageUrl = (url) => {
-        if (!url) return ""
+        if (!url) return "";
         return url.startsWith("http")
             ? url
-            : `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`
-    }
+            : `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+    };
 
     useEffect(() => {
-        const timestamp = new Date().getTime()
+        const timestamp = new Date().getTime();
         const fetchOptions = {
             headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
-        }
+        };
 
         // 所有 API 請求皆帶上 locale 參數
         Promise.all([
@@ -77,21 +91,21 @@ export default function AboutAaltoEMBA(props) {
             try {
                 // 2-1. 判斷「標題與大圖」區塊是否停用
                 if (headerData && headerData.is_active === false) {
-                    setIsHeaderActive(false)
+                    setIsHeaderActive(false);
                 } else if (headerData && headerData.fields) {
                     setHeader({
                         title: headerData.fields.title || "",
                         intro: headerData.fields.content || "",
                         heroImage:
                             getImageUrl(headerData.fields.image_url) || "",
-                    })
+                    });
                 }
 
                 // 2-2. 判斷「特色介紹」區塊是否停用
                 if (introData && introData.is_active === false) {
-                    setIsIntroActive(false)
+                    setIsIntroActive(false);
                 } else {
-                    let parsedIntro = []
+                    let parsedIntro = [];
                     if (
                         introData &&
                         introData.fields &&
@@ -100,12 +114,12 @@ export default function AboutAaltoEMBA(props) {
                         parsedIntro =
                             typeof introData.fields.about_intro === "string"
                                 ? JSON.parse(introData.fields.about_intro)
-                                : introData.fields.about_intro
+                                : introData.fields.about_intro;
                     } else if (introData && introData.about_intro) {
                         parsedIntro =
                             typeof introData.about_intro === "string"
                                 ? JSON.parse(introData.about_intro)
-                                : introData.about_intro
+                                : introData.about_intro;
                     }
 
                     if (Array.isArray(parsedIntro)) {
@@ -118,16 +132,16 @@ export default function AboutAaltoEMBA(props) {
                                     item.content ||
                                     item.summary ||
                                     "",
-                            }))
-                        setFeatures({ items: activeIntro })
+                            }));
+                        setFeatures({ items: activeIntro });
                     }
                 }
 
                 // 2-3. 判斷「圖片連結卡片」區塊是否停用
                 if (linksData && linksData.is_active === false) {
-                    setIsLinksActive(false)
+                    setIsLinksActive(false);
                 } else {
-                    let parsedLinks = []
+                    let parsedLinks = [];
                     if (
                         linksData &&
                         linksData.fields &&
@@ -136,12 +150,12 @@ export default function AboutAaltoEMBA(props) {
                         parsedLinks =
                             typeof linksData.fields.about_links === "string"
                                 ? JSON.parse(linksData.fields.about_links)
-                                : linksData.fields.about_links
+                                : linksData.fields.about_links;
                     } else if (linksData && linksData.about_links) {
                         parsedLinks =
                             typeof linksData.about_links === "string"
                                 ? JSON.parse(linksData.about_links)
-                                : linksData.about_links
+                                : linksData.about_links;
                     }
 
                     if (Array.isArray(parsedLinks)) {
@@ -149,14 +163,14 @@ export default function AboutAaltoEMBA(props) {
                             .filter((item) => item.is_active !== false)
                             .map((item) => {
                                 let cardUrl =
-                                    item.link_url || item.summary || "#"
+                                    item.link_url || item.summary || "#";
                                 // 當前台為英文版且為相對路徑時，自動補上 /en 前綴
                                 if (
                                     currentLocale === "en-US" &&
                                     cardUrl.startsWith("/") &&
                                     !cardUrl.startsWith("/en")
                                 ) {
-                                    cardUrl = `/en${cardUrl}`
+                                    cardUrl = `/en${cardUrl}`;
                                 }
 
                                 return {
@@ -169,21 +183,21 @@ export default function AboutAaltoEMBA(props) {
                                         item.image_url || item.image
                                     ),
                                     url: cardUrl,
-                                }
-                            })
-                        setLinks(activeLinks)
+                                };
+                            });
+                        setLinks(activeLinks);
                     }
                 }
             } catch (e) {
-                console.error("❌ [AboutAaltoEMBA] 解析流程發生錯誤", e)
+                console.error("❌ [AboutAaltoEMBA] 解析流程發生錯誤", e);
             } finally {
-                setLoading(false)
+                setLoading(false);
             }
-        })
-    }, [currentLocale])
+        });
+    }, [currentLocale]);
 
-    // 3. 如果三個區塊都被停用，直接回傳 null，讓整個大區塊在畫面上消失！
-    if (!isHeaderActive && !isIntroActive && !isLinksActive) return null
+    // 如果三個區塊都被停用，直接回傳 null，讓整個大區塊在畫面上消失！
+    if (!isHeaderActive && !isIntroActive && !isLinksActive) return null;
 
     if (loading) {
         return (
@@ -202,7 +216,7 @@ export default function AboutAaltoEMBA(props) {
                     ? "Loading Aalto EMBA details..."
                     : "載入 Aalto EMBA 介紹資料中..."}
             </div>
-        )
+        );
     }
 
     return (
@@ -276,7 +290,7 @@ export default function AboutAaltoEMBA(props) {
                 }
             `}</style>
 
-            {/* 4. 如果頭部或特色介紹其中一個有啟用，就渲染上半部背景框 */}
+            {/* 如果頭部或特色介紹其中一個有啟用，就渲染上半部背景框 */}
             {(isHeaderActive || isIntroActive) && (
                 <div className="hero-section">
                     <div className="framer-container">
@@ -380,29 +394,5 @@ export default function AboutAaltoEMBA(props) {
                 </div>
             )}
         </div>
-    )
+    );
 }
-
-addPropertyControls(AboutAaltoEMBA, {
-    locale: {
-        type: ControlType.Enum,
-        title: "語系 (Locale)",
-        options: ["auto", "zh-TW", "en-US"],
-        optionTitles: ["自動偵測 (Auto)", "繁體中文", "English"],
-        defaultValue: "auto",
-    },
-    topPadding: {
-        type: ControlType.Number,
-        title: "上方留白 (最大)",
-        defaultValue: 120,
-        min: 0,
-        max: 200,
-    },
-    bottomPadding: {
-        type: ControlType.Number,
-        title: "下方留白 (最大)",
-        defaultValue: 120,
-        min: 0,
-        max: 200,
-    },
-})

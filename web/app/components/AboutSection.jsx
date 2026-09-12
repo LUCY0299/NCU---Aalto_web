@@ -1,38 +1,42 @@
-import React, { useState, useEffect } from "react"
-import { addPropertyControls, ControlType } from "framer"
+"use client"; // Next.js 標記為客戶端元件 (因為有使用 useState 和 useEffect)
 
-const BASE_URL = "https://ncu-aalto-web.onrender.com"
+import React, { useState, useEffect } from "react";
+
+const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
 // 自動偵測網址是否為英文版頁面
 const detectLocale = () => {
     if (typeof window !== "undefined") {
-        const path = window.location.pathname.toLowerCase()
+        const path = window.location.pathname.toLowerCase();
         if (path.includes("/en") || path.includes("-en")) {
-            return "en-US"
+            return "en-US";
         }
     }
-    return "zh-TW"
-}
+    return "zh-TW";
+};
 
-export default function AboutSection(props) {
-    const { topPadding, bottomPadding, locale: propLocale } = props
-
+export default function AboutSection({
+    // 將 Framer 的 Property Controls 轉為預設 Props
+    topPadding = 100,
+    bottomPadding = 100,
+    locale: propLocale = "auto",
+}) {
     // 若面板設定為 auto，才使用自動偵測網址語系，否則以面板指定為主
     const currentLocale =
-        !propLocale || propLocale === "auto" ? detectLocale() : propLocale
+        !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
 
     // 中英文預設字設定
     const defaultTitle =
         currentLocale === "en-US"
             ? "NCU × Finland Aalto EE\nNurturing Global Corporate Leaders with a Nordic Perspective"
-            : "中央大學 × 芬蘭 Aalto EE\n用北歐視角培養國際級企業領導者"
+            : "中央大學 × 芬蘭 Aalto EE\n用北歐視角培養國際級企業領導者";
 
-    const defaultSubtitle = "Lead with Nordic Vision."
+    const defaultSubtitle = "Lead with Nordic Vision.";
 
     const defaultContent =
         currentLocale === "en-US"
             ? "As global enterprises rapidly move towards internationalization and digital transformation..."
-            : "當全球企業快速邁向國際化與數位轉型..."
+            : "當全球企業快速邁向國際化與數位轉型...";
 
     const [aboutData, setAboutData] = useState({
         title: currentLocale === "en-US" ? "Loading title..." : "載入標題中...",
@@ -44,9 +48,9 @@ export default function AboutSection(props) {
             currentLocale === "en-US" ? "Loading content..." : "載入內文中...",
         imageUrl: "",
         isActive: true,
-    })
+    });
 
-    const [isLoaded, setIsLoaded] = useState(false)
+    const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
         // API 請求帶上 locale 參數
@@ -60,26 +64,26 @@ export default function AboutSection(props) {
             }
         )
             .then((res) => {
-                if (!res.ok) throw new Error(`HTTP 錯誤: ${res.status}`)
-                return res.json()
+                if (!res.ok) throw new Error(`HTTP 錯誤: ${res.status}`);
+                return res.json();
             })
             .then((data) => {
                 if (data.is_active === false) {
-                    setAboutData((prev) => ({ ...prev, isActive: false }))
-                    return
+                    setAboutData((prev) => ({ ...prev, isActive: false }));
+                    return;
                 }
 
-                const fields = data.fields ? data.fields : data
-                let finalUrl = ""
+                const fields = data.fields ? data.fields : data;
+                let finalUrl = "";
 
                 if (fields.image_url) {
-                    const imgPath = fields.image_url
+                    const imgPath = fields.image_url;
                     finalUrl = imgPath.startsWith("http")
                         ? imgPath
-                        : `${BASE_URL}${imgPath}`
-                    finalUrl = `${finalUrl}?t=${new Date().getTime()}`
+                        : `${BASE_URL}${imgPath}`;
+                    finalUrl = `${finalUrl}?t=${new Date().getTime()}`;
                 } else {
-                    finalUrl = " " // 沒有圖片則留空
+                    finalUrl = " "; // 沒有圖片則留空
                 }
 
                 setAboutData({
@@ -88,11 +92,11 @@ export default function AboutSection(props) {
                     content: fields.content || defaultContent,
                     imageUrl: finalUrl,
                     isActive: true,
-                })
-                setIsLoaded(true)
+                });
+                setIsLoaded(true);
             })
             .catch((err) => {
-                console.error("❌ About API 連線失敗:", err)
+                console.error("❌ About API 連線失敗:", err);
                 // 連線失敗時，顯示預設多語系字樣
                 setAboutData({
                     title: defaultTitle,
@@ -100,11 +104,11 @@ export default function AboutSection(props) {
                     content: defaultContent,
                     imageUrl: "",
                     isActive: true,
-                })
-            })
-    }, [currentLocale])
+                });
+            });
+    }, [currentLocale]);
 
-    if (!aboutData.isActive) return null
+    if (!aboutData.isActive) return null;
 
     return (
         <div
@@ -217,29 +221,5 @@ export default function AboutSection(props) {
                 </div>
             </div>
         </div>
-    )
+    );
 }
-
-addPropertyControls(AboutSection, {
-    locale: {
-        type: ControlType.Enum,
-        title: "語系 (Locale)",
-        options: ["auto", "zh-TW", "en-US"],
-        optionTitles: ["自動偵測 (Auto)", "繁體中文", "English"],
-        defaultValue: "auto",
-    },
-    topPadding: {
-        type: ControlType.Number,
-        title: "上方留白 (最大)",
-        defaultValue: 100,
-        min: 0,
-        max: 200,
-    },
-    bottomPadding: {
-        type: ControlType.Number,
-        title: "下方留白 (最大)",
-        defaultValue: 100,
-        min: 0,
-        max: 200,
-    },
-})

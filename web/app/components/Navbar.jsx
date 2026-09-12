@@ -1,63 +1,74 @@
-import React, { useState, useEffect, useRef } from "react"
-import { addPropertyControls, ControlType, RenderTarget } from "framer"
+"use client"; // Next.js 標記為客戶端元件 (因為有使用 useState, useEffect, useRef 以及 window 變數)
 
-const BASE_URL = "https://ncu-aalto-web.onrender.com"
+import React, { useState, useEffect, useRef } from "react";
+
+const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
 // 自動偵測當前網址語系
 const detectLocale = () => {
     if (typeof window !== "undefined") {
-        const path = window.location.pathname.toLowerCase()
+        const path = window.location.pathname.toLowerCase();
         if (path.includes("/en") || path.includes("-en")) {
-            return "en-US"
+            return "en-US";
         }
     }
-    return "zh-TW"
-}
+    return "zh-TW";
+};
 
-export default function Navbar(props) {
-    const { logoImage, activeColor, textColor, bgColor } = props
+const headerStyle = {
+    width: "100%",
+    position: "sticky",
+    top: 0,
+    zIndex: 1000,
+    display: "flex",
+    justifyContent: "center",
+};
 
-    const isCanvas = RenderTarget.current() === RenderTarget.canvas
-    const [currentLocale, setCurrentLocale] = useState("zh-TW")
-    const [menuItems, setMenuItems] = useState(
-        isCanvas ? getDefaultMenu("zh-TW") : []
-    )
-    const [logoUrl, setLogoUrl] = useState("")
-    const [loading, setLoading] = useState(!isCanvas)
-    const [mobileOpen, setMobileOpen] = useState(false)
+export default function Navbar({
+    // 將 Framer 的 Property Controls 轉為預設 Props
+    logoImage,
+    activeColor = "#d49b38",
+    textColor = "#111111",
+    bgColor = "#FAF9F5",
+}) {
+    const [currentLocale, setCurrentLocale] = useState("zh-TW");
+    const [menuItems, setMenuItems] = useState([]);
+    const [logoUrl, setLogoUrl] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [mobileOpen, setMobileOpen] = useState(false);
 
     // 手機版選單摺疊狀態
-    const [activeAccordion, setActiveAccordion] = useState(null)
+    const [activeAccordion, setActiveAccordion] = useState(null);
 
     // 搜尋功能相關 State 與 Refs
-    const [searchOpen, setSearchOpen] = useState(false)
-    const [searchKeyword, setSearchKeyword] = useState("")
-    const [searchResults, setSearchResults] = useState([])
-    const [searchLoading, setSearchLoading] = useState(false)
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [searchKeyword, setSearchKeyword] = useState("");
+    const [searchResults, setSearchResults] = useState([]);
+    const [searchLoading, setSearchLoading] = useState(false);
 
-    const searchContainerRef = useRef(null)
-    const searchDebounceTimer = useRef(null)
+    const searchContainerRef = useRef(null);
+    const searchDebounceTimer = useRef(null);
 
     // 關閉搜尋
     const closeSearch = () => {
-        setSearchOpen(false)
-        setSearchKeyword("")
-        setSearchResults([])
-    }
+        setSearchOpen(false);
+        setSearchKeyword("");
+        setSearchResults([]);
+    };
 
     // 點擊搜尋結果的跳轉邏輯
     const handleItemClick = (url) => {
-        if (typeof window === "undefined" || !url) return
-        let finalUrl = url
+        if (typeof window === "undefined" || !url) return;
+        let finalUrl = url;
         if (
             currentLocale === "en-US" &&
             finalUrl.startsWith("/") &&
             !finalUrl.startsWith("/en")
         ) {
-            finalUrl = `/en${finalUrl}`
+            finalUrl = `/en${finalUrl}`;
         }
-        window.location.href = finalUrl
-    }
+        window.location.href = finalUrl;
+    };
 
     // 點擊選單外部關閉搜尋
     useEffect(() => {
@@ -66,53 +77,55 @@ export default function Navbar(props) {
                 searchContainerRef.current &&
                 !searchContainerRef.current.contains(event.target)
             ) {
-                closeSearch()
+                closeSearch();
             }
-        }
-        document.addEventListener("mousedown", handleClickOutside)
+        };
+        document.addEventListener("mousedown", handleClickOutside);
         return () => {
-            document.removeEventListener("mousedown", handleClickOutside)
-        }
-    }, [])
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     // 防抖搜尋邏輯
     useEffect(() => {
         if (searchDebounceTimer.current) {
-            clearTimeout(searchDebounceTimer.current)
+            clearTimeout(searchDebounceTimer.current);
         }
 
-        const trimmed = searchKeyword.trim()
+        const trimmed = searchKeyword.trim();
         if (!trimmed) {
-            setSearchResults([])
-            setSearchLoading(false)
-            return
+            setSearchResults([]);
+            setSearchLoading(false);
+            return;
         }
 
-        setSearchLoading(true)
+        setSearchLoading(true);
         searchDebounceTimer.current = setTimeout(() => {
             fetch(
-                `${BASE_URL}/api/v1/search?q=${encodeURIComponent(trimmed)}&locale=${currentLocale}&t=${new Date().getTime()}`
+                `${BASE_URL}/api/v1/search?q=${encodeURIComponent(
+                    trimmed
+                )}&locale=${currentLocale}&t=${new Date().getTime()}`
             )
                 .then((res) => (res.ok ? res.json() : []))
                 .then((data) => {
                     if (Array.isArray(data)) {
-                        setSearchResults(data)
+                        setSearchResults(data);
                     }
                 })
                 .catch((err) => {
-                    console.error("Search failed:", err)
+                    console.error("Search failed:", err);
                 })
                 .finally(() => {
-                    setSearchLoading(false)
-                })
-        }, 300)
+                    setSearchLoading(false);
+                });
+        }, 300);
 
         return () => {
             if (searchDebounceTimer.current) {
-                clearTimeout(searchDebounceTimer.current)
+                clearTimeout(searchDebounceTimer.current);
             }
-        }
-    }, [searchKeyword, currentLocale])
+        };
+    }, [searchKeyword, currentLocale]);
 
     // 抓取 layout 頁面資料的函數（提取為獨立函數便於重複使用）
     const fetchLayoutData = async (locale) => {
@@ -126,65 +139,65 @@ export default function Navbar(props) {
                         Expires: "0",
                     },
                 }
-            )
+            );
 
             if (!res.ok) {
-                setMenuItems(getDefaultMenu(locale))
-                return
+                setMenuItems(getDefaultMenu(locale));
+                return;
             }
 
-            const data = await res.json()
+            const data = await res.json();
 
             if (data && data.sections) {
                 // 處理導覽列選單
                 const navSec = data.sections.find(
                     (s) => s.section_key === "navbar"
-                )
+                );
                 if (navSec && navSec.content_fields) {
                     const navField = navSec.content_fields.find(
                         (f) => f.field_key === "navbar_links"
-                    )
+                    );
                     if (navField && navField.field_value) {
                         let parsed =
                             typeof navField.field_value === "string"
                                 ? JSON.parse(navField.field_value)
-                                : navField.field_value
+                                : navField.field_value;
                         if (Array.isArray(parsed)) {
                             setMenuItems(
                                 parsed.filter(
                                     (item) => item.is_active !== false
                                 )
-                            )
+                            );
                         } else {
-                            setMenuItems(getDefaultMenu(locale))
+                            setMenuItems(getDefaultMenu(locale));
                         }
                     } else {
-                        setMenuItems(getDefaultMenu(locale))
+                        setMenuItems(getDefaultMenu(locale));
                     }
                 } else {
-                    setMenuItems(getDefaultMenu(locale))
+                    setMenuItems(getDefaultMenu(locale));
                 }
 
                 // ✅ 從 branding section 加載 navbar_logo、favicon_title、favicon
                 const brandingSec = data.sections.find(
                     (s) => s.section_key === "branding"
-                )
+                );
                 if (brandingSec && brandingSec.content_fields) {
                     // 1️⃣ 處理 navbar_logo（優先選擇有值的版本）
                     const logoFields = brandingSec.content_fields.filter(
                         (f) => f.field_key === "navbar_logo"
-                    )
+                    );
 
                     let logoField = logoFields.find(
                         (f) => f.locale === locale && f.field_value
-                    )
+                    );
 
                     if (!logoField) {
-                        logoField = logoFields.find((f) => f.field_value)
+                        logoField = logoFields.find((f) => f.field_value);
                     }
 
                     if (logoField && logoField.field_value) {
-                        setLogoUrl(logoField.field_value)
+                        setLogoUrl(logoField.field_value);
                     }
 
                     // 2️⃣ 處理 favicon_title（更新瀏覽器標籤標題）
@@ -192,123 +205,98 @@ export default function Navbar(props) {
                         (f) =>
                             f.field_key === "favicon_title" &&
                             f.locale === locale
-                    )
-
-                    console.log("🔍 favicon_title 搜尋結果:", faviconTitleField)
-                    console.log("📍 當前 locale:", locale)
-                    console.log(
-                        "📋 所有 branding content_fields:",
-                        brandingSec.content_fields
-                    )
+                    );
 
                     if (faviconTitleField && faviconTitleField.field_value) {
-                        console.log(
-                            "✅ 設定瀏覽器標題:",
-                            faviconTitleField.field_value
-                        )
-                        document.title = faviconTitleField.field_value
+                        document.title = faviconTitleField.field_value;
 
-                        // 防止 Framer 改變 title，設置監視器
+                        // 防止改變 title，設置監視器
                         const observer = new MutationObserver(() => {
                             if (
-                                document.title !== faviconTitleField.field_value
+                                document.title !==
+                                faviconTitleField.field_value
                             ) {
-                                console.log(
-                                    "⚠️ Title 被改變，重新設定:",
-                                    faviconTitleField.field_value
-                                )
-                                document.title = faviconTitleField.field_value
+                                document.title = faviconTitleField.field_value;
                             }
-                        })
+                        });
                         observer.observe(document.querySelector("head"), {
                             childList: true,
                             subtree: true,
-                        })
-                    } else {
-                        console.log("❌ 沒有找到 favicon_title 或值為空")
+                        });
                     }
 
                     // 3️⃣ 處理 favicon（更新瀏覽器標籤圖示）
                     const faviconField = brandingSec.content_fields.find(
                         (f) => f.field_key === "favicon" && f.locale === locale
-                    )
+                    );
 
                     if (faviconField && faviconField.field_value) {
                         const fullFaviconUrl =
                             faviconField.field_value.startsWith("http")
                                 ? faviconField.field_value
-                                : `${BASE_URL}${faviconField.field_value}`
+                                : `${BASE_URL}${faviconField.field_value}`;
 
-                        let link = document.querySelector("link[rel~='icon']")
+                        let link = document.querySelector("link[rel~='icon']");
                         if (!link) {
-                            link = document.createElement("link")
-                            link.rel = "icon"
-                            document.head.appendChild(link)
+                            link = document.createElement("link");
+                            link.rel = "icon";
+                            document.head.appendChild(link);
                         }
-                        link.href = fullFaviconUrl
+                        link.href = fullFaviconUrl;
                     }
                 }
             } else {
-                setMenuItems(getDefaultMenu(locale))
+                setMenuItems(getDefaultMenu(locale));
             }
         } catch (err) {
-            console.error("Navbar layout page fetch failed:", err)
-            setMenuItems(getDefaultMenu(locale))
+            console.error("Navbar layout page fetch failed:", err);
+            setMenuItems(getDefaultMenu(locale));
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
-    }
+    };
 
     useEffect(() => {
-        const locale = detectLocale()
-        setCurrentLocale(locale)
-
-        if (isCanvas) {
-            setMenuItems(getDefaultMenu(locale))
-            setLoading(false)
-            return
-        }
+        const locale = detectLocale();
+        setCurrentLocale(locale);
 
         // 初次加載
-        fetchLayoutData(locale)
+        fetchLayoutData(locale);
 
         // 🔄 每 30 秒自動檢查一次後端資料，確保 Logo 更新能被抓取
         const refreshInterval = setInterval(() => {
-            fetchLayoutData(locale)
-        }, 30000) // 30 秒
+            fetchLayoutData(locale);
+        }, 30000); // 30 秒
 
-        return () => clearInterval(refreshInterval)
-    }, [isCanvas])
+        return () => clearInterval(refreshInterval);
+    }, []);
 
     const handleLanguageChange = (targetLang) => {
-        if (typeof window === "undefined") return
-        const currentPath = window.location.pathname
-        const currentSearch = window.location.search
+        if (typeof window === "undefined") return;
+        const currentPath = window.location.pathname;
+        const currentSearch = window.location.search;
 
         if (targetLang === "en-US") {
             if (!currentPath.startsWith("/en/") && currentPath !== "/en") {
                 const newPath =
-                    currentPath === "/" ? "/en" : `/en${currentPath}`
-                window.location.href = newPath + currentSearch
+                    currentPath === "/" ? "/en" : `/en${currentPath}`;
+                window.location.href = newPath + currentSearch;
             }
         } else {
             if (currentPath.startsWith("/en")) {
-                let newPath = currentPath.substring(3)
+                let newPath = currentPath.substring(3);
                 if (!newPath.startsWith("/")) {
-                    newPath = "/" + newPath
+                    newPath = "/" + newPath;
                 }
-                window.location.href = newPath + currentSearch
+                window.location.href = newPath + currentSearch;
             }
         }
-    }
+    };
 
     const isLinkActive = (path, index) => {
-        if (isCanvas) {
-            return index === 0
-        }
-        if (typeof window === "undefined") return false
-        const currentPath = window.location.pathname.toLowerCase()
-        const cleanPath = path.toLowerCase()
+        if (typeof window === "undefined") return false;
+        const currentPath = window.location.pathname.toLowerCase();
+        const cleanPath = path.toLowerCase();
 
         if (cleanPath === "/" || cleanPath === "/en") {
             return (
@@ -316,19 +304,19 @@ export default function Navbar(props) {
                 currentPath === "/en" ||
                 currentPath === "" ||
                 currentPath.endsWith("/index.html")
-            )
+            );
         }
-        return currentPath.startsWith(cleanPath)
-    }
+        return currentPath.startsWith(cleanPath);
+    };
 
-    const isEn = currentLocale === "en-US"
+    const isEn = currentLocale === "en-US";
 
     const resolvedLogoUrl = logoUrl
         ? logoUrl.startsWith("http")
             ? logoUrl
             : `${BASE_URL}${logoUrl}`
         : logoImage ||
-          "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png"
+          "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png";
 
     return (
         <header style={{ ...headerStyle, backgroundColor: bgColor }}>
@@ -655,27 +643,29 @@ export default function Navbar(props) {
                     <ul className="nav-menu">
                         {menuItems.map((item, index) => {
                             const hasDropdown =
-                                item.dropdown && item.dropdown.length > 0
-                            const active = isLinkActive(item.link_url, index)
-                            const isAccordionOpen = activeAccordion === index
+                                item.dropdown && item.dropdown.length > 0;
+                            const active = isLinkActive(item.link_url, index);
+                            const isAccordionOpen = activeAccordion === index;
 
                             return (
                                 <li key={index} className="nav-item">
                                     <a
                                         href={item.link_url}
-                                        className={`nav-link ${active ? "active" : ""}`}
+                                        className={`nav-link ${
+                                            active ? "active" : ""
+                                        }`}
                                         onClick={(e) => {
                                             if (
                                                 hasDropdown &&
                                                 typeof window !== "undefined" &&
                                                 window.innerWidth <= 1199
                                             ) {
-                                                e.preventDefault()
+                                                e.preventDefault();
                                                 setActiveAccordion(
                                                     isAccordionOpen
                                                         ? null
                                                         : index
-                                                )
+                                                );
                                             }
                                         }}
                                     >
@@ -708,7 +698,9 @@ export default function Navbar(props) {
 
                                     {hasDropdown && (
                                         <div
-                                            className={`dropdown-menu ${isAccordionOpen ? "open" : ""}`}
+                                            className={`dropdown-menu ${
+                                                isAccordionOpen ? "open" : ""
+                                            }`}
                                         >
                                             {item.dropdown.map((sub, sIdx) => (
                                                 <a
@@ -722,7 +714,7 @@ export default function Navbar(props) {
                                         </div>
                                     )}
                                 </li>
-                            )
+                            );
                         })}
                     </ul>
 
@@ -768,10 +760,10 @@ export default function Navbar(props) {
                             <button
                                 onClick={() => {
                                     if (!searchOpen) {
-                                        setSearchOpen(true)
+                                        setSearchOpen(true);
                                     } else {
                                         if (!searchKeyword.trim()) {
-                                            closeSearch()
+                                            closeSearch();
                                         }
                                     }
                                 }}
@@ -871,11 +863,11 @@ export default function Navbar(props) {
                                                 }}
                                                 onMouseEnter={(e) => {
                                                     e.currentTarget.style.backgroundColor =
-                                                        "#f5f5f5"
+                                                        "#f5f5f5";
                                                 }}
                                                 onMouseLeave={(e) => {
                                                     e.currentTarget.style.backgroundColor =
-                                                        "transparent"
+                                                        "transparent";
                                                 }}
                                             >
                                                 <div
@@ -1011,7 +1003,7 @@ export default function Navbar(props) {
                 </button>
             </div>
         </header>
-    )
+    );
 }
 
 function getDefaultMenu(locale) {
@@ -1075,7 +1067,7 @@ function getDefaultMenu(locale) {
                 ],
             },
             { title: "Contact", link_url: "/en/contact", is_active: true },
-        ]
+        ];
     }
     return [
         { title: "首頁 Home", link_url: "/", is_active: true },
@@ -1128,36 +1120,5 @@ function getDefaultMenu(locale) {
             ],
         },
         { title: "聯絡方式", link_url: "/contact", is_active: true },
-    ]
+    ];
 }
-
-const headerStyle = {
-    width: "100%",
-    position: "sticky",
-    top: 0,
-    zIndex: 1000,
-    display: "flex",
-    justifyContent: "center",
-}
-
-addPropertyControls(Navbar, {
-    logoImage: {
-        type: ControlType.Image,
-        title: "Logo 圖片 (畫布預設備用)",
-    },
-    activeColor: {
-        type: ControlType.Color,
-        title: "選單啟用/滑過顏色",
-        defaultValue: "#d49b38",
-    },
-    textColor: {
-        type: ControlType.Color,
-        title: "選單字體顏色",
-        defaultValue: "#111111",
-    },
-    bgColor: {
-        type: ControlType.Color,
-        title: "背景顏色",
-        defaultValue: "#FAF9F5",
-    },
-})

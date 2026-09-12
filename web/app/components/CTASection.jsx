@@ -1,36 +1,36 @@
-import React, { useState, useEffect } from "react"
-import { addPropertyControls, ControlType } from "framer"
+"use client"; // Next.js 標記為客戶端元件 (因為有使用 useState 和 useEffect)
 
-const BASE_URL = "https://ncu-aalto-web.onrender.com"
+import React, { useState, useEffect } from "react";
+
+const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
 // 自動偵測當前網址語系
 const detectLocale = () => {
     if (typeof window !== "undefined") {
-        const path = window.location.pathname.toLowerCase()
+        const path = window.location.pathname.toLowerCase();
         if (path.includes("/en") || path.includes("-en")) {
-            return "en-US"
+            return "en-US";
         }
     }
-    return "zh-TW"
-}
+    return "zh-TW";
+};
 
-export default function CTASection(props) {
-    const {
-        titleText,
-        buttonText,
-        buttonLink,
-        leftImage,
-        rightImage,
-        leftDecoImage,
-        rightDecoImage,
-        sectionBg,
-        ctaTitleColor,
-        locale: propLocale,
-    } = props
-
+export default function CTASection({
+    // 將 Framer 的 Property Controls 轉為預設 Props
+    titleText = "",
+    buttonText = "",
+    buttonLink = "",
+    leftImage,
+    rightImage,
+    leftDecoImage,
+    rightDecoImage,
+    sectionBg = "#602A80",
+    ctaTitleColor = "#ffffff",
+    locale: propLocale = "auto",
+}) {
     const currentLocale =
-        !propLocale || propLocale === "auto" ? detectLocale() : propLocale
-    const isEn = currentLocale === "en-US"
+        !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
+    const isEn = currentLocale === "en-US";
 
     // 儲存從後台 API 取得的動態內容
     const [dbContent, setDbContent] = useState({
@@ -39,21 +39,21 @@ export default function CTASection(props) {
         buttonLink: "",
         leftImage: "",
         rightImage: "",
-    })
+    });
 
     // 區塊整體的啟用狀態
-    const [isActive, setIsActive] = useState(true)
+    const [isActive, setIsActive] = useState(true);
 
     const getImageUrl = (url) => {
-        if (!url) return ""
+        if (!url) return "";
         return url.startsWith("http")
             ? url
-            : `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`
-    }
+            : `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+    };
 
     // 從 Supabase 後台 API 讀取內容
     useEffect(() => {
-        const timestamp = new Date().getTime()
+        const timestamp = new Date().getTime();
         fetch(
             `${BASE_URL}/api/v1/content/layout/cta_section?locale=${currentLocale}&t=${timestamp}`,
             {
@@ -63,8 +63,8 @@ export default function CTASection(props) {
             .then((res) => (res.ok ? res.json() : null))
             .then((data) => {
                 if (data && data.is_active === false) {
-                    setIsActive(false)
-                    return
+                    setIsActive(false);
+                    return;
                 }
 
                 if (data && data.fields) {
@@ -74,55 +74,55 @@ export default function CTASection(props) {
                         buttonLink: data.fields.button_link || "",
                         leftImage: data.fields.left_image || "",
                         rightImage: data.fields.right_image || "",
-                    })
+                    });
                 }
             })
             .catch((err) => {
-                console.error("CTA Section API fetch failed:", err)
-            })
-    }, [currentLocale])
+                console.error("CTA Section API fetch failed:", err);
+            });
+    }, [currentLocale]);
 
-    if (!isActive) return null
+    if (!isActive) return null;
 
     const resolvedTitle =
         dbContent.title ||
         titleText ||
         (isEn
             ? "Join us and unlock new perspectives on Nordic innovation management!"
-            : "跟著我們，一起解鎖北歐\n創新管理新思維！")
+            : "跟著我們，一起解鎖北歐\n創新管理新思維！");
 
     const resolvedButtonText =
-        dbContent.buttonText || buttonText || (isEn ? "Contact Us" : "聯絡我們")
+        dbContent.buttonText || buttonText || (isEn ? "Contact Us" : "聯絡我們");
 
     let resolvedButtonLink =
         dbContent.buttonLink ||
         buttonLink ||
-        (isEn ? "/en/contact" : "/contact")
+        (isEn ? "/en/contact" : "/contact");
 
     if (
         isEn &&
         resolvedButtonLink.startsWith("/") &&
         !resolvedButtonLink.startsWith("/en")
     ) {
-        resolvedButtonLink = `/en${resolvedButtonLink}`
+        resolvedButtonLink = `/en${resolvedButtonLink}`;
     }
 
     const resolvedLeftImage =
         getImageUrl(dbContent.leftImage) ||
         leftImage ||
-        "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-aalto/9a41fe87-23a8-448c-bc67-e4ed7203e7cf.jpg"
+        "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-aalto/9a41fe87-23a8-448c-bc67-e4ed7203e7cf.jpg";
 
     const resolvedRightImage =
         getImageUrl(dbContent.rightImage) ||
         rightImage ||
-        "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-ncu/7b6f1d3b-bf99-4ba3-ab27-512c0a9693be.jpg"
+        "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-ncu/7b6f1d3b-bf99-4ba3-ab27-512c0a9693be.jpg";
 
     const handleButtonClick = (e) => {
-        e.preventDefault()
+        e.preventDefault();
         if (typeof window !== "undefined") {
-            window.location.href = resolvedButtonLink
+            window.location.href = resolvedButtonLink;
         }
-    }
+    };
 
     return (
         <section className="cta-section">
@@ -412,59 +412,5 @@ export default function CTASection(props) {
                 </div>
             </div>
         </section>
-    )
+    );
 }
-
-addPropertyControls(CTASection, {
-    locale: {
-        type: ControlType.Enum,
-        title: "語系 (Locale)",
-        options: ["auto", "zh-TW", "en-US"],
-        optionTitles: ["自動偵測 (Auto)", "繁體中文", "English"],
-        defaultValue: "auto",
-    },
-    titleText: {
-        type: ControlType.String,
-        title: "標題文字 (預備)",
-        defaultValue: "",
-        placeholder: "預設依後台/語系呈現...",
-    },
-    buttonText: {
-        type: ControlType.String,
-        title: "按鈕文字 (預備)",
-        defaultValue: "",
-        placeholder: "預設依後台/語系呈現...",
-    },
-    buttonLink: {
-        type: ControlType.String,
-        title: "自訂跳轉連結 (預備)",
-        defaultValue: "",
-        placeholder: "預設依後台/語系呈現...",
-    },
-    leftImage: {
-        type: ControlType.Image,
-        title: "左側圖片 (預備)",
-    },
-    leftDecoImage: {
-        type: ControlType.Image,
-        title: "左側線條圖片 (可選)",
-    },
-    rightImage: {
-        type: ControlType.Image,
-        title: "右側圖片 (預備)",
-    },
-    rightDecoImage: {
-        type: ControlType.Image,
-        title: "右側線條圖片 (可選)",
-    },
-    sectionBg: {
-        type: ControlType.Color,
-        title: "背景顏色",
-        defaultValue: "#602A80",
-    },
-    ctaTitleColor: {
-        type: ControlType.Color,
-        title: "文字顏色",
-        defaultValue: "#ffffff",
-    },
-})

@@ -1,51 +1,51 @@
-import React, { useState, useEffect } from "react"
-import { addPropertyControls, ControlType } from "framer"
+"use client"; // Next.js 標記為客戶端元件 (因為有使用 useState 和 useEffect)
 
-const BASE_URL = "https://ncu-aalto-web.onrender.com"
+import React, { useState, useEffect } from "react";
+
+const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
 // 自動偵測網址是否為英文版頁面
 const detectLocale = () => {
     if (typeof window !== "undefined") {
-        const path = window.location.pathname.toLowerCase()
+        const path = window.location.pathname.toLowerCase();
         if (path.includes("/en") || path.includes("-en")) {
-            return "en-US"
+            return "en-US";
         }
     }
-    return "zh-TW"
-}
+    return "zh-TW";
+};
 
 // 確認對應最新的 API 路由
-const API_HEADER = `${BASE_URL}/api/v1/content/about-aalto/about_header`
-const API_INTRO = `${BASE_URL}/api/v1/content/about-aalto/about_intro_sec`
-const API_LINKS = `${BASE_URL}/api/v1/content/about-aalto/about_links_sec`
-const API_YT = `${BASE_URL}/api/v1/content/about-aalto/about_yt_sec`
+const API_HEADER = `${BASE_URL}/api/v1/content/about-aalto/about_header`;
+const API_INTRO = `${BASE_URL}/api/v1/content/about-aalto/about_intro_sec`;
+const API_LINKS = `${BASE_URL}/api/v1/content/about-aalto/about_links_sec`;
+const API_YT = `${BASE_URL}/api/v1/content/about-aalto/about_yt_sec`;
 
 // 解析 YouTube 網址的工具
 const getYoutubeId = (url) => {
-    if (!url) return null
+    if (!url) return null;
     const regExp =
-        /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
-    const match = url.match(regExp)
-    return match && match[2].length === 11 ? match[2] : null
-}
+        /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+};
 
-export default function AboutAalto(props) {
-    const {
-        topPadding,
-        bottomPadding,
-        showLinks = true,
-        showYoutube = true,
-        locale: propLocale, // 可在 Framer 面板手動指定語系
-    } = props
-
-    // 若面板設定為 auto，才使用自動偵測網址語系，否則以面板指定為主
+export default function AboutAalto({
+    // 將 Framer 的 Property Controls 轉為預設 Props
+    topPadding = 120,
+    bottomPadding = 120,
+    showLinks = true,
+    showYoutube = true,
+    locale: propLocale = "auto",
+}) {
+    // 若設定為 auto，才使用自動偵測網址語系
     const currentLocale =
-        !propLocale || propLocale === "auto" ? detectLocale() : propLocale
+        !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
 
     const defaultTitle =
         currentLocale === "en-US"
             ? "About Aalto University"
-            : "關於阿爾托大學 Aalto University"
+            : "關於阿爾托大學 Aalto University";
 
     const [header, setHeader] = useState({
         title: defaultTitle,
@@ -53,31 +53,31 @@ export default function AboutAalto(props) {
         topText: "",
         middleText: "",
         bottomImage: "",
-    })
+    });
 
-    const [features, setFeatures] = useState({ items: [] })
-    const [links, setLinks] = useState([])
-    const [ytVideos, setYtVideos] = useState([])
-    const [loading, setLoading] = useState(true)
+    const [features, setFeatures] = useState({ items: [] });
+    const [links, setLinks] = useState([]);
+    const [ytVideos, setYtVideos] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // 1. 新增：分別控制 4 個區塊的啟用狀態
-    const [isHeaderActive, setIsHeaderActive] = useState(true)
-    const [isIntroActive, setIsIntroActive] = useState(true)
-    const [isLinksActive, setIsLinksActive] = useState(true)
-    const [isYtActive, setIsYtActive] = useState(true)
+    // 分別控制 4 個區塊的啟用狀態
+    const [isHeaderActive, setIsHeaderActive] = useState(true);
+    const [isIntroActive, setIsIntroActive] = useState(true);
+    const [isLinksActive, setIsLinksActive] = useState(true);
+    const [isYtActive, setIsYtActive] = useState(true);
 
     const getImageUrl = (url) => {
-        if (!url) return ""
+        if (!url) return "";
         return url.startsWith("http")
             ? url
-            : `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`
-    }
+            : `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+    };
 
     useEffect(() => {
-        const timestamp = new Date().getTime()
+        const timestamp = new Date().getTime();
         const fetchOptions = {
             headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
-        }
+        };
 
         // 所有 API 請求皆帶上 locale 參數
         Promise.all([
@@ -109,7 +109,7 @@ export default function AboutAalto(props) {
             try {
                 // 2-1. 判斷「標題與大圖」區塊是否停用
                 if (headerData && headerData.is_active === false) {
-                    setIsHeaderActive(false)
+                    setIsHeaderActive(false);
                 } else if (headerData && headerData.fields) {
                     setHeader({
                         title: headerData.fields.title || defaultTitle,
@@ -119,14 +119,14 @@ export default function AboutAalto(props) {
                         middleText: headerData.fields.middle_text || "",
                         bottomImage:
                             getImageUrl(headerData.fields.bottom_image) || "",
-                    })
+                    });
                 }
 
                 // 2-2. 判斷「特色介紹」區塊是否停用
                 if (introData && introData.is_active === false) {
-                    setIsIntroActive(false)
+                    setIsIntroActive(false);
                 } else {
-                    let parsedIntro = []
+                    let parsedIntro = [];
                     if (
                         introData &&
                         introData.fields &&
@@ -135,12 +135,12 @@ export default function AboutAalto(props) {
                         parsedIntro =
                             typeof introData.fields.about_intro === "string"
                                 ? JSON.parse(introData.fields.about_intro)
-                                : introData.fields.about_intro
+                                : introData.fields.about_intro;
                     } else if (introData && introData.about_intro) {
                         parsedIntro =
                             typeof introData.about_intro === "string"
                                 ? JSON.parse(introData.about_intro)
-                                : introData.about_intro
+                                : introData.about_intro;
                     }
 
                     if (Array.isArray(parsedIntro)) {
@@ -153,16 +153,16 @@ export default function AboutAalto(props) {
                                     item.content ||
                                     item.summary ||
                                     "",
-                            }))
-                        setFeatures({ items: activeIntro })
+                            }));
+                        setFeatures({ items: activeIntro });
                     }
                 }
 
                 // 2-3. 判斷「圖片連結清單」區塊是否停用
                 if (linksData && linksData.is_active === false) {
-                    setIsLinksActive(false)
+                    setIsLinksActive(false);
                 } else {
-                    let parsedLinks = []
+                    let parsedLinks = [];
                     if (
                         linksData &&
                         linksData.fields &&
@@ -171,12 +171,12 @@ export default function AboutAalto(props) {
                         parsedLinks =
                             typeof linksData.fields.about_links === "string"
                                 ? JSON.parse(linksData.fields.about_links)
-                                : linksData.fields.about_links
+                                : linksData.fields.about_links;
                     } else if (linksData && linksData.about_links) {
                         parsedLinks =
                             typeof linksData.about_links === "string"
                                 ? JSON.parse(linksData.about_links)
-                                : linksData.about_links
+                                : linksData.about_links;
                     }
 
                     if (Array.isArray(parsedLinks)) {
@@ -184,13 +184,13 @@ export default function AboutAalto(props) {
                             .filter((item) => item.is_active !== false)
                             .map((item) => {
                                 let cardUrl =
-                                    item.link_url || item.summary || "#"
+                                    item.link_url || item.summary || "#";
                                 if (
                                     currentLocale === "en-US" &&
                                     cardUrl.startsWith("/") &&
                                     !cardUrl.startsWith("/en")
                                 ) {
-                                    cardUrl = `/en${cardUrl}`
+                                    cardUrl = `/en${cardUrl}`;
                                 }
 
                                 return {
@@ -199,27 +199,27 @@ export default function AboutAalto(props) {
                                         item.image_url || item.image
                                     ),
                                     url: cardUrl,
-                                }
-                            })
-                        setLinks(activeLinks)
+                                };
+                            });
+                        setLinks(activeLinks);
                     }
                 }
 
                 // 2-4. 判斷「YouTube影片清單」區塊是否停用
                 if (ytData && ytData.is_active === false) {
-                    setIsYtActive(false)
+                    setIsYtActive(false);
                 } else {
-                    let parsedYt = []
+                    let parsedYt = [];
                     if (ytData && ytData.fields && ytData.fields.about_yt) {
                         parsedYt =
                             typeof ytData.fields.about_yt === "string"
                                 ? JSON.parse(ytData.fields.about_yt)
-                                : ytData.fields.about_yt
+                                : ytData.fields.about_yt;
                     } else if (ytData && ytData.about_yt) {
                         parsedYt =
                             typeof ytData.about_yt === "string"
                                 ? JSON.parse(ytData.about_yt)
-                                : ytData.about_yt
+                                : ytData.about_yt;
                     }
 
                     if (Array.isArray(parsedYt)) {
@@ -233,20 +233,20 @@ export default function AboutAalto(props) {
                                         i.summary ||
                                         "",
                                 }))
-                        )
+                        );
                     }
                 }
             } catch (e) {
-                console.error("❌ [AboutAalto] 解析流程發生錯誤", e)
+                console.error("❌ [AboutAalto] 解析流程發生錯誤", e);
             } finally {
-                setLoading(false)
+                setLoading(false);
             }
-        })
-    }, [currentLocale])
+        });
+    }, [currentLocale]);
 
-    // 3. 若 4 個區塊全被停用，直接隱藏整個元件
+    // 若 4 個區塊全被停用，直接隱藏整個元件
     if (!isHeaderActive && !isIntroActive && !isLinksActive && !isYtActive)
-        return null
+        return null;
 
     if (loading) {
         return (
@@ -265,7 +265,7 @@ export default function AboutAalto(props) {
                     ? "Loading Aalto University details..."
                     : "載入 Aalto 介紹資料中..."}
             </div>
-        )
+        );
     }
 
     return (
@@ -354,11 +354,11 @@ export default function AboutAalto(props) {
                 }
             `}</style>
 
-            {/* 4. 如果頭部或特色介紹有任一個啟用，就顯示上半部區塊 */}
+            {/* 如果頭部或特色介紹有任一個啟用，就顯示上半部區塊 */}
             {(isHeaderActive || isIntroActive) && (
                 <div className="hero-section">
                     <div className="framer-container">
-                        {/* 4-1. 渲染：標題與圖文 */}
+                        {/* 渲染：標題與圖文 */}
                         {isHeaderActive && (
                             <>
                                 <div className="section-title">
@@ -404,7 +404,7 @@ export default function AboutAalto(props) {
                             </>
                         )}
 
-                        {/* 4-2. 渲染：特色介紹 */}
+                        {/* 渲染：特色介紹 */}
                         {isIntroActive && (
                             <div className="content-wrapper">
                                 {features.items.length === 0 ? (
@@ -437,7 +437,7 @@ export default function AboutAalto(props) {
                 </div>
             )}
 
-            {/* 5. 如果圖片連結卡或影片有啟用，顯示下半部 */}
+            {/* 如果圖片連結卡或影片有啟用，顯示下半部 */}
             {(isLinksActive || isYtActive) && (
                 <div className="team-section">
                     {/* 防呆：如果雖然區塊啟用，但裡面一張圖/一部影片都沒加 */}
@@ -458,7 +458,7 @@ export default function AboutAalto(props) {
                         </div>
                     ) : (
                         <>
-                            {/* 5-1. 渲染：圖片連結 */}
+                            {/* 渲染：圖片連結 */}
                             {isLinksActive &&
                                 showLinks &&
                                 links.map((link, idx) => (
@@ -494,12 +494,12 @@ export default function AboutAalto(props) {
                                     </a>
                                 ))}
 
-                            {/* 5-2. 渲染：YT影片 */}
+                            {/* 渲染：YT影片 */}
                             {isYtActive &&
                                 showYoutube &&
                                 ytVideos.map((yt, idx) => {
-                                    const ytId = getYoutubeId(yt.url)
-                                    if (!ytId) return null
+                                    const ytId = getYoutubeId(yt.url);
+                                    if (!ytId) return null;
                                     return (
                                         <div
                                             className="youtube-card"
@@ -512,50 +512,12 @@ export default function AboutAalto(props) {
                                                 allowFullScreen
                                             ></iframe>
                                         </div>
-                                    )
+                                    );
                                 })}
                         </>
                     )}
                 </div>
             )}
         </div>
-    )
+    );
 }
-
-addPropertyControls(AboutAalto, {
-    locale: {
-        type: ControlType.Enum,
-        title: "語系 (Locale)",
-        options: ["auto", "zh-TW", "en-US"],
-        optionTitles: ["自動偵測 (Auto)", "繁體中文", "English"],
-        defaultValue: "auto",
-    },
-    topPadding: {
-        type: ControlType.Number,
-        title: "上方留白 (最大)",
-        defaultValue: 120,
-        min: 0,
-        max: 200,
-    },
-    bottomPadding: {
-        type: ControlType.Number,
-        title: "下方留白 (最大)",
-        defaultValue: 120,
-        min: 0,
-        max: 200,
-    },
-    showLinks: {
-        type: ControlType.Boolean,
-        title: "顯示圖片連結",
-        defaultValue: true,
-        enabledTitle: "顯示",
-        disabledTitle: "隱藏",
-    },
-    showYoutube: {
-        type: ControlType.Boolean,
-        title: "顯示 YT 影片",
-        defaultValue: true,
-        enabledTitle: "顯示",
-        disabledTitle: "隱藏",
-    },
-})

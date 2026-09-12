@@ -1,94 +1,90 @@
-import React, { useState, useEffect } from "react"
-import { addPropertyControls, ControlType } from "framer"
+"use client"; // Next.js 標記為客戶端元件 (因為有使用 useState 和 useEffect)
 
-const BASE_URL = "https://ncu-aalto-web.onrender.com"
+import React, { useState, useEffect } from "react";
+
+const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
 // 自動偵測網址是否為英文版頁面
 const detectLocale = () => {
     if (typeof window !== "undefined") {
-        const path = window.location.pathname.toLowerCase()
+        const path = window.location.pathname.toLowerCase();
         if (path.includes("/en") || path.includes("-en")) {
-            return "en-US"
+            return "en-US";
         }
     }
-    return "zh-TW"
-}
+    return "zh-TW";
+};
 
-const API_HEADER = `${BASE_URL}/api/v1/content/about-ncu/about_ncu_header`
-const API_COLLEGE = `${BASE_URL}/api/v1/content/about-ncu/about_ncu_college`
-const API_FEATURES = `${BASE_URL}/api/v1/content/about-ncu/about_ncu_features`
-const API_LINKS = `${BASE_URL}/api/v1/content/about-ncu/about_ncu_links`
-const API_YT = `${BASE_URL}/api/v1/content/about-ncu/about_ncu_yt`
+const API_HEADER = `${BASE_URL}/api/v1/content/about-ncu/about_ncu_header`;
+const API_COLLEGE = `${BASE_URL}/api/v1/content/about-ncu/about_ncu_college`;
+const API_FEATURES = `${BASE_URL}/api/v1/content/about-ncu/about_ncu_features`;
+const API_LINKS = `${BASE_URL}/api/v1/content/about-ncu/about_ncu_links`;
+const API_YT = `${BASE_URL}/api/v1/content/about-ncu/about_ncu_yt`;
 
 const getYoutubeId = (url) => {
-    if (!url) return null
+    if (!url) return null;
     const regExp =
-        /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
-    const match = url.match(regExp)
-    return match && match[2].length === 11 ? match[2] : null
-}
+        /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+};
 
-/**
- * @framerSupportedLayoutWidth any
- * @framerIntrinsicWidth 1440
- */
-export default function AboutNCU(props) {
-    const {
-        topPadding,
-        bottomPadding,
-        showLinks = true,
-        showYoutube = true,
-        style,
-        locale: propLocale, // 可在 Framer 面板手動指定語系
-    } = props
-
-    // 若面板設定為 auto，才使用自動偵測網址語系，否則以面板指定為主
+export default function AboutNCU({
+    // 將 Framer 的 Property Controls 轉為預設 Props
+    topPadding = 120,
+    bottomPadding = 120,
+    showLinks = true,
+    showYoutube = true,
+    style = {},
+    locale: propLocale = "auto",
+}) {
+    // 若設定為 auto，才使用自動偵測網址語系，否則以面板指定為主
     const currentLocale =
-        !propLocale || propLocale === "auto" ? detectLocale() : propLocale
+        !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
 
     // 中英文預設字設定
     const defaultTitle =
         currentLocale === "en-US"
             ? "About National Central University"
-            : "關於國立中央大學 National Central University"
+            : "關於國立中央大學 National Central University";
 
     const defaultCollegeSubtitle =
         currentLocale === "en-US"
             ? "College of Management"
-            : "管理學院 College of Management"
+            : "管理學院 College of Management";
 
     const [header, setHeader] = useState({
         title: "",
         introText: "",
         heroImage: "",
-    })
-    const [college, setCollege] = useState({ subtitle: "", contentText: "" })
+    });
+    const [college, setCollege] = useState({ subtitle: "", contentText: "" });
 
-    const [features, setFeatures] = useState({ title: "", items: [] })
+    const [features, setFeatures] = useState({ title: "", items: [] });
 
-    const [links, setLinks] = useState([])
-    const [ytVideos, setYtVideos] = useState([])
-    const [loading, setLoading] = useState(true)
+    const [links, setLinks] = useState([]);
+    const [ytVideos, setYtVideos] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     // 1. 新增：分別控制 5 個區塊的啟用狀態
-    const [isHeaderActive, setIsHeaderActive] = useState(true)
-    const [isCollegeActive, setIsCollegeActive] = useState(true)
-    const [isFeaturesActive, setIsFeaturesActive] = useState(true)
-    const [isLinksActive, setIsLinksActive] = useState(true)
-    const [isYtActive, setIsYtActive] = useState(true)
+    const [isHeaderActive, setIsHeaderActive] = useState(true);
+    const [isCollegeActive, setIsCollegeActive] = useState(true);
+    const [isFeaturesActive, setIsFeaturesActive] = useState(true);
+    const [isLinksActive, setIsLinksActive] = useState(true);
+    const [isYtActive, setIsYtActive] = useState(true);
 
     const getImageUrl = (url) => {
-        if (!url) return ""
+        if (!url) return "";
         return url.startsWith("http")
             ? url
-            : `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`
-    }
+            : `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+    };
 
     useEffect(() => {
-        const timestamp = new Date().getTime()
+        const timestamp = new Date().getTime();
         const fetchOptions = {
             headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
-        }
+        };
 
         // 所有 API 請求皆帶上 locale 參數
         Promise.all([
@@ -127,48 +123,48 @@ export default function AboutNCU(props) {
                 try {
                     // 2-1. Header
                     if (headerData && headerData.is_active === false) {
-                        setIsHeaderActive(false)
+                        setIsHeaderActive(false);
                     } else if (headerData?.fields) {
                         setHeader({
                             title: headerData.fields.title || defaultTitle,
                             introText: headerData.fields.intro_text || "",
                             heroImage:
                                 getImageUrl(headerData.fields.hero_image) || "",
-                        })
+                        });
                     }
 
                     // 2-2. College
                     if (collegeData && collegeData.is_active === false) {
-                        setIsCollegeActive(false)
+                        setIsCollegeActive(false);
                     } else if (collegeData?.fields) {
                         setCollege({
                             subtitle:
                                 collegeData.fields.subtitle ||
                                 defaultCollegeSubtitle,
                             contentText: collegeData.fields.content_text || "",
-                        })
+                        });
                     }
 
                     // 2-3. Features
                     if (featuresData && featuresData.is_active === false) {
-                        setIsFeaturesActive(false)
+                        setIsFeaturesActive(false);
                     } else {
                         const rawFeatures =
                             featuresData?.fields?.features_list ||
-                            featuresData?.features_list
+                            featuresData?.features_list;
 
-                        let sectionTitle = featuresData?.fields?.section_title
+                        let sectionTitle = featuresData?.fields?.section_title;
                         if (!sectionTitle) {
                             sectionTitle =
                                 currentLocale === "en-US"
                                     ? "Features & Advantages of College of Management"
-                                    : "管理學院特色與優勢"
+                                    : "管理學院特色與優勢";
                         }
 
                         const parsedFeatures =
                             typeof rawFeatures === "string"
                                 ? JSON.parse(rawFeatures)
-                                : rawFeatures || []
+                                : rawFeatures || [];
 
                         if (Array.isArray(parsedFeatures)) {
                             setFeatures({
@@ -183,35 +179,35 @@ export default function AboutNCU(props) {
                                         title: i.title || "",
                                         desc: i.desc || "",
                                     })),
-                            })
+                            });
                         } else {
                             // 防呆處理
                             setFeatures((prev) => ({
                                 ...prev,
                                 title: sectionTitle,
-                            }))
+                            }));
                         }
                     }
 
                     // 2-4. Links
                     if (linksData && linksData.is_active === false) {
-                        setIsLinksActive(false)
+                        setIsLinksActive(false);
                     } else {
                         const rawLinks =
                             linksData?.fields?.ncu_links ||
                             linksData?.ncu_links ||
                             linksData?.fields?.about_links ||
                             linksData?.about_links ||
-                            linksData?.fields?.about_ncu_links
+                            linksData?.fields?.about_ncu_links;
 
-                        let parsedLinks = []
+                        let parsedLinks = [];
                         try {
                             parsedLinks =
                                 typeof rawLinks === "string"
                                     ? JSON.parse(rawLinks)
-                                    : rawLinks || []
+                                    : rawLinks || [];
                         } catch (e) {
-                            console.error("圖片卡片 JSON 解析失敗", e)
+                            console.error("圖片卡片 JSON 解析失敗", e);
                         }
 
                         if (Array.isArray(parsedLinks)) {
@@ -227,14 +223,14 @@ export default function AboutNCU(props) {
                                             i.link_url ||
                                             i.url ||
                                             i.summary ||
-                                            "#"
+                                            "#";
                                         // 當前台為英文版且為相對路徑時，自動補上 /en 前綴
                                         if (
                                             currentLocale === "en-US" &&
                                             cardUrl.startsWith("/") &&
                                             !cardUrl.startsWith("/en")
                                         ) {
-                                            cardUrl = `/en${cardUrl}`
+                                            cardUrl = `/en${cardUrl}`;
                                         }
 
                                         return {
@@ -243,30 +239,30 @@ export default function AboutNCU(props) {
                                                 i.image_url || i.image || ""
                                             ),
                                             url: cardUrl,
-                                        }
+                                        };
                                     })
-                            )
+                            );
                         }
                     }
 
                     // 2-5. YouTube
                     if (ytData && ytData.is_active === false) {
-                        setIsYtActive(false)
+                        setIsYtActive(false);
                     } else {
                         const rawYt =
                             ytData?.fields?.ncu_yt ||
                             ytData?.ncu_yt ||
                             ytData?.fields?.about_yt ||
-                            ytData?.about_yt
+                            ytData?.about_yt;
 
-                        let parsedYt = []
+                        let parsedYt = [];
                         try {
                             parsedYt =
                                 typeof rawYt === "string"
                                     ? JSON.parse(rawYt)
-                                    : rawYt || []
+                                    : rawYt || [];
                         } catch (e) {
-                            console.error("YT JSON 解析失敗", e)
+                            console.error("YT JSON 解析失敗", e);
                         }
 
                         if (Array.isArray(parsedYt)) {
@@ -285,17 +281,17 @@ export default function AboutNCU(props) {
                                             i.summary ||
                                             "",
                                     }))
-                            )
+                            );
                         }
                     }
                 } catch (e) {
-                    console.error("❌ [AboutNCU] 解析錯誤", e)
+                    console.error("❌ [AboutNCU] 解析錯誤", e);
                 } finally {
-                    setLoading(false)
+                    setLoading(false);
                 }
             }
-        )
-    }, [currentLocale])
+        );
+    }, [currentLocale]);
 
     // 3. 如果所有區塊都被停用，直接回傳 null 隱藏整個元件
     if (
@@ -305,7 +301,7 @@ export default function AboutNCU(props) {
         !isLinksActive &&
         !isYtActive
     ) {
-        return null
+        return null;
     }
 
     if (loading) {
@@ -325,7 +321,7 @@ export default function AboutNCU(props) {
                     ? "Loading NCU details..."
                     : "載入中央大學介紹中..."}
             </div>
-        )
+        );
     }
 
     return (
@@ -610,8 +606,8 @@ export default function AboutNCU(props) {
                             {isYtActive &&
                                 showYoutube &&
                                 ytVideos.map((yt, idx) => {
-                                    const ytId = getYoutubeId(yt.url)
-                                    if (!ytId) return null
+                                    const ytId = getYoutubeId(yt.url);
+                                    if (!ytId) return null;
                                     return (
                                         <div
                                             className="youtube-card"
@@ -624,50 +620,12 @@ export default function AboutNCU(props) {
                                                 allowFullScreen
                                             ></iframe>
                                         </div>
-                                    )
+                                    );
                                 })}
                         </>
                     )}
                 </div>
             )}
         </div>
-    )
+    );
 }
-
-addPropertyControls(AboutNCU, {
-    locale: {
-        type: ControlType.Enum,
-        title: "語系 (Locale)",
-        options: ["auto", "zh-TW", "en-US"],
-        optionTitles: ["自動偵測 (Auto)", "繁體中文", "English"],
-        defaultValue: "auto",
-    },
-    topPadding: {
-        type: ControlType.Number,
-        title: "上方留白",
-        defaultValue: 120,
-        min: 0,
-        max: 200,
-    },
-    bottomPadding: {
-        type: ControlType.Number,
-        title: "下方留白",
-        defaultValue: 120,
-        min: 0,
-        max: 200,
-    },
-    showLinks: {
-        type: ControlType.Boolean,
-        title: "顯示圖片連結",
-        defaultValue: true,
-        enabledTitle: "顯示",
-        disabledTitle: "隱藏",
-    },
-    showYoutube: {
-        type: ControlType.Boolean,
-        title: "顯示 YT 影片",
-        defaultValue: true,
-        enabledTitle: "顯示",
-        disabledTitle: "隱藏",
-    },
-})

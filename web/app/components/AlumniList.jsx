@@ -1,54 +1,66 @@
-import React, { useState, useEffect } from "react"
-import { addPropertyControls, ControlType } from "framer"
+"use client"; // Next.js 標記為客戶端元件 (因為有使用 useState 和 useEffect)
 
-const BASE_URL = "https://ncu-aalto-web.onrender.com"
+import React, { useState, useEffect } from "react";
+
+const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
 // 自動偵測網址是否為英文版頁面
 const detectLocale = () => {
     if (typeof window !== "undefined") {
-        const path = window.location.pathname.toLowerCase()
+        const path = window.location.pathname.toLowerCase();
         if (path.includes("/en") || path.includes("-en")) {
-            return "en-US"
+            return "en-US";
         }
     }
-    return "zh-TW"
-}
+    return "zh-TW";
+};
 
-export default function AlumniList(props) {
-    const {
-        limit,
-        gap,
-        layout,
-        cardColor,
-        forceHideButton,
-        locale: propLocale,
-    } = props
+const placeholderStyle = {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    minHeight: "200px",
+    color: "#999",
+    background: "rgba(0,0,0,0.05)",
+    borderRadius: "12px",
+    padding: "20px",
+};
 
-    const [alumni, setAlumni] = useState([])
-    const [loading, setLoading] = useState(true)
+export default function AlumniList({
+    // 將 Framer 的 Property Controls 轉為預設 Props
+    limit = 0,
+    gap = 24,
+    layout = "horizontal",
+    cardColor = "transparent",
+    forceHideButton = false,
+    locale: propLocale = "auto",
+}) {
+    const [alumni, setAlumni] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // 1. 新增：分別控制 2 個區塊的啟用狀態
-    const [isHeaderActive, setIsHeaderActive] = useState(true)
-    const [isListActive, setIsListActive] = useState(true)
+    // 分別控制 2 個區塊的啟用狀態
+    const [isHeaderActive, setIsHeaderActive] = useState(true);
+    const [isListActive, setIsListActive] = useState(true);
 
     // 若面板設定為 auto，才使用自動偵測網址語系，否則以面板指定為主
     const currentLocale =
-        !propLocale || propLocale === "auto" ? detectLocale() : propLocale
+        !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
 
     // 中英文預設字設定
     const defaultTitle =
-        currentLocale === "en-US" ? "Alumni Sharing" : "校友分享"
+        currentLocale === "en-US" ? "Alumni Sharing" : "校友分享";
     const defaultBtnText =
-        currentLocale === "en-US" ? "More Alumni Sharing" : "更多 校友分享"
+        currentLocale === "en-US" ? "More Alumni Sharing" : "更多 校友分享";
     const defaultBtnLink =
-        currentLocale === "en-US" ? "/alumni-sharing-all" : "/校友分享全"
+        currentLocale === "en-US" ? "/alumni-sharing-all" : "/校友分享全";
 
     const [headerConfig, setHeaderConfig] = useState({
         title: defaultTitle,
         showButton: true,
         buttonText: defaultBtnText,
         buttonLink: defaultBtnLink,
-    })
+    });
 
     useEffect(() => {
         // API 請求帶上 locale 參數
@@ -69,9 +81,9 @@ export default function AlumniList(props) {
             try {
                 // 2-1. 處理標題區塊停用邏輯
                 if (headerData && headerData.is_active === false) {
-                    setIsHeaderActive(false)
+                    setIsHeaderActive(false);
                 } else if (headerData && headerData.fields) {
-                    const showBtnVal = headerData.fields.show_button
+                    const showBtnVal = headerData.fields.show_button;
                     setHeaderConfig({
                         title: headerData.fields.section_title || defaultTitle,
                         showButton:
@@ -80,21 +92,21 @@ export default function AlumniList(props) {
                             headerData.fields.button_text || defaultBtnText,
                         buttonLink:
                             headerData.fields.button_link || defaultBtnLink,
-                    })
+                    });
                 } else {
                     setHeaderConfig({
                         title: defaultTitle,
                         showButton: true,
                         buttonText: defaultBtnText,
                         buttonLink: defaultBtnLink,
-                    })
+                    });
                 }
 
                 // 2-2. 處理卡片清單停用邏輯
                 if (listData && listData.is_active === false) {
-                    setIsListActive(false)
+                    setIsListActive(false);
                 } else {
-                    let parsedList = []
+                    let parsedList = [];
                     if (
                         listData &&
                         listData.fields &&
@@ -103,32 +115,32 @@ export default function AlumniList(props) {
                         parsedList =
                             typeof listData.fields.alumni_list === "string"
                                 ? JSON.parse(listData.fields.alumni_list)
-                                : listData.fields.alumni_list
+                                : listData.fields.alumni_list;
                     } else if (listData && listData.alumni_list) {
                         parsedList =
                             typeof listData.alumni_list === "string"
                                 ? JSON.parse(listData.alumni_list)
-                                : listData.alumni_list
+                                : listData.alumni_list;
                     }
 
                     if (Array.isArray(parsedList)) {
                         // 只過濾出 is_active 為 true 的項目
                         const activeList = parsedList.filter(
                             (item) => item.is_active !== false
-                        )
-                        setAlumni(activeList)
+                        );
+                        setAlumni(activeList);
                     }
                 }
             } catch (e) {
-                console.error("❌ [AlumniList] 解析流程發生錯誤", e)
+                console.error("❌ [AlumniList] 解析流程發生錯誤", e);
             } finally {
-                setLoading(false)
+                setLoading(false);
             }
-        })
-    }, [currentLocale])
+        });
+    }, [currentLocale]);
 
     // 3. 若標題與清單全被停用，直接隱藏整個元件
-    if (!isHeaderActive && !isListActive) return null
+    if (!isHeaderActive && !isListActive) return null;
 
     if (loading) {
         return (
@@ -137,19 +149,19 @@ export default function AlumniList(props) {
                     ? "Loading alumni data..."
                     : "載入校友資料中..."}
             </div>
-        )
+        );
     }
 
-    const displayList = limit && limit > 0 ? alumni.slice(0, limit) : alumni
+    const displayList = limit && limit > 0 ? alumni.slice(0, limit) : alumni;
 
     // 當前台為英文版時，自動將右上角的「更多」按鈕連結加上 /en 前綴
-    let finalButtonLink = headerConfig.buttonLink
+    let finalButtonLink = headerConfig.buttonLink;
     if (
         currentLocale === "en-US" &&
         finalButtonLink.startsWith("/") &&
         !finalButtonLink.startsWith("/en")
     ) {
-        finalButtonLink = `/en${finalButtonLink}`
+        finalButtonLink = `/en${finalButtonLink}`;
     }
 
     return (
@@ -313,13 +325,13 @@ export default function AlumniList(props) {
                                 ? item.image_url.startsWith("http")
                                     ? item.image_url
                                     : `${BASE_URL}${item.image_url}`
-                                : ""
+                                : "";
 
                             // 如果沒填外部連結，給予預設值 "#" 避免報錯或亂連
                             let cardLink =
                                 item.link && item.link.trim() !== ""
                                     ? item.link
-                                    : "#"
+                                    : "#";
 
                             // 如果站長在連結填了站內連結 (如 /about)，英文版自動補上 /en
                             if (
@@ -327,11 +339,11 @@ export default function AlumniList(props) {
                                 cardLink.startsWith("/") &&
                                 !cardLink.startsWith("/en")
                             ) {
-                                cardLink = `/en${cardLink}`
+                                cardLink = `/en${cardLink}`;
                             }
 
                             // 判斷是否為外網連結 (http開頭)，如果是才開新分頁
-                            const isExternal = cardLink.startsWith("http")
+                            const isExternal = cardLink.startsWith("http");
 
                             return (
                                 <a
@@ -367,66 +379,10 @@ export default function AlumniList(props) {
                                         </h3>
                                     </div>
                                 </a>
-                            )
+                            );
                         })}
                     </div>
                 ))}
         </div>
-    )
+    );
 }
-
-const placeholderStyle: React.CSSProperties = {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
-    minHeight: "200px",
-    color: "#999",
-    background: "rgba(0,0,0,0.05)",
-    borderRadius: "12px",
-    padding: "20px",
-}
-
-AlumniList.defaultProps = {
-    width: "100%",
-    height: "fit-content",
-}
-
-addPropertyControls(AlumniList, {
-    locale: {
-        type: ControlType.Enum,
-        title: "語系 (Locale)",
-        options: ["auto", "zh-TW", "en-US"],
-        optionTitles: ["自動偵測 (Auto)", "繁體中文", "English"],
-        defaultValue: "auto",
-    },
-    limit: {
-        type: ControlType.Number,
-        title: "顯示數量",
-        defaultValue: 0,
-        min: 0,
-    },
-    forceHideButton: {
-        type: ControlType.Boolean,
-        title: "強制隱藏按鈕",
-        defaultValue: false,
-    },
-    layout: {
-        type: ControlType.Enum,
-        title: "排列方向",
-        options: ["horizontal", "vertical"],
-        optionTitles: ["水平網格 (並排)", "垂直列表"],
-        defaultValue: "horizontal",
-    },
-    gap: {
-        type: ControlType.Number,
-        title: "卡片間距",
-        defaultValue: 24,
-        min: 0,
-    },
-    cardColor: {
-        type: ControlType.Color,
-        title: "卡片底色",
-        defaultValue: "transparent",
-    },
-})

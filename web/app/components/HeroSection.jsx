@@ -1,38 +1,44 @@
-import React, { useState, useEffect } from "react"
-import { addPropertyControls, ControlType } from "framer"
+"use client"; // Next.js 標記為客戶端元件 (因為有使用 useState 和 useEffect)
 
-const BASE_URL = "https://ncu-aalto-web.onrender.com"
+import React, { useState, useEffect } from "react";
+
+const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
 // 自動偵測網址是否為英文版頁面
 const detectLocale = () => {
     if (typeof window !== "undefined") {
-        const path = window.location.pathname.toLowerCase()
+        const path = window.location.pathname.toLowerCase();
         if (path.includes("/en") || path.includes("-en")) {
-            return "en-US"
+            return "en-US";
         }
     }
-    return "zh-TW"
-}
+    return "zh-TW";
+};
 
-export default function HeroSection(props) {
-    const { alignY, alignX, minHeight, topPadding, locale: propLocale } = props
-
+export default function HeroSection({
+    // 將 Framer 的 Property Controls 轉為預設 Props
+    minHeight = 100,
+    topPadding = 150,
+    alignY = "flex-start",
+    alignX = "flex-start",
+    locale: propLocale = "auto",
+}) {
     // 若面板設定為 auto，才使用自動偵測網址語系，否則以面板指定為主
     const currentLocale =
-        !propLocale || propLocale === "auto" ? detectLocale() : propLocale
+        !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
 
     // 定義中英文預設字，在資料還沒載入或載入失敗時作為預備顯示
     const defaultTitle =
         currentLocale === "en-US"
             ? "National Central University × Aalto University Executive MBA Program"
-            : "國立中央大學 × 阿爾托大學 高階經營管理碩士在職學位學程"
+            : "國立中央大學 × 阿爾托大學 高階經營管理碩士在職學位學程";
 
-    const defaultSubtitle = "NCU × Aalto Executive MBA Program"
+    const defaultSubtitle = "NCU × Aalto Executive MBA Program";
 
     const defaultDescription =
         currentLocale === "en-US"
             ? "Nordic Innovation × Asian Practice. Leading with Global Vision"
-            : "北歐創新 × 亞洲實戰 Leading with Global Vision"
+            : "北歐創新 × 亞洲實戰 Leading with Global Vision";
 
     const [heroData, setHeroData] = useState({
         title: defaultTitle,
@@ -40,9 +46,9 @@ export default function HeroSection(props) {
         description: defaultDescription,
         imageUrl: "",
         isActive: true,
-    })
+    });
 
-    const [isLoaded, setIsLoaded] = useState(false)
+    const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
         // API 請求帶上 locale 參數
@@ -55,17 +61,17 @@ export default function HeroSection(props) {
             .then((res) => res.json())
             .then((data) => {
                 if (data.is_active === false) {
-                    setHeroData((prev) => ({ ...prev, isActive: false }))
-                    return
+                    setHeroData((prev) => ({ ...prev, isActive: false }));
+                    return;
                 }
-                const fields = data.fields ? data.fields : data
-                let finalUrl = heroData.imageUrl
+                const fields = data.fields ? data.fields : data;
+                let finalUrl = heroData.imageUrl;
                 if (fields.image_url) {
-                    const imgPath = fields.image_url
+                    const imgPath = fields.image_url;
                     finalUrl = imgPath.startsWith("http")
                         ? imgPath
-                        : `${BASE_URL}${imgPath}`
-                    finalUrl = `${finalUrl}?t=${new Date().getTime()}`
+                        : `${BASE_URL}${imgPath}`;
+                    finalUrl = `${finalUrl}?t=${new Date().getTime()}`;
                 }
                 setHeroData({
                     title: fields.title || defaultTitle,
@@ -73,11 +79,11 @@ export default function HeroSection(props) {
                     description: fields.description || defaultDescription,
                     imageUrl: finalUrl,
                     isActive: true,
-                })
-                setIsLoaded(true)
+                });
+                setIsLoaded(true);
             })
             .catch((err) => {
-                console.error("Hero API 連線失敗:", err)
+                console.error("Hero API 連線失敗:", err);
                 // 連線失敗時，至少讓它有對應語系的預設字顯示
                 setHeroData({
                     title: defaultTitle,
@@ -85,11 +91,11 @@ export default function HeroSection(props) {
                     description: defaultDescription,
                     imageUrl: "",
                     isActive: true,
-                })
-            })
-    }, [currentLocale])
+                });
+            });
+    }, [currentLocale]);
 
-    if (!heroData.isActive) return null
+    if (!heroData.isActive) return null;
 
     return (
         <div
@@ -201,43 +207,5 @@ export default function HeroSection(props) {
                 </p>
             </div>
         </div>
-    )
+    );
 }
-
-addPropertyControls(HeroSection, {
-    locale: {
-        type: ControlType.Enum,
-        title: "語系 (Locale)",
-        options: ["auto", "zh-TW", "en-US"],
-        optionTitles: ["自動偵測 (Auto)", "繁體中文", "English"],
-        defaultValue: "auto",
-    },
-    minHeight: {
-        type: ControlType.Number,
-        title: "高度佔比 (vh)",
-        defaultValue: 100,
-        min: 40,
-        max: 100,
-    },
-    topPadding: {
-        type: ControlType.Number,
-        title: "上方留白 (px)",
-        defaultValue: 150,
-        min: 0,
-        max: 300,
-    },
-    alignY: {
-        type: ControlType.Enum,
-        title: "垂直對齊",
-        options: ["flex-start", "center", "flex-end"],
-        optionTitles: ["靠上", "置中", "靠下"],
-        defaultValue: "flex-start",
-    },
-    alignX: {
-        type: ControlType.Enum,
-        title: "水平對齊",
-        options: ["flex-start", "center", "flex-end"],
-        optionTitles: ["靠左", "置中", "靠右"],
-        defaultValue: "flex-start",
-    },
-})

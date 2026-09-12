@@ -1,42 +1,42 @@
-import React, { useState, useEffect } from "react"
-import { addPropertyControls, ControlType } from "framer"
+"use client"; // Next.js 標記為客戶端元件 (因為有使用 useState 和 useEffect)
 
-const BASE_URL = "https://ncu-aalto-web.onrender.com"
+import React, { useState, useEffect } from "react";
+
+const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
 // 自動偵測網址是否為英文版頁面
 const detectLocale = () => {
     if (typeof window !== "undefined") {
-        const path = window.location.pathname.toLowerCase()
+        const path = window.location.pathname.toLowerCase();
         if (path.includes("/en") || path.includes("-en")) {
-            return "en-US"
+            return "en-US";
         }
     }
-    return "zh-TW"
-}
+    return "zh-TW";
+};
 
-export default function EventList(props) {
-    const {
-        limit,
-        gap,
-        detailPagePath,
-        cardColor,
-        sidePadding,
-        showTitle,
-        titleAlign,
-        titleFontSize,
-        titleLineHeight,
-        titleColor,
-        locale: propLocale, // 可在 Framer 面板手動指定語系
-    } = props
+export default function EventList({
+    // 將 Framer 的 Property Controls 轉為預設 Props
+    limit = 0,
+    gap = 24,
+    detailPagePath = "/eventlist-2",
+    cardColor = "#FADDCB",
+    sidePadding = 40,
+    showTitle = true,
+    titleAlign = "center",
+    titleFontSize = 64,
+    titleLineHeight = 1.2,
+    titleColor = "#160D03",
+    locale: propLocale = "auto",
+}) {
+    const [events, setEvents] = useState([]);
+    const [sectionTitle, setSectionTitle] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [isActive, setIsActive] = useState(true);
 
-    const [events, setEvents] = useState([])
-    const [sectionTitle, setSectionTitle] = useState("")
-    const [loading, setLoading] = useState(true)
-    const [isActive, setIsActive] = useState(true) // 1. 新增：區塊整體的啟用狀態
-
-    // 修正：若面板設定為 auto，才使用自動偵測網址語系，否則以面板指定為主
+    // 若面板設定為 auto，才使用自動偵測網址語系，否則以面板指定為主
     const currentLocale =
-        !propLocale || propLocale === "auto" ? detectLocale() : propLocale
+        !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
 
     useEffect(() => {
         // 請求時帶上 locale 參數，讓後台回傳對應語系
@@ -51,43 +51,43 @@ export default function EventList(props) {
         )
             .then((res) => res.json())
             .then((data) => {
-                // 2. 判斷：如果後台將整個區塊停用，就設定狀態並提早結束
+                // 判斷：如果後台將整個區塊停用，就設定狀態並提早結束
                 if (data.is_active === false) {
-                    setIsActive(false)
-                    return
+                    setIsActive(false);
+                    return;
                 }
 
-                const fields = data.fields || {}
+                const fields = data.fields || {};
                 setSectionTitle(
                     fields.section_title ||
                         (currentLocale === "en-US" ? "Events" : "活動訊息")
-                )
+                );
 
-                let parsedList = []
+                let parsedList = [];
                 if (fields.event_list) {
                     parsedList =
                         typeof fields.event_list === "string"
                             ? JSON.parse(fields.event_list)
-                            : fields.event_list
+                            : fields.event_list;
                 }
 
                 if (Array.isArray(parsedList)) {
                     const activeList = parsedList
                         .map((item, index) => ({ ...item, _index: index }))
-                        .filter((item) => item.is_active !== false) // 保留原本單個活動的停用過濾
-                    setEvents(activeList)
+                        .filter((item) => item.is_active !== false); // 保留原本單個活動的停用過濾
+                    setEvents(activeList);
                 }
             })
             .catch((err) => {
-                console.error("EventList API 連線失敗:", err)
+                console.error("EventList API 連線失敗:", err);
             })
             .finally(() => {
-                setLoading(false)
-            })
-    }, [currentLocale])
+                setLoading(false);
+            });
+    }, [currentLocale]);
 
-    // 3. 如果整個區塊被停用，直接回傳 null 讓畫面徹底隱藏
-    if (!isActive) return null
+    // 如果整個區塊被停用，直接回傳 null 讓畫面徹底隱藏
+    if (!isActive) return null;
 
     if (loading) {
         return (
@@ -96,7 +96,7 @@ export default function EventList(props) {
                     ? "Loading events..."
                     : "載入活動資料中..."}
             </div>
-        )
+        );
     }
 
     return (
@@ -140,7 +140,7 @@ export default function EventList(props) {
                 />
             )}
         </div>
-    )
+    );
 }
 
 function EventCards({
@@ -172,29 +172,29 @@ function EventCards({
                 />
             ))}
         </div>
-    )
+    );
 }
 
 function EventCard({ item, cardColor, detailPagePath, locale }) {
-    const [hover, setHover] = useState(false)
+    const [hover, setHover] = useState(false);
 
     const imgUrl = item.image_url
         ? item.image_url.startsWith("http")
             ? item.image_url
             : `${BASE_URL}${item.image_url}`
-        : ""
+        : "";
 
-    // 修正：當在英文版環境下，跳轉路徑自動補上 /en 前綴，防止跳轉時回到中文頁面
-    let basePath = detailPagePath || "/eventlist-2"
+    // 當在英文版環境下，跳轉路徑自動補上 /en 前綴，防止跳轉時回到中文頁面
+    let basePath = detailPagePath || "/eventlist-2";
     if (
         locale === "en-US" &&
         basePath.startsWith("/") &&
         !basePath.startsWith("/en")
     ) {
-        basePath = `/en${basePath}`
+        basePath = `/en${basePath}`;
     }
 
-    const detailLink = `${basePath}?title=${encodeURIComponent(item.title)}`
+    const detailLink = `${basePath}?title=${encodeURIComponent(item.title)}`;
 
     return (
         <div
@@ -253,11 +253,11 @@ function EventCard({ item, cardColor, detailPagePath, locale }) {
                 <ReadMoreButton href={detailLink} locale={locale} />
             </div>
         </div>
-    )
+    );
 }
 
 function ReadMoreButton({ href, locale }) {
-    const [hover, setHover] = useState(false)
+    const [hover, setHover] = useState(false);
 
     return (
         <a
@@ -281,25 +281,25 @@ function ReadMoreButton({ href, locale }) {
         >
             {locale === "en-US" ? "Read More" : "閱讀更多"}
         </a>
-    )
+    );
 }
 
 // 格式化日期：中文顯示 2026年7月29日，英文顯示 Jul 29, 2026
 function formatDate(dateStr, locale) {
-    if (!dateStr) return ""
-    const d = new Date(dateStr)
-    if (isNaN(d.getTime())) return dateStr
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
     if (locale === "en-US") {
         return d.toLocaleDateString("en-US", {
             year: "numeric",
             month: "short",
             day: "numeric",
-        })
+        });
     }
-    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
+    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
-const placeholderStyle: React.CSSProperties = {
+const placeholderStyle = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -309,74 +309,4 @@ const placeholderStyle: React.CSSProperties = {
     background: "rgba(0,0,0,0.05)",
     borderRadius: "12px",
     padding: "20px",
-}
-
-addPropertyControls(EventList, {
-    locale: {
-        type: ControlType.Enum,
-        title: "語系 (Locale)",
-        options: ["auto", "zh-TW", "en-US"], // 新增 auto，並將其設定為預設值
-        optionTitles: ["自動偵測 (Auto)", "繁體中文", "English"],
-        defaultValue: "auto",
-    },
-    limit: {
-        type: ControlType.Number,
-        title: "顯示數量",
-        defaultValue: 0,
-        min: 0,
-    },
-    gap: {
-        type: ControlType.Number,
-        title: "卡片間距",
-        defaultValue: 24,
-        min: 0,
-    },
-    sidePadding: {
-        type: ControlType.Number,
-        title: "左右內距",
-        defaultValue: 40,
-        min: 0,
-    },
-    cardColor: {
-        type: ControlType.Color,
-        title: "卡片底色",
-        defaultValue: "#FADDCB",
-    },
-    detailPagePath: {
-        type: ControlType.String,
-        title: "詳情頁路徑",
-        defaultValue: "/eventlist-2",
-    },
-    showTitle: {
-        type: ControlType.Boolean,
-        title: "顯示標題",
-        defaultValue: true,
-    },
-    titleAlign: {
-        type: ControlType.Enum,
-        title: "標題對齊",
-        options: ["left", "center", "right"],
-        optionTitles: ["靠左", "置中", "靠右"],
-        defaultValue: "center",
-    },
-    titleFontSize: {
-        type: ControlType.Number,
-        title: "標題字級",
-        defaultValue: 64,
-        min: 16,
-        max: 100,
-    },
-    titleLineHeight: {
-        type: ControlType.Number,
-        title: "標題行高",
-        defaultValue: 1.2,
-        min: 1,
-        max: 2,
-        step: 0.1,
-    },
-    titleColor: {
-        type: ControlType.Color,
-        title: "標題顏色",
-        defaultValue: "#160D03",
-    },
-})
+};

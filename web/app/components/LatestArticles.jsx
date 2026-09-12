@@ -1,46 +1,46 @@
-import React, { useState, useEffect } from "react"
-import { addPropertyControls, ControlType } from "framer"
+"use client"; // Next.js 標記為客戶端元件 (因為有使用 useState 和 useEffect)
 
-const BASE_URL = "https://ncu-aalto-web.onrender.com"
+import React, { useState, useEffect } from "react";
+
+const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
 // 自動偵測網址是否為英文版頁面
 const detectLocale = () => {
     if (typeof window !== "undefined") {
-        const path = window.location.pathname.toLowerCase()
+        const path = window.location.pathname.toLowerCase();
         if (path.includes("/en") || path.includes("-en")) {
-            return "en-US"
+            return "en-US";
         }
     }
-    return "zh-TW"
-}
+    return "zh-TW";
+};
 
-export default function LatestArticles(props) {
-    const {
-        limit,
-        sidePadding,
-        showTitle,
-        titleAlign,
-        titleFontSize,
-        titleLineHeight,
-        titleColor,
-        rowBorderColor,
-        titleTextColor,
-        metaTextColor,
-        locale: propLocale, // 可在 Framer 面板手動指定語系
-    } = props
-
-    const [articles, setArticles] = useState([])
-    const [sectionTitle, setSectionTitle] = useState("")
-    const [isActive, setIsActive] = useState(true) // 1. 新增：區塊整體的啟用狀態
-    const [loading, setLoading] = useState(true)
+export default function LatestArticles({
+    // 將 Framer 的 Property Controls 轉為預設 Props
+    limit = 4,
+    sidePadding = 24,
+    showTitle = true,
+    titleAlign = "left",
+    titleFontSize = 48,
+    titleLineHeight = 1.3,
+    titleColor = "#160D03",
+    rowBorderColor = "#555555",
+    titleTextColor = "#111111",
+    metaTextColor = "#8B8B94",
+    locale: propLocale = "auto",
+}) {
+    const [articles, setArticles] = useState([]);
+    const [sectionTitle, setSectionTitle] = useState("");
+    const [isActive, setIsActive] = useState(true); // 區塊整體的啟用狀態
+    const [loading, setLoading] = useState(true);
 
     // 若面板設定為 auto，才使用自動偵測網址語系，否則以面板指定為主
     const currentLocale =
-        !propLocale || propLocale === "auto" ? detectLocale() : propLocale
+        !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
 
     // 中英文預設字設定
     const defaultTitle =
-        currentLocale === "en-US" ? "Latest Articles" : "最新文章"
+        currentLocale === "en-US" ? "Latest Articles" : "最新文章";
 
     useEffect(() => {
         // API 請求帶上 locale 參數
@@ -55,40 +55,40 @@ export default function LatestArticles(props) {
         )
             .then((res) => res.json())
             .then((data) => {
-                // 2. 判斷：如果後台將整個區塊停用，就設定狀態並提早結束
+                // 判斷：如果後台將整個區塊停用，就設定狀態並提早結束
                 if (data.is_active === false) {
-                    setIsActive(false)
-                    return
+                    setIsActive(false);
+                    return;
                 }
 
-                const fields = data.fields || {}
-                setSectionTitle(fields.section_title || defaultTitle)
+                const fields = data.fields || {};
+                setSectionTitle(fields.section_title || defaultTitle);
 
-                let parsedList = []
+                let parsedList = [];
                 if (fields.article_list) {
                     parsedList =
                         typeof fields.article_list === "string"
                             ? JSON.parse(fields.article_list)
-                            : fields.article_list
+                            : fields.article_list;
                 }
 
                 if (Array.isArray(parsedList)) {
                     setArticles(
                         // 這裡保留你原本寫得很好的「單篇文章」過濾邏輯
                         parsedList.filter((item) => item.is_active !== false)
-                    )
+                    );
                 }
             })
             .catch((err) => {
-                console.error("LatestArticles API 連線失敗:", err)
+                console.error("LatestArticles API 連線失敗:", err);
             })
             .finally(() => {
-                setLoading(false)
-            })
-    }, [currentLocale])
+                setLoading(false);
+            });
+    }, [currentLocale]);
 
-    // 3. 如果整個區塊被停用，直接回傳 null 讓畫面徹底隱藏
-    if (!isActive) return null
+    // 如果整個區塊被停用，直接回傳 null 讓畫面徹底隱藏
+    if (!isActive) return null;
 
     if (loading) {
         return (
@@ -97,10 +97,10 @@ export default function LatestArticles(props) {
                     ? "Loading articles..."
                     : "載入文章中..."}
             </div>
-        )
+        );
     }
 
-    const displayList = limit && limit > 0 ? articles.slice(0, limit) : articles
+    const displayList = limit && limit > 0 ? articles.slice(0, limit) : articles;
 
     return (
         <div
@@ -152,21 +152,21 @@ export default function LatestArticles(props) {
                 ))
             )}
         </div>
-    )
+    );
 }
 
 function ArticleRow({ item, borderColor, titleColor, metaColor, locale }) {
-    const [hover, setHover] = useState(false)
-    const meta = [item.author, formatDate(item.date)].filter(Boolean).join(", ")
+    const [hover, setHover] = useState(false);
+    const meta = [item.author, formatDate(item.date)].filter(Boolean).join(", ");
 
     // 當前台為英文版且為站內相對連結時，自動補上 /en 前綴
-    let finalLink = item.link_url || "#"
+    let finalLink = item.link_url || "#";
     if (
         locale === "en-US" &&
         finalLink.startsWith("/") &&
         !finalLink.startsWith("/en")
     ) {
-        finalLink = `/en${finalLink}`
+        finalLink = `/en${finalLink}`;
     }
 
     return (
@@ -225,15 +225,15 @@ function ArticleRow({ item, borderColor, titleColor, metaColor, locale }) {
                 </span>
             )}
         </a>
-    )
+    );
 }
 
 function formatDate(dateStr) {
-    if (!dateStr) return ""
-    const d = new Date(dateStr)
-    if (isNaN(d.getTime())) return dateStr
-    const pad = (n) => String(n).padStart(2, "0")
-    return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 
 const placeholderStyle = {
@@ -246,73 +246,4 @@ const placeholderStyle = {
     background: "rgba(0,0,0,0.05)",
     borderRadius: "12px",
     padding: "20px",
-}
-
-addPropertyControls(LatestArticles, {
-    locale: {
-        type: ControlType.Enum,
-        title: "語系 (Locale)",
-        options: ["auto", "zh-TW", "en-US"],
-        optionTitles: ["自動偵測 (Auto)", "繁體中文", "English"],
-        defaultValue: "auto",
-    },
-    limit: {
-        type: ControlType.Number,
-        title: "顯示數量",
-        defaultValue: 4,
-        min: 0,
-    },
-    sidePadding: {
-        type: ControlType.Number,
-        title: "左右內距",
-        defaultValue: 24,
-        min: 0,
-    },
-    showTitle: {
-        type: ControlType.Boolean,
-        title: "顯示標題",
-        defaultValue: true,
-    },
-    titleAlign: {
-        type: ControlType.Enum,
-        title: "標題對齊",
-        options: ["left", "center", "right"],
-        optionTitles: ["靠左", "置中", "靠右"],
-        defaultValue: "left",
-    },
-    titleFontSize: {
-        type: ControlType.Number,
-        title: "標題字級",
-        defaultValue: 48,
-        min: 16,
-        max: 100,
-    },
-    titleLineHeight: {
-        type: ControlType.Number,
-        title: "標題行高",
-        defaultValue: 1.3,
-        min: 1,
-        max: 2,
-        step: 0.1,
-    },
-    titleColor: {
-        type: ControlType.Color,
-        title: "標題顏色",
-        defaultValue: "#160D03",
-    },
-    titleTextColor: {
-        type: ControlType.Color,
-        title: "文章標題文字顏色",
-        defaultValue: "#111111",
-    },
-    metaTextColor: {
-        type: ControlType.Color,
-        title: "作者/日期文字顏色",
-        defaultValue: "#8B8B94",
-    },
-    rowBorderColor: {
-        type: ControlType.Color,
-        title: "分隔線顏色",
-        defaultValue: "#555555",
-    },
-})
+};

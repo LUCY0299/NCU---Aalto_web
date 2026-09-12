@@ -1,30 +1,30 @@
-import React, { useState, useEffect, useRef } from "react"
-import { addPropertyControls, ControlType } from "framer"
+"use client"; // Next.js 標記為客戶端元件 (因為有使用 useState, useEffect, useRef 與 IntersectionObserver)
 
-const BASE_URL = "https://ncu-aalto-web.onrender.com"
+import React, { useState, useEffect, useRef } from "react";
+
+const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
 // 自動偵測當前網址語系
 const detectLocale = () => {
     if (typeof window !== "undefined") {
-        const path = window.location.pathname.toLowerCase()
+        const path = window.location.pathname.toLowerCase();
         if (path.includes("/en") || path.includes("-en")) {
-            return "en-US"
+            return "en-US";
         }
     }
-    return "zh-TW"
-}
+    return "zh-TW";
+};
 
-export default function Footer(props) {
-    const {
-        logoImage,
-        footerBgColor,
-        footerTextColor,
-        footerIconColor,
-        locale: propLocale,
-    } = props
-
+export default function Footer({
+    // 將 Framer 的 Property Controls 轉為預設 Props
+    logoImage,
+    footerBgColor = "#160d03",
+    footerTextColor = "#ffffcf",
+    footerIconColor = "#d49b38",
+    locale: propLocale = "auto",
+}) {
     const currentLocale =
-        !propLocale || propLocale === "auto" ? detectLocale() : propLocale
+        !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
 
     const [contact, setContact] = useState({
         phone:
@@ -40,39 +40,39 @@ export default function Footer(props) {
                 ? "No. 300, Zhongda Rd., Zhongli Dist., Taoyuan City"
                 : "桃園市中壢區中大路300號 管理學院一館 志希館10樓辦公室",
         logoUrl: "",
-    })
-    const [loading, setLoading] = useState(true)
-    const [isActive, setIsActive] = useState(true) // 區塊整體的啟用狀態
+    });
+    const [loading, setLoading] = useState(true);
+    const [isActive, setIsActive] = useState(true); // 區塊整體的啟用狀態
 
     // 控制 Logo 滾動滑入動畫的狀態與 Ref
-    const [logoVisible, setLogoVisible] = useState(false)
-    const logoRef = useRef<HTMLDivElement>(null)
+    const [logoVisible, setLogoVisible] = useState(false);
+    const logoRef = useRef(null); // 移除 TS 型別標記以符合 .jsx 格式
 
     const getImageUrl = (url) => {
-        if (!url) return ""
+        if (!url) return "";
         return url.startsWith("http")
             ? url
-            : `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`
-    }
+            : `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+    };
 
     // 監聽滾動：當 Logo 的頂端一進入畫面便立刻觸發由下往上滑入動畫
     useEffect(() => {
         const observer = new IntersectionObserver(
             ([entry]) => {
                 if (entry.isIntersecting) {
-                    setLogoVisible(true)
+                    setLogoVisible(true);
                 }
             },
             { threshold: 0 } // 🎯 只要露出 1 像素即刻觸發，確保在頁尾能 100% 執行
-        )
+        );
         if (logoRef.current) {
-            observer.observe(logoRef.current)
+            observer.observe(logoRef.current);
         }
-        return () => observer.disconnect()
-    }, [])
+        return () => observer.disconnect();
+    }, []);
 
     useEffect(() => {
-        const timestamp = new Date().getTime()
+        const timestamp = new Date().getTime();
         fetch(
             `${BASE_URL}/api/v1/content/layout/footer?locale=${currentLocale}&t=${timestamp}`,
             {
@@ -83,8 +83,8 @@ export default function Footer(props) {
             .then((data) => {
                 // 判斷：如果後台將整個頁尾停用，就設定狀態並提早結束
                 if (data && data.is_active === false) {
-                    setIsActive(false)
-                    return
+                    setIsActive(false);
+                    return;
                 }
 
                 if (data && data.fields) {
@@ -93,30 +93,30 @@ export default function Footer(props) {
                         email: data.fields.email || contact.email,
                         address: data.fields.address || contact.address,
                         logoUrl: data.fields.logo_image || "",
-                    })
+                    });
                 }
             })
             .catch((err) => {
-                console.error("Footer contact-info fetch failed:", err)
+                console.error("Footer contact-info fetch failed:", err);
             })
             .finally(() => {
-                setLoading(false)
-            })
-    }, [currentLocale])
+                setLoading(false);
+            });
+    }, [currentLocale]);
 
     // 若頁尾被停用，直接回傳 null 隱藏整個元件
-    if (!isActive) return null
+    if (!isActive) return null;
 
     const resolvedLogoUrl =
         getImageUrl(contact.logoUrl) ||
         logoImage ||
-        "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png"
+        "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png";
 
     return (
         <footer
             style={{
                 width: "100%",
-                backgroundColor: footerBgColor || "#160d03",
+                backgroundColor: footerBgColor,
                 padding: "80px 30px 60px 30px",
                 display: "flex",
                 flexDirection: "column",
@@ -171,7 +171,7 @@ export default function Footer(props) {
                     position: absolute;
                     left: 0;
                     top: 2px; /* 對齊第一行文字 */
-                    color: ${footerIconColor || "#d49b38"} !important;
+                    color: ${footerIconColor} !important;
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -187,7 +187,7 @@ export default function Footer(props) {
                     white-space: pre-wrap;
                     word-wrap: break-word;
                     word-break: break-word;
-                    color: ${footerTextColor || "#ffffcf"} !important;
+                    color: ${footerTextColor} !important;
                     text-align: left;
                     line-height: 1.2;
                     margin: 0;
@@ -296,7 +296,9 @@ export default function Footer(props) {
                     <a
                         href={
                             contact.address
-                                ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contact.address)}`
+                                ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                      contact.address
+                                  )}`
                                 : "#"
                         }
                         target="_blank"
@@ -337,34 +339,5 @@ export default function Footer(props) {
                 </div>
             </div>
         </footer>
-    )
+    );
 }
-
-addPropertyControls(Footer, {
-    locale: {
-        type: ControlType.Enum,
-        title: "語系 (Locale)",
-        options: ["auto", "zh-TW", "en-US"],
-        optionTitles: ["自動偵測 (Auto)", "繁體中文", "English"],
-        defaultValue: "auto",
-    },
-    logoImage: {
-        type: ControlType.Image,
-        title: "Footer Logo (畫布備用底圖)",
-    },
-    footerBgColor: {
-        type: ControlType.Color,
-        title: "背景顏色",
-        defaultValue: "#160d03",
-    },
-    footerTextColor: {
-        type: ControlType.Color,
-        title: "文字顏色",
-        defaultValue: "#ffffcf",
-    },
-    footerIconColor: {
-        type: ControlType.Color,
-        title: "圖示顏色",
-        defaultValue: "#d49b38",
-    },
-})

@@ -1,23 +1,24 @@
-import React, { useState, useEffect } from "react"
-import { addPropertyControls, ControlType } from "framer"
+"use client"; // Next.js 標記為客戶端元件 (因為有使用 useState 和 useEffect)
 
-const BASE_URL = "https://ncu-aalto-web.onrender.com"
+import React, { useState, useEffect } from "react";
+
+const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
 // 自動偵測當前網址語系
 const detectLocale = () => {
     if (typeof window !== "undefined") {
-        const path = window.location.pathname.toLowerCase()
+        const path = window.location.pathname.toLowerCase();
         if (path.includes("/en") || path.includes("-en")) {
-            return "en-US"
+            return "en-US";
         }
     }
-    return "zh-TW"
-}
+    return "zh-TW";
+};
 
 // 1. 讓 Hook 接收 currentLocale 作為參數
 function useContactData(currentLocale) {
-    const [data, setData] = useState(null)
-    const [loading, setLoading] = useState(true)
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         // 使用傳入的 currentLocale
@@ -27,21 +28,21 @@ function useContactData(currentLocale) {
         )
             .then((res) => res.json())
             .then((res) => {
-                const fields = res.fields || {}
-                setData({ ...fields, isActive: res.is_active !== false })
+                const fields = res.fields || {};
+                setData({ ...fields, isActive: res.is_active !== false });
             })
             .catch((err) => {
-                console.error("Contact API 連線失敗:", err)
-                setData({ isActive: true, title: "連線中斷" })
+                console.error("Contact API 連線失敗:", err);
+                setData({ isActive: true, title: "連線中斷" });
             })
-            .finally(() => setLoading(false))
-    }, [currentLocale]) //  記得加入 dependencies
+            .finally(() => setLoading(false));
+    }, [currentLocale]); //  記得加入 dependencies
 
-    return { data, loading }
+    return { data, loading };
 }
 
 function InfoRow({ icon, text, link, textColor }) {
-    if (!text) return null
+    if (!text) return null;
     const content = (
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <span style={{ fontSize: "20px" }}>{icon}</span>
@@ -55,37 +56,36 @@ function InfoRow({ icon, text, link, textColor }) {
                 {text}
             </span>
         </div>
-    )
+    );
     if (link) {
         return (
             <a href={link} style={{ textDecoration: "none" }}>
                 {content}
             </a>
-        )
+        );
     }
-    return content
+    return content;
 }
 
-export default function Contact(props) {
-    const {
-        titleFontSize,
-        titleColor,
-        subtitleFontSize,
-        subtitleColor,
-        panelBg,
-        infoTextColor,
-        mapHeight,
-        maxWidth,
-        locale: propLocale, //  2. 接收 Framer 面板的語系設定
-    } = props
-
-    //  3. 判斷當前語系
+export default function Contact({
+    // 將 Framer 的 Property Controls 轉為預設 Props
+    titleFontSize = 64,
+    titleColor = "#160D03",
+    subtitleFontSize = 18,
+    subtitleColor = "#4A4949",
+    panelBg = "#eef2f7",
+    infoTextColor = "#602A80",
+    mapHeight = 419,
+    maxWidth = 1160,
+    locale: propLocale = "auto",
+}) {
+    // 3. 判斷當前語系
     const currentLocale =
-        !propLocale || propLocale === "auto" ? detectLocale() : propLocale
+        !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
 
-    //  將語系傳入 Hook
-    const { data, loading } = useContactData(currentLocale)
-    const isEn = currentLocale === "en-US"
+    // 將語系傳入 Hook
+    const { data, loading } = useContactData(currentLocale);
+    const isEn = currentLocale === "en-US";
 
     if (loading) {
         return (
@@ -98,23 +98,23 @@ export default function Contact(props) {
             >
                 {isEn ? "Loading..." : "載入中..."}
             </div>
-        )
+        );
     }
 
     // 後台停用此區塊時直接隱藏
-    if (data?.isActive === false) return null
+    if (data?.isActive === false) return null;
 
-    const title = data?.title || (isEn ? "Contact Us" : "聯絡我們")
+    const title = data?.title || (isEn ? "Contact Us" : "聯絡我們");
     const subtitle =
-        data?.subtitle || (isEn ? "Leave us a message" : "請留下您的訊息")
-    const email = data?.email || ""
-    const phone = data?.phone || ""
-    const address = data?.address || ""
-    const mapAddress = data?.map_address || address
+        data?.subtitle || (isEn ? "Leave us a message" : "請留下您的訊息");
+    const email = data?.email || "";
+    const phone = data?.phone || "";
+    const address = data?.address || "";
+    const mapAddress = data?.map_address || address;
 
-    const encodedAddress = encodeURIComponent(mapAddress)
-    const mapEmbedUrl = `https://www.google.com/maps?q=${encodedAddress}&output=embed`
-    const mapOpenUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`
+    const encodedAddress = encodeURIComponent(mapAddress);
+    const mapEmbedUrl = `https://www.google.com/maps?q=${encodedAddress}&output=embed`;
+    const mapOpenUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
 
     return (
         <div
@@ -255,64 +255,5 @@ export default function Contact(props) {
                 </div>
             </div>
         </div>
-    )
+    );
 }
-
-addPropertyControls(Contact, {
-    locale: {
-        // 4. 新增語系切換選項
-        type: ControlType.Enum,
-        title: "語系 (Locale)",
-        options: ["auto", "zh-TW", "en-US"],
-        optionTitles: ["自動偵測 (Auto)", "繁體中文", "English"],
-        defaultValue: "auto",
-    },
-    titleFontSize: {
-        type: ControlType.Number,
-        title: "標題字級",
-        defaultValue: 64,
-        min: 20,
-        max: 100,
-    },
-    titleColor: {
-        type: ControlType.Color,
-        title: "標題顏色",
-        defaultValue: "#160D03",
-    },
-    subtitleFontSize: {
-        type: ControlType.Number,
-        title: "副標題字級",
-        defaultValue: 18,
-        min: 10,
-        max: 30,
-    },
-    subtitleColor: {
-        type: ControlType.Color,
-        title: "副標題顏色",
-        defaultValue: "#4A4949",
-    },
-    panelBg: {
-        type: ControlType.Color,
-        title: "地圖區塊底色",
-        defaultValue: "#eef2f7",
-    },
-    infoTextColor: {
-        type: ControlType.Color,
-        title: "聯絡資訊文字顏色",
-        defaultValue: "#602A80",
-    },
-    mapHeight: {
-        type: ControlType.Number,
-        title: "地圖高度",
-        defaultValue: 419,
-        min: 200,
-        max: 800,
-    },
-    maxWidth: {
-        type: ControlType.Number,
-        title: "整體最大寬度",
-        defaultValue: 1160,
-        min: 600,
-        max: 1600,
-    },
-})

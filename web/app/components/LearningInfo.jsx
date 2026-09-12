@@ -1,58 +1,59 @@
-import React, { useState, useEffect } from "react"
-import { addPropertyControls, ControlType } from "framer"
+"use client"; // Next.js 標記為客戶端元件 (因為有使用 useState 和 useEffect)
 
-const BASE_URL = "https://ncu-aalto-web.onrender.com"
+import React, { useState, useEffect } from "react";
+
+const BASE_URL = "https://ncu-aalto-web.onrender.com";
 // 這裡已修正為正確的 page_slug "learning"
-const API_URL = `${BASE_URL}/api/v1/content/learning/learning_header`
+const API_URL = `${BASE_URL}/api/v1/content/learning/learning_header`;
 
 // 自動偵測網址是否為英文版頁面
 const detectLocale = () => {
     if (typeof window !== "undefined") {
-        const path = window.location.pathname.toLowerCase()
+        const path = window.location.pathname.toLowerCase();
         if (path.includes("/en") || path.includes("-en")) {
-            return "en-US"
+            return "en-US";
         }
     }
-    return "zh-TW"
-}
+    return "zh-TW";
+};
 
-/**
- * @framerSupportedLayoutWidth any
- * @framerIntrinsicWidth 1440
- */
-export default function LearningInfo(props) {
-    const { topPadding, bottomPadding, style, locale: propLocale } = props
-
+export default function LearningInfo({
+    // 將 Framer 的 Property Controls 轉為預設 Props
+    topPadding = 80,
+    bottomPadding = 80,
+    style = {},
+    locale: propLocale = "auto",
+}) {
     // 若面板設定為 auto，才使用自動偵測網址語系，否則以面板指定為主
     const currentLocale =
-        !propLocale || propLocale === "auto" ? detectLocale() : propLocale
+        !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
 
     // 中英文預設字設定
     const defaultTitle =
-        currentLocale === "en-US" ? "Learning Resources" : "學習資訊"
+        currentLocale === "en-US" ? "Learning Resources" : "學習資訊";
     const defaultDesc =
         currentLocale === "en-US"
             ? "After the enrollment of the first cohort, it is recommended to collect testimonials at the end of the first semester (around Dec 2026)."
-            : "首屆學員入學後，建議於第一學期末（約2026年12月）蒐集見證，格式如下："
+            : "首屆學員入學後，建議於第一學期末（約2026年12月）蒐集見證，格式如下：";
 
     const [data, setData] = useState({
         title: defaultTitle,
         heroImage: "",
         description: defaultDesc,
         isActive: true, // 1. 新增：預設為啟用狀態
-    })
-    const [loading, setLoading] = useState(true)
+    });
+    const [loading, setLoading] = useState(true);
 
     // 處理圖片網址的輔助函數
     const getImageUrl = (url) => {
-        if (!url) return ""
+        if (!url) return "";
         return url.startsWith("http")
             ? url
-            : `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`
-    }
+            : `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+    };
 
     useEffect(() => {
-        const timestamp = new Date().getTime()
+        const timestamp = new Date().getTime();
         // API 請求帶上 locale 參數
         fetch(`${API_URL}?locale=${currentLocale}&t=${timestamp}`, {
             headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
@@ -62,8 +63,8 @@ export default function LearningInfo(props) {
                 if (resData) {
                     // 2. 判斷後台是否將此區塊停用
                     if (resData.is_active === false) {
-                        setData((prev) => ({ ...prev, isActive: false }))
-                        return
+                        setData((prev) => ({ ...prev, isActive: false }));
+                        return;
                     }
 
                     if (resData.fields) {
@@ -74,7 +75,7 @@ export default function LearningInfo(props) {
                             description:
                                 resData.fields.description || defaultDesc,
                             isActive: true,
-                        })
+                        });
                     } else {
                         // 若該語系後台無資料，使用預設值
                         setData({
@@ -82,16 +83,16 @@ export default function LearningInfo(props) {
                             heroImage: "",
                             description: defaultDesc,
                             isActive: true,
-                        })
+                        });
                     }
                 }
             })
             .catch((err) => console.error("❌ 讀取學習資訊失敗", err))
-            .finally(() => setLoading(false))
-    }, [currentLocale])
+            .finally(() => setLoading(false));
+    }, [currentLocale, defaultTitle, defaultDesc]);
 
     // 3. 如果區塊被設為停用，直接回傳 null 讓畫面徹底隱藏
-    if (!data.isActive) return null
+    if (!data.isActive) return null;
 
     if (loading) {
         return (
@@ -107,7 +108,7 @@ export default function LearningInfo(props) {
             >
                 {currentLocale === "en-US" ? "Loading..." : "載入中..."}
             </div>
-        )
+        );
     }
 
     return (
@@ -202,28 +203,5 @@ export default function LearningInfo(props) {
                 )}
             </div>
         </div>
-    )
+    );
 }
-
-// Framer 右側控制面板設定
-addPropertyControls(LearningInfo, {
-    locale: {
-        type: ControlType.Enum,
-        title: "語系 (Locale)",
-        options: ["auto", "zh-TW", "en-US"],
-        optionTitles: ["自動偵測 (Auto)", "繁體中文", "English"],
-        defaultValue: "auto",
-    },
-    topPadding: {
-        type: ControlType.Number,
-        title: "上方留白",
-        defaultValue: 80,
-        min: 0,
-    },
-    bottomPadding: {
-        type: ControlType.Number,
-        title: "下方留白",
-        defaultValue: 80,
-        min: 0,
-    },
-})

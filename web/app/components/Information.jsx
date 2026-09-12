@@ -1,23 +1,24 @@
-import React, { useState, useEffect } from "react"
-import { addPropertyControls, ControlType } from "framer"
+"use client"; // Next.js 標記為客戶端元件 (因為有使用 useState 和 useEffect)
 
-const BASE_URL = "https://ncu-aalto-web.onrender.com"
+import React, { useState, useEffect } from "react";
+
+const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
 // 自動偵測當前網址語系
 const detectLocale = () => {
     if (typeof window !== "undefined") {
-        const path = window.location.pathname.toLowerCase()
+        const path = window.location.pathname.toLowerCase();
         if (path.includes("/en") || path.includes("-en")) {
-            return "en-US"
+            return "en-US";
         }
     }
-    return "zh-TW"
-}
+    return "zh-TW";
+};
 
 // 讓 Hook 接收 currentLocale 作為參數
 function useSection(sectionKey, currentLocale) {
-    const [data, setData] = useState(null)
-    const [loading, setLoading] = useState(true)
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         // 使用傳入的 currentLocale
@@ -27,71 +28,71 @@ function useSection(sectionKey, currentLocale) {
         )
             .then((res) => res.json())
             .then((res) => {
-                const fields = res.fields || {}
+                const fields = res.fields || {};
                 const blocks =
                     typeof fields.blocks === "string"
                         ? JSON.parse(fields.blocks || "[]")
-                        : fields.blocks || []
+                        : fields.blocks || [];
                 setData({
                     ...fields,
                     blocks,
                     isActive: res.is_active !== false,
-                })
+                });
             })
             .catch((err) => {
-                console.error(`${sectionKey} API 連線失敗:`, err)
-                setData({ isActive: true, title: "連線中斷", blocks: [] })
+                console.error(`${sectionKey} API 連線失敗:`, err);
+                setData({ isActive: true, title: "連線中斷", blocks: [] });
             })
-            .finally(() => setLoading(false))
-    }, [sectionKey, currentLocale])
+            .finally(() => setLoading(false));
+    }, [sectionKey, currentLocale]);
 
-    return { data, loading }
+    return { data, loading };
 }
 
 function resolveImage(url) {
-    if (!url) return ""
-    return url.startsWith("http") ? url : `${BASE_URL}${url}`
+    if (!url) return "";
+    return url.startsWith("http") ? url : `${BASE_URL}${url}`;
 }
 
 function resolveUrl(url) {
-    if (!url) return ""
-    return url.startsWith("http") ? url : `${BASE_URL}${url}`
+    if (!url) return "";
+    return url.startsWith("http") ? url : `${BASE_URL}${url}`;
 }
 
 // ✨ 新增：強制下載檔案的攔截函數
 const forceDownload = async (e, url, filename) => {
-    e.preventDefault() // 阻止瀏覽器預設的「開啟新分頁」行為
+    e.preventDefault(); // 阻止瀏覽器預設的「開啟新分頁」行為
     try {
         // 透過 fetch 把檔案當作 Blob (二進制資料) 抓下來
-        const response = await fetch(url)
-        if (!response.ok) throw new Error("Network response was not ok")
-        const blob = await response.blob()
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Network response was not ok");
+        const blob = await response.blob();
 
         // 建立一個暫時的隱形連結來觸發下載
-        const blobUrl = window.URL.createObjectURL(blob)
-        const link = document.createElement("a")
-        link.href = blobUrl
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
 
         // 如果網址有副檔名，幫檔名補上副檔名
-        let finalFilename = filename || "download"
-        const extensionMatch = url.match(/\.([0-9a-z]+)(?:[\?#]|$)/i)
+        let finalFilename = filename || "download";
+        const extensionMatch = url.match(/\.([0-9a-z]+)(?:[\?#]|$)/i);
         if (extensionMatch && !filename.includes(".")) {
-            finalFilename += `.${extensionMatch[1]}`
+            finalFilename += `.${extensionMatch[1]}`;
         }
 
-        link.download = finalFilename
-        document.body.appendChild(link)
-        link.click() // 模擬點擊下載
+        link.download = finalFilename;
+        document.body.appendChild(link);
+        link.click(); // 模擬點擊下載
 
         // 清理記憶體與暫時連結
-        document.body.removeChild(link)
-        window.URL.revokeObjectURL(blobUrl)
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
-        console.error("強制下載失敗，改用新分頁開啟:", error)
+        console.error("強制下載失敗，改用新分頁開啟:", error);
         // 萬一遇到嚴格的 CORS 阻擋，退回原本的新分頁開啟模式
-        window.open(url, "_blank")
+        window.open(url, "_blank");
     }
-}
+};
 
 function BlockList({ blocks, contentFontSize, contentColor }) {
     return blocks.map((block, index) => {
@@ -107,7 +108,7 @@ function BlockList({ blocks, contentFontSize, contentColor }) {
                         display: "block",
                     }}
                 />
-            )
+            );
         }
 
         // 文字 block
@@ -116,7 +117,7 @@ function BlockList({ blocks, contentFontSize, contentColor }) {
                 block.text.includes("reserve the right") ||
                 block.text.includes("We reserve") ||
                 block.text.includes("本校保留") ||
-                block.text.includes("保留隨時")
+                block.text.includes("保留隨時");
 
             if (isDisclaimer) {
                 return (
@@ -146,7 +147,7 @@ function BlockList({ blocks, contentFontSize, contentColor }) {
                             {block.text}
                         </p>
                     </div>
-                )
+                );
             }
 
             return (
@@ -166,7 +167,7 @@ function BlockList({ blocks, contentFontSize, contentColor }) {
                 >
                     {block.text}
                 </p>
-            )
+            );
         }
 
         // 兩列布局 block
@@ -222,36 +223,35 @@ function BlockList({ blocks, contentFontSize, contentColor }) {
                         </div>
                     ))}
                 </div>
-            )
+            );
         }
 
-        return null
-    })
+        return null;
+    });
 }
 
-export default function Information(props) {
-    const {
-        titleFontSize,
-        titleColor,
-        subtitleFontSize,
-        subtitleColor,
-        sectionTitleFontSize,
-        headingColor,
-        contentColor,
-        contentFontSize,
-        cardBg,
-        locale: propLocale,
-    } = props
-
+export default function Information({
+    // 將 Framer 的 Property Controls 轉為預設 Props
+    titleFontSize = 64,
+    titleColor = "#160D03",
+    subtitleFontSize = 18,
+    subtitleColor = "#160D03",
+    sectionTitleFontSize = 48,
+    headingColor = "#160D03",
+    contentColor = "#3B3B3D",
+    contentFontSize = 23,
+    cardBg = "#ffffff",
+    locale: propLocale = "auto",
+}) {
     const currentLocale =
-        !propLocale || propLocale === "auto" ? detectLocale() : propLocale
+        !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
 
-    const hero = useSection("admission-hero", currentLocale)
-    const info = useSection("admission-info", currentLocale)
-    const requirements = useSection("admission-requirements", currentLocale)
-    const downloads = useSection("admission-downloads", currentLocale)
+    const hero = useSection("admission-hero", currentLocale);
+    const info = useSection("admission-info", currentLocale);
+    const requirements = useSection("admission-requirements", currentLocale);
+    const downloads = useSection("admission-downloads", currentLocale);
 
-    const isEn = currentLocale === "en-US"
+    const isEn = currentLocale === "en-US";
 
     if (
         hero.loading ||
@@ -269,7 +269,7 @@ export default function Information(props) {
             >
                 {isEn ? "Loading..." : "載入中..."}
             </div>
-        )
+        );
     }
 
     if (
@@ -278,7 +278,7 @@ export default function Information(props) {
         requirements.data?.isActive === false &&
         downloads.data?.isActive === false
     ) {
-        return null
+        return null;
     }
 
     return (
@@ -443,14 +443,14 @@ export default function Information(props) {
                         }}
                     >
                         {(() => {
-                            let fileList = []
+                            let fileList = [];
                             try {
                                 fileList = JSON.parse(
                                     downloads.data?.file_list || "[]"
-                                )
+                                );
                                 fileList = fileList.filter(
                                     (f) => f.is_active !== false
-                                )
+                                );
                             } catch (e) {}
 
                             if (fileList.length === 0) {
@@ -465,14 +465,14 @@ export default function Information(props) {
                                             ? "No files available."
                                             : "目前尚無檔案提供下載"}
                                     </div>
-                                )
+                                );
                             }
 
                             return fileList.map((file, idx) => {
-                                const fileUrl = resolveUrl(file.file_url)
+                                const fileUrl = resolveUrl(file.file_url);
                                 const fileName =
                                     file.title ||
-                                    (isEn ? "Unnamed File" : "未命名檔案")
+                                    (isEn ? "Unnamed File" : "未命名檔案");
 
                                 return (
                                     <a
@@ -543,75 +543,12 @@ export default function Information(props) {
                                             </svg>
                                         </span>
                                     </a>
-                                )
-                            })
+                                );
+                            });
                         })()}
                     </div>
                 </div>
             )}
         </div>
-    )
+    );
 }
-
-addPropertyControls(Information, {
-    locale: {
-        type: ControlType.Enum,
-        title: "語系 (Locale)",
-        options: ["auto", "zh-TW", "en-US"],
-        optionTitles: ["自動偵測 (Auto)", "繁體中文", "English"],
-        defaultValue: "auto",
-    },
-    titleFontSize: {
-        type: ControlType.Number,
-        title: "Hero 標題字級",
-        defaultValue: 64,
-        min: 20,
-        max: 100,
-    },
-    titleColor: {
-        type: ControlType.Color,
-        title: "Hero 標題顏色",
-        defaultValue: "#160D03",
-    },
-    subtitleFontSize: {
-        type: ControlType.Number,
-        title: "Hero 副標題字級",
-        defaultValue: 18,
-        min: 10,
-        max: 40,
-    },
-    subtitleColor: {
-        type: ControlType.Color,
-        title: "Hero 副標題顏色",
-        defaultValue: "#160D03",
-    },
-    sectionTitleFontSize: {
-        type: ControlType.Number,
-        title: "區塊標題字級",
-        defaultValue: 48,
-        min: 16,
-        max: 80,
-    },
-    headingColor: {
-        type: ControlType.Color,
-        title: "小標顏色",
-        defaultValue: "#160D03",
-    },
-    contentColor: {
-        type: ControlType.Color,
-        title: "內文顏色",
-        defaultValue: "#3B3B3D",
-    },
-    contentFontSize: {
-        type: ControlType.Number,
-        title: "內文字級",
-        defaultValue: 23,
-        min: 12,
-        max: 40,
-    },
-    cardBg: {
-        type: ControlType.Color,
-        title: "卡片底色",
-        defaultValue: "#ffffff",
-    },
-})
