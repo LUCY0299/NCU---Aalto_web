@@ -1,4 +1,4 @@
-"use client"; // Next.js 標記為客戶端元件 (因為有使用 useState, useEffect, useRef 以及 window 變數)
+"use client";
 
 import React, { useState, useEffect, useRef } from "react";
 
@@ -15,6 +15,56 @@ const detectLocale = () => {
     return "zh-TW";
 };
 
+// 解析並淨化搜尋摘要的文字，過濾掉 JSON 符號與 HTML 標籤
+function cleanSnippetText(text) {
+    if (!text) return "";
+    let resultText = text;
+
+    try {
+        // 判斷字串是否疑似為 JSON 陣列或物件 (以 [ 或 { 開頭)
+        if (text.trim().startsWith("[") || text.trim().startsWith("{")) {
+            const parsed = JSON.parse(text);
+
+            // 遞迴提取物件中所有的字串值
+            const extractText = (val) => {
+                if (typeof val === "string") return val;
+                if (Array.isArray(val))
+                    return val.map(extractText).filter(Boolean).join(" - ");
+                if (typeof val === "object" && val !== null) {
+                    // 優先提取特定的內容欄位 (加入 content 欄位)
+                    if (val.title || val.desc || val.content || val.text) {
+                        return [val.title, val.desc, val.content, val.text]
+                            .filter(Boolean)
+                            .join(" ");
+                    }
+                    return Object.values(val)
+                        .map(extractText)
+                        .filter(Boolean)
+                        .join(" ");
+                }
+                return "";
+            };
+
+            resultText = extractText(parsed);
+            return resultText.replace(/<[^>]*>?/gm, "").trim();
+        }
+    } catch (e) {
+        // 🚨 關鍵點：如果進到這裡，代表後端把 JSON 切斷了 (變成無效 JSON)
+        // 改用 Regex 強制脫掉 JSON 外衣
+        resultText = text
+            .replace(/\[|\]|\{|\}/g, "") // 移除所有括號 [ ] { }
+            .replace(/"title"\s*:\s*"/g, "") // 移除 "title":"
+            .replace(/"desc"\s*:\s*"/g, " - ") // 移除 "desc":"
+            .replace(/"content"\s*:\s*"/g, " - ") // 移除 "content":"
+            .replace(/"text"\s*:\s*"/g, " - ") // 移除 "text":"
+            .replace(/"/g, "") // 移除剩餘的雙引號
+            .replace(/,/g, "，"); // 將半形逗號轉全形
+    }
+
+    // 移除可能夾帶的 HTML 標籤
+    return resultText.replace(/<[^>]*>?/gm, "").trim();
+}
+
 const headerStyle = {
     width: "100%",
     position: "sticky",
@@ -25,11 +75,11 @@ const headerStyle = {
 };
 
 export default function Navbar({
-    // 將 Framer 的 Property Controls 轉為預設 Props
     logoImage,
     activeColor = "#d49b38",
     textColor = "#111111",
     bgColor = "#FAF9F5",
+    locale: propLocale = "auto",
 }) {
     const [currentLocale, setCurrentLocale] = useState("zh-TW");
     const [menuItems, setMenuItems] = useState([]);
@@ -127,7 +177,7 @@ export default function Navbar({
         };
     }, [searchKeyword, currentLocale]);
 
-    // 抓取 layout 頁面資料的函數（提取為獨立函數便於重複使用）
+    // 抓取 layout 頁面資料的函數
     const fetchLayoutData = async (locale) => {
         try {
             const res = await fetch(
@@ -178,12 +228,12 @@ export default function Navbar({
                     setMenuItems(getDefaultMenu(locale));
                 }
 
-                // ✅ 從 branding section 加載 navbar_logo、favicon_title、favicon
+                // 處理 branding 區塊
                 const brandingSec = data.sections.find(
                     (s) => s.section_key === "branding"
                 );
                 if (brandingSec && brandingSec.content_fields) {
-                    // 1️⃣ 處理 navbar_logo（優先選擇有值的版本）
+                    // 1. 處理 navbar_logo
                     const logoFields = brandingSec.content_fields.filter(
                         (f) => f.field_key === "navbar_logo"
                     );
@@ -200,7 +250,7 @@ export default function Navbar({
                         setLogoUrl(logoField.field_value);
                     }
 
-                    // 2️⃣ 處理 favicon_title（更新瀏覽器標籤標題）
+                    // 2. 處理 favicon_title
                     const faviconTitleField = brandingSec.content_fields.find(
                         (f) =>
                             f.field_key === "favicon_title" &&
@@ -209,8 +259,6 @@ export default function Navbar({
 
                     if (faviconTitleField && faviconTitleField.field_value) {
                         document.title = faviconTitleField.field_value;
-
-                        // 防止改變 title，設置監視器
                         const observer = new MutationObserver(() => {
                             if (
                                 document.title !==
@@ -219,13 +267,16 @@ export default function Navbar({
                                 document.title = faviconTitleField.field_value;
                             }
                         });
-                        observer.observe(document.querySelector("head"), {
-                            childList: true,
-                            subtree: true,
-                        });
+                        const headNode = document.querySelector("head");
+                        if (headNode) {
+                            observer.observe(headNode, {
+                                childList: true,
+                                subtree: true,
+                            });
+                        }
                     }
 
-                    // 3️⃣ 處理 favicon（更新瀏覽器標籤圖示）
+                    // 3. 處理 favicon
                     const faviconField = brandingSec.content_fields.find(
                         (f) => f.field_key === "favicon" && f.locale === locale
                     );
@@ -257,19 +308,20 @@ export default function Navbar({
     };
 
     useEffect(() => {
-        const locale = detectLocale();
+        const locale =
+            !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
         setCurrentLocale(locale);
 
         // 初次加載
         fetchLayoutData(locale);
 
-        // 🔄 每 30 秒自動檢查一次後端資料，確保 Logo 更新能被抓取
+        // 每 30 秒自動檢查一次
         const refreshInterval = setInterval(() => {
             fetchLayoutData(locale);
-        }, 30000); // 30 秒
+        }, 30000);
 
         return () => clearInterval(refreshInterval);
-    }, []);
+    }, [propLocale]);
 
     const handleLanguageChange = (targetLang) => {
         if (typeof window === "undefined") return;
@@ -321,7 +373,7 @@ export default function Navbar({
     return (
         <header style={{ ...headerStyle, backgroundColor: bgColor }}>
             <style>{`
-                /* 🌟 全域防反藍、防點擊高亮閃爍 🌟 */
+                /* 全域防反藍、防點擊高亮閃爍 */
                 a, button, input, [role="button"] {
                     -webkit-tap-highlight-color: transparent !important;
                     outline: none !important;
@@ -923,7 +975,7 @@ export default function Navbar({
                                                             lineHeight: 1.3,
                                                         }}
                                                     >
-                                                        {item.snippet}
+                                                        {cleanSnippetText(item.snippet)}
                                                     </span>
                                                 )}
                                             </div>
