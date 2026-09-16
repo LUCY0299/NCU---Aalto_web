@@ -501,11 +501,23 @@
           { id:33, field_key:"title",    field_value:"Admission Information",         field_type:"text", locale:"en-US", label:"主標題", hint:null },
           { id:34, field_key:"subtitle", field_value:"Begin your international EMBA journey", field_type:"text", locale:"en-US", label:"副標題", hint:null }
         ]},
-        { id:7, section_key:"admission-requirements", name:"申請資格", section_type:"list", display_order:2, is_active:true, content_fields:[
-          { id:35, field_key:"title",   field_value:"申請資格",                               field_type:"text",     locale:"zh-TW", label:"區塊標題", hint:null },
-          { id:36, field_key:"content", field_value:"• 大學畢業\n• 5年以上工作經驗\n• 具備基本英文能力", field_type:"textarea", locale:"zh-TW", label:"資格說明", hint:null },
-          { id:37, field_key:"title",   field_value:"Requirements",                           field_type:"text",     locale:"en-US", label:"區塊標題", hint:null },
-          { id:38, field_key:"content", field_value:"• Bachelor's degree\n• 5+ years work experience\n• Basic English proficiency", field_type:"textarea", locale:"en-US", label:"資格說明", hint:null }
+        { id:7, section_key:"admission-info", name:"招生資訊", section_type:"text", display_order:2, is_active:true, content_fields:[
+          { id:35, field_key:"title",   field_value:"招生資訊",                               field_type:"text",     locale:"zh-TW", label:"區塊標題", hint:null },
+          { id:36, field_key:"blocks",  field_value:"[]", field_type:"blocks",                  locale:"zh-TW", label:"內容區塊", hint:null },
+          { id:37, field_key:"title",   field_value:"Admission Information",           field_type:"text",     locale:"en-US", label:"區塊標題", hint:null },
+          { id:38, field_key:"blocks",  field_value:"[]", field_type:"blocks",                  locale:"en-US", label:"Content Blocks", hint:null }
+        ]},
+        { id:8, section_key:"admission-requirements", name:"入學門檻", section_type:"text", display_order:3, is_active:true, content_fields:[
+          { id:39, field_key:"title",   field_value:"入學門檻",                               field_type:"text",     locale:"zh-TW", label:"區塊標題", hint:null },
+          { id:40, field_key:"blocks",  field_value:"[]", field_type:"blocks",                  locale:"zh-TW", label:"內容區塊", hint:null },
+          { id:41, field_key:"title",   field_value:"Admission Requirements",           field_type:"text",     locale:"en-US", label:"區塊標題", hint:null },
+          { id:42, field_key:"blocks",  field_value:"[]", field_type:"blocks",                  locale:"en-US", label:"Content Blocks", hint:null }
+        ]},
+        { id:9, section_key:"admission-info-and-requirements", name:"招生資訊與入學門檻（卡片版）", section_type:"list", display_order:2.5, is_active:false, content_fields:[
+          { id:43, field_key:"info_items",   field_value:'[{"title":"招生資訊","content":"","image_url":"","is_active":true}]', field_type:"json", locale:"zh-TW", label:"招生資訊卡片清單", hint:null },
+          { id:44, field_key:"requirements_items", field_value:'[{"title":"入學門檻","content":"","image_url":"","is_active":true}]', field_type:"json", locale:"zh-TW", label:"入學門檻卡片清單", hint:null },
+          { id:45, field_key:"info_items",   field_value:'[{"title":"Admission Information","content":"","image_url":"","is_active":true}]', field_type:"json", locale:"en-US", label:"Admission Info Cards", hint:null },
+          { id:46, field_key:"requirements_items", field_value:'[{"title":"Admission Requirements","content":"","image_url":"","is_active":true}]', field_type:"json", locale:"en-US", label:"Requirements Cards", hint:null }
         ]}
       ]
     },
@@ -1992,7 +2004,6 @@
             <div style="display:flex; gap:4px;">
               <button class="btn btn-secondary" style="padding:2px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲</button>
               <button class="btn btn-secondary" style="padding:2px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, 1)" ${index === items.length - 1 ? 'disabled' : ''}>▼</button>
-              <button class="btn btn-danger" style="padding:2px 8px; font-size:12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
             </div>
           </div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
@@ -2024,6 +2035,51 @@
                 <option value="false" ${item.is_active === false ? 'selected' : ''}>🔴 隱藏</option>
               </select>
             </div>
+          </div>
+        </div>`;
+      }
+
+
+      // ==========================================
+      // 專屬 UI：修業規定與學位授予的卡片清單 (degree-regulations/degree-certification items)
+      // ==========================================
+      if (fieldKey === 'items' && (sectionKey === 'degree-regulations' || sectionKey === 'degree-certification')) {
+        return `
+        <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h4 style="margin:0; color:var(--color-primary); font-size:15px; font-weight:bold;">📋 卡片 #${index + 1}：${escape(item.title || '未命名')}</h4>
+            <div style="display:flex; gap:4px;">
+              <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲ 上移</button>
+              <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, 1)" ${index === items.length - 1 ? 'disabled' : ''}>▼ 下移</button>
+              <button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:12px;">
+            <div>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">卡片標題</label>
+              <input type="text" value="${escape(item.title)}" oninput="updateListItem('${fieldKey}', ${index}, 'title', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="例如: 修業規定">
+            </div>
+
+            <div>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">卡片內容</label>
+              <textarea oninput="updateListItem('${fieldKey}', ${index}, 'content', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-family:var(--font-main); font-size:13px; line-height:1.5; min-height:120px;" placeholder="輸入詳細內容...">${escape(item.content || '')}</textarea>
+            </div>
+
+            <div>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">配圖（選填）</label>
+              <div style="display:flex; gap:8px; align-items:center;">
+                ${item.image_url ? `<img src="${item.image_url}" style="width:60px; height:60px; object-fit:cover; border-radius:4px; border:1px solid #ddd;">` : '<div style="width:60px; height:60px; background:#f0f0f0; border:1px solid #ddd; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#999; font-size:24px;">📸</div>'}
+                <input type="text" value="${escape(item.image_url || '')}" oninput="updateListItem('${fieldKey}', ${index}, 'image_url', this.value)" style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="輸入圖片 URL 或上傳">
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; align-items:center; padding-top:8px; border-top:1px solid #eee;">
+            <select onchange="updateListItem('${fieldKey}', ${index}, 'is_active', this.value === 'true')" style="width:100px; padding:4px 8px; font-size:12px; border:1px solid #ccc; border-radius:4px;">
+              <option value="true" ${item.is_active !== false ? 'selected' : ''}>🟢 顯示</option>
+              <option value="false" ${item.is_active === false ? 'selected' : ''}>🔴 隱藏</option>
+            </select>
           </div>
         </div>`;
       }
@@ -2165,22 +2221,6 @@
             </div>
           </div>
 
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom:12px;">
-            <div>
-              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">日期</label>
-              <input type="date" value="${escape(item.date)}" onchange="updateListItem('${fieldKey}', ${index}, 'date', this.value)" style="width:100%;">
-            </div>
-            <div>
-              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">卡片封面照</label>
-              <input type="file" accept="image/*" onchange="uploadListImage(this, '${fieldKey}', ${index})" style="margin-bottom:8px; font-size:12px;">
-              ${imgUrl ? `<img src="${imgUrl}" style="max-height:60px; border-radius:4px; border:1px solid #ccc; display:block;">` : ''}
-            </div>
-          </div>
-
-          <div style="margin-bottom:12px;">
-            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">內容大綱 (Summary)</label>
-            <textarea rows="2" oninput="updateListItem('${fieldKey}', ${index}, 'summary', this.value)" style="width:100%;">${escape(item.summary)}</textarea>
-          </div>
 
           ${fieldKey === 'event_list' ? renderContentBlocksSection(fieldKey, index, item) : `
           <div style="margin-top: 16px;">
@@ -2229,7 +2269,59 @@
       }, 0);
     }
   }
-  
+
+  // 更新課程項目
+  function updateCourseItem(fieldKey, itemIndex, courseIndex, field, value) {
+    if (!listFieldStates[fieldKey]) listFieldStates[fieldKey] = [];
+    const item = listFieldStates[fieldKey][itemIndex];
+    if (!item || !item.courses) return;
+
+    if (field === 'title') {
+      item.courses[courseIndex].title = value;
+      markUnsaved(true);
+    }
+  }
+
+  // 移動課程順序
+  function moveCourseItem(fieldKey, itemIndex, courseIndex, direction) {
+    if (!listFieldStates[fieldKey]) return;
+    const item = listFieldStates[fieldKey][itemIndex];
+    if (!item || !item.courses) return;
+
+    const newIndex = courseIndex + direction;
+    if (newIndex < 0 || newIndex >= item.courses.length) return;
+
+    [item.courses[courseIndex], item.courses[newIndex]] = [item.courses[newIndex], item.courses[courseIndex]];
+    renderListItems(fieldKey);
+    markUnsaved(true);
+  }
+
+  // 刪除課程項目
+  function removeCourseItem(fieldKey, itemIndex, courseIndex) {
+    if (!listFieldStates[fieldKey]) return;
+    const item = listFieldStates[fieldKey][itemIndex];
+    if (!item || !item.courses) return;
+
+    item.courses.splice(courseIndex, 1);
+    renderListItems(fieldKey);
+    markUnsaved(true);
+  }
+
+  // 新增課程項目
+  function addCourseItem(fieldKey, itemIndex) {
+    if (!listFieldStates[fieldKey]) return;
+    const item = listFieldStates[fieldKey][itemIndex];
+    if (!item) return;
+
+    if (!Array.isArray(item.courses)) {
+      item.courses = [];
+    }
+
+    item.courses.push({ title: '', is_active: true });
+    renderListItems(fieldKey);
+    markUnsaved(true);
+  }
+
   /** 手動強制依照日期排序 */
   function forceSortByDate(fieldKey) {
     const items = listFieldStates[fieldKey];

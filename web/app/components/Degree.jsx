@@ -109,12 +109,11 @@ export default function Degree({
 
     // 4. 將語系傳入給 Hook
     const hero = useSection("degree-hero", currentLocale);
-    const regulations = useSection("degree-regulations", currentLocale);
-    const certification = useSection("degree-certification", currentLocale);
+    const combined = useSection("regulations-and-certification", currentLocale);
 
     const isEn = currentLocale === "en-US";
 
-    if (hero.loading || regulations.loading || certification.loading) {
+    if (hero.loading || combined.loading) {
         return (
             <div
                 style={{
@@ -128,11 +127,10 @@ export default function Degree({
         );
     }
 
-    // 5. 若三個區塊都被停用，直接隱藏整個大元件
+    // 5. 若兩個區塊都被停用，直接隱藏整個大元件
     if (
         hero.data?.isActive === false &&
-        regulations.data?.isActive === false &&
-        certification.data?.isActive === false
+        combined.data?.isActive === false
     ) {
         return null;
     }
@@ -203,7 +201,7 @@ export default function Degree({
             )}
 
             {/* 修業規定 */}
-            {regulations.data?.isActive !== false && (
+            {combined.data?.isActive !== false && (
                 <div
                     style={{
                         padding: "20px",
@@ -219,34 +217,31 @@ export default function Degree({
                             margin: "0 0 16px 0",
                         }}
                     >
-                        {regulations.data?.title ||
-                            (isEn ? "Academic Regulations" : "修業規定")}
+                        {isEn ? "Academic Regulations" : "修業規定"}
                     </h2>
                     <div style={grayFrameStyle}>
                         <div style={cardStyle}>
-                            <ItemBlock
-                                heading={regulations.data?.item1_heading}
-                                content={regulations.data?.item1_content}
-                                headingFontSize={headingFontSize}
-                                headingColor={headingColor}
-                                contentFontSize={contentFontSize}
-                                contentColor={contentColor}
-                            />
-                            <ItemBlock
-                                heading={regulations.data?.item2_heading}
-                                content={regulations.data?.item2_content}
-                                headingFontSize={headingFontSize}
-                                headingColor={headingColor}
-                                contentFontSize={contentFontSize}
-                                contentColor={contentColor}
-                            />
+                            {Array.isArray(combined.data?.regulations_items) &&
+                                combined.data.regulations_items.map((item, idx) => (
+                                    item.is_active !== false && (
+                                        <ItemBlock
+                                            key={idx}
+                                            heading={item.title}
+                                            content={item.content}
+                                            headingFontSize={headingFontSize}
+                                            headingColor={headingColor}
+                                            contentFontSize={contentFontSize}
+                                            contentColor={contentColor}
+                                        />
+                                    )
+                                ))}
                         </div>
                     </div>
                 </div>
             )}
 
             {/* 學位授予 */}
-            {certification.data?.isActive !== false && (
+            {combined.data?.isActive !== false && (
                 <div
                     style={{
                         padding: "20px",
@@ -262,27 +257,24 @@ export default function Degree({
                             margin: "0 0 16px 0",
                         }}
                     >
-                        {certification.data?.title ||
-                            (isEn ? "Degree Conferral" : "學位授予")}
+                        {isEn ? "Degree Conferral" : "學位授予"}
                     </h2>
                     <div style={grayFrameStyle}>
                         <div style={cardStyle}>
-                            <ItemBlock
-                                heading={certification.data?.item1_heading}
-                                content={certification.data?.item1_content}
-                                headingFontSize={headingFontSize}
-                                headingColor={headingColor}
-                                contentFontSize={contentFontSize}
-                                contentColor={contentColor}
-                            />
-                            <ItemBlock
-                                heading={certification.data?.item2_heading}
-                                content={certification.data?.item2_content}
-                                headingFontSize={headingFontSize}
-                                headingColor={headingColor}
-                                contentFontSize={contentFontSize}
-                                contentColor={contentColor}
-                            />
+                            {Array.isArray(combined.data?.certification_items) &&
+                                combined.data.certification_items.map((item, idx) => (
+                                    item.is_active !== false && (
+                                        <ItemBlock
+                                            key={idx}
+                                            heading={item.title}
+                                            content={item.content}
+                                            headingFontSize={headingFontSize}
+                                            headingColor={headingColor}
+                                            contentFontSize={contentFontSize}
+                                            contentColor={contentColor}
+                                        />
+                                    )
+                                ))}
                         </div>
                     </div>
                 </div>
