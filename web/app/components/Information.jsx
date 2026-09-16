@@ -47,6 +47,13 @@ function useSection(sectionKey, currentLocale) {
                         requirementsItems,
                         isActive: res.is_active !== false,
                     });
+                } else if (sectionKey === "admission-downloads") {
+                    const fileList = parseItems(fields.file_list);
+                    setData({
+                        ...fields,
+                        file_list: fileList,
+                        isActive: res.is_active !== false,
+                    });
                 } else {
                     const blocks =
                         typeof fields.blocks === "string"
@@ -61,7 +68,7 @@ function useSection(sectionKey, currentLocale) {
             })
             .catch((err) => {
                 console.error(`${sectionKey} API 連線失敗:`, err);
-                setData({ isActive: true, title: "連線中斷", blocks: [], infoItems: [], requirementsItems: [] });
+                setData({ isActive: true, title: "連線中斷", blocks: [], infoItems: [], requirementsItems: [], file_list: [] });
             })
             .finally(() => setLoading(false));
     }, [sectionKey, currentLocale]);
@@ -365,24 +372,24 @@ export default function Information({
                                         </ul>
                                     </div>
                                 )}
-                            </div>
-                        )}
 
-                        {/* 課程免責聲明 - 左邊 bar + 灰底 */}
-                        {combined.data?.course_disclaimer && (
-                            <div
-                                style={{
-                                    marginTop: "30px",
-                                    padding: "16px 20px",
-                                    backgroundColor: "#f5f5f5",
-                                    borderLeft: "4px solid #666",
-                                    fontSize: `${contentFontSize - 2}px`,
-                                    color: "#666",
-                                    lineHeight: 1.6,
-                                    fontFamily: '"Open Sans", "Open Sans Placeholder", sans-serif',
-                                }}
-                            >
-                                {combined.data.course_disclaimer}
+                                {/* 課程免責聲明 - 灰底 + 左邊 BAR */}
+                                {combined.data.infoItems[0]?.course_disclaimer && (
+                                    <div
+                                        style={{
+                                            marginTop: "30px",
+                                            padding: "16px 20px",
+                                            backgroundColor: "#f5f5f5",
+                                            borderLeft: "4px solid #666",
+                                            fontSize: `${contentFontSize - 2}px`,
+                                            color: "#666",
+                                            lineHeight: 1.6,
+                                            fontFamily: '"Open Sans", "Open Sans Placeholder", sans-serif',
+                                        }}
+                                    >
+                                        {combined.data.infoItems[0].course_disclaimer}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

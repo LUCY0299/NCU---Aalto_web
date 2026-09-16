@@ -53,7 +53,7 @@ function ItemBlock({
     return (
         <div>
             {heading && (
-                <p
+                <h3
                     style={{
                         margin: "0 0 8px 0",
                         fontFamily:
@@ -65,10 +65,10 @@ function ItemBlock({
                     }}
                 >
                     {heading}
-                </p>
+                </h3>
             )}
             {content && (
-                <p
+                <div
                     style={{
                         margin: 0,
                         fontFamily:
@@ -77,11 +77,10 @@ function ItemBlock({
                         fontWeight: 400,
                         lineHeight: 1.6,
                         color: contentColor,
-                        whiteSpace: "pre-line",
                     }}
-                >
-                    {content}
-                </p>
+                    className="content-html"
+                    dangerouslySetInnerHTML={{ __html: content }}
+                />
             )}
         </div>
     );
@@ -96,7 +95,7 @@ export default function Degree({
     sectionTitleFontSize = 48,
     headingFontSize = 20,
     headingColor = "#160D03",
-    contentFontSize = 18,
+    contentFontSize = 23,
     contentColor = "#3B3B3D",
     cardBg = "#ffffff",
     cardBorderColor = "#E8E8E8",
@@ -201,7 +200,7 @@ export default function Degree({
             )}
 
             {/* 修業規定 */}
-            {combined.data?.isActive !== false && (
+            {combined.data?.isActive !== false && Array.isArray(combined.data?.regulations_items) && combined.data.regulations_items.length > 0 && (
                 <div
                     style={{
                         padding: "20px",
@@ -217,7 +216,7 @@ export default function Degree({
                             margin: "0 0 16px 0",
                         }}
                     >
-                        {isEn ? "Academic Regulations" : "修業規定"}
+                        {combined.data.regulations_items[0]?.title || (isEn ? "Academic Regulations" : "修業規定")}
                     </h2>
                     <div style={grayFrameStyle}>
                         <div style={cardStyle}>
@@ -226,7 +225,7 @@ export default function Degree({
                                     item.is_active !== false && (
                                         <ItemBlock
                                             key={idx}
-                                            heading={item.title}
+                                            heading={idx === 0 ? null : item.title}
                                             content={item.content}
                                             headingFontSize={headingFontSize}
                                             headingColor={headingColor}
@@ -241,7 +240,7 @@ export default function Degree({
             )}
 
             {/* 學位授予 */}
-            {combined.data?.isActive !== false && (
+            {combined.data?.isActive !== false && Array.isArray(combined.data?.certification_items) && combined.data.certification_items.length > 0 && (
                 <div
                     style={{
                         padding: "20px",
@@ -257,7 +256,7 @@ export default function Degree({
                             margin: "0 0 16px 0",
                         }}
                     >
-                        {isEn ? "Degree Conferral" : "學位授予"}
+                        {combined.data.certification_items[0]?.title || (isEn ? "Degree Conferral" : "學位授予")}
                     </h2>
                     <div style={grayFrameStyle}>
                         <div style={cardStyle}>
@@ -266,7 +265,7 @@ export default function Degree({
                                     item.is_active !== false && (
                                         <ItemBlock
                                             key={idx}
-                                            heading={item.title}
+                                            heading={idx === 0 ? null : item.title}
                                             content={item.content}
                                             headingFontSize={headingFontSize}
                                             headingColor={headingColor}

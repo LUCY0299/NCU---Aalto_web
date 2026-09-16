@@ -151,6 +151,17 @@
     textarea.editable-field:hover {
       border-color: var(--color-primary) !important;
     }
+
+    /* Quill 編輯器列表縮進樣式 */
+    .ql-container.ql-snow ul li.ql-indent-1 {
+      margin-left: 2em;
+    }
+    .ql-container.ql-snow ul li.ql-indent-2 {
+      margin-left: 4em;
+    }
+    .ql-container.ql-snow ul li.ql-indent-3 {
+      margin-left: 6em;
+    }
   </style>
 </head>
 <body>
@@ -500,18 +511,6 @@
           { id:32, field_key:"subtitle", field_value:"開啟您的國際 EMBA 之旅", field_type:"text", locale:"zh-TW", label:"副標題", hint:null },
           { id:33, field_key:"title",    field_value:"Admission Information",         field_type:"text", locale:"en-US", label:"主標題", hint:null },
           { id:34, field_key:"subtitle", field_value:"Begin your international EMBA journey", field_type:"text", locale:"en-US", label:"副標題", hint:null }
-        ]},
-        { id:7, section_key:"admission-info", name:"招生資訊", section_type:"text", display_order:2, is_active:true, content_fields:[
-          { id:35, field_key:"title",   field_value:"招生資訊",                               field_type:"text",     locale:"zh-TW", label:"區塊標題", hint:null },
-          { id:36, field_key:"blocks",  field_value:"[]", field_type:"blocks",                  locale:"zh-TW", label:"內容區塊", hint:null },
-          { id:37, field_key:"title",   field_value:"Admission Information",           field_type:"text",     locale:"en-US", label:"區塊標題", hint:null },
-          { id:38, field_key:"blocks",  field_value:"[]", field_type:"blocks",                  locale:"en-US", label:"Content Blocks", hint:null }
-        ]},
-        { id:8, section_key:"admission-requirements", name:"入學門檻", section_type:"text", display_order:3, is_active:true, content_fields:[
-          { id:39, field_key:"title",   field_value:"入學門檻",                               field_type:"text",     locale:"zh-TW", label:"區塊標題", hint:null },
-          { id:40, field_key:"blocks",  field_value:"[]", field_type:"blocks",                  locale:"zh-TW", label:"內容區塊", hint:null },
-          { id:41, field_key:"title",   field_value:"Admission Requirements",           field_type:"text",     locale:"en-US", label:"區塊標題", hint:null },
-          { id:42, field_key:"blocks",  field_value:"[]", field_type:"blocks",                  locale:"en-US", label:"Content Blocks", hint:null }
         ]},
         { id:9, section_key:"admission-info-and-requirements", name:"招生資訊與入學門檻（卡片版）", section_type:"list", display_order:2.5, is_active:false, content_fields:[
           { id:43, field_key:"info_items",   field_value:'[{"title":"招生資訊","content":"","image_url":"","is_active":true}]', field_type:"json", locale:"zh-TW", label:"招生資訊卡片清單", hint:null },
@@ -2226,6 +2225,10 @@
           <div style="margin-top: 16px;">
             <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">完整內容 (Content)</label>
             <div id="quill-editor-${fieldKey}-${index}" style="height: 250px; background: #fff; font-family: sans-serif;"></div>
+          </div>
+          <div style="margin-top: 16px;">
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">課程免責聲明</label>
+            <textarea rows="3" oninput="updateListItem('${fieldKey}', ${index}, 'course_disclaimer', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-family:monospace; font-size:13px; resize:vertical;" placeholder="例如：本校保留隨時變更課程內容、時程及提供方式的權利...">${escape(item.course_disclaimer || '')}</textarea>
           </div>`}
         </div>
       </div>
@@ -2242,7 +2245,7 @@
           if (editorElement && !editorElement.classList.contains('ql-container')) {
             const quill = new Quill(editorElement, {
               theme: 'snow',
-              modules: { 
+              modules: {
                 toolbar: {
                   container: quillToolbarOptions,
                   handlers: { 'image': function() { quillImageHandler(this.quill); } }
@@ -2251,13 +2254,19 @@
               placeholder: '在此輸入完整內容...'
             });
 
-            if (item.content) { quill.root.innerHTML = item.content; }
-            
+            if (item.content) {
+              // 加載內容時轉換為可編輯的縮進格式
+              quill.root.innerHTML = item.content;
+            }
+
             quill.on('text-change', function(delta, oldDelta, source) {
               if (source === 'user') {
-                const currentHtml = quill.root.innerHTML;
+                let currentHtml = quill.root.innerHTML;
                 const originalHtml = item.content || '';
                 const isActuallyEmpty = (originalHtml === '' && currentHtml === '<p><br></p>');
+
+                // 轉換縮進列表為嵌套 <ul>
+                currentHtml = convertIndentedListToNested(currentHtml);
 
                 if (currentHtml !== originalHtml && !isActuallyEmpty) {
                   updateListItem(fieldKey, index, 'content', currentHtml);
@@ -2475,6 +2484,48 @@
     
     saveListToPending(fieldKey);
     renderListItems(fieldKey);
+  }
+
+  /** 轉換 Quill 的縮進列表為嵌套 <ul> */
+  function convertIndentedListToNested(html) {
+    if (!html) return html;
+
+    // 解析 HTML
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    // 找到所有的 <ul> 元素
+    const lists = doc.querySelectorAll('ul');
+
+    lists.forEach(ul => {
+      const items = ul.querySelectorAll(':scope > li');
+      let currentUl = ul;
+      let currentParent = null;
+
+      items.forEach((li, idx) => {
+        const indent = li.className.match(/ql-indent-(\d+)/);
+        const level = indent ? parseInt(indent[1]) : 0;
+
+        // 移除 Quill 的縮進類名
+        li.className = li.className.replace(/ql-indent-\d+/g, '').trim();
+
+        if (level > 0 && currentParent) {
+          // 如果需要縮進，建立嵌套 <ul>
+          if (!currentParent.querySelector(':scope > ul')) {
+            const newUl = document.createElement('ul');
+            currentParent.appendChild(newUl);
+          }
+          const nestedUl = currentParent.querySelector(':scope > ul');
+          nestedUl.appendChild(li);
+        } else {
+          // 恢復到原始層級
+          currentUl.appendChild(li);
+          currentParent = li;
+        }
+      });
+    });
+
+    return doc.body.innerHTML;
   }
 
   /** 更新卡片內單一欄位的值 */

@@ -496,35 +496,7 @@ SECTIONS_DATA = [
         ]
     },
     {
-        "page_slug": "admission", "key": "admission-info", "name": "招生資訊", "type": "text", "order": 2,
-        "fields": [
-            {"key": "title",   "label": "區塊標題", "type": "text",
-             "zh": "招生資訊",
-             "en": "Admission Information"},
-            {
-                "key": "blocks",
-                "label": "內容區塊（可自由新增/刪除/排序文字、圖片）",
-                "type": "blocks",
-                "block_types": ["text", "image"],
-            },
-        ]
-    },
-    {
-        "page_slug": "admission", "key": "admission-requirements", "name": "入學門檻", "type": "text", "order": 3,
-        "fields": [
-            {"key": "title",   "label": "區塊標題", "type": "text",
-             "zh": "入學門檻",
-             "en": "Admission Requirements"},
-            {
-                "key": "blocks",
-                "label": "內容區塊（可自由新增/刪除/排序文字、圖片）",
-                "type": "blocks",
-                "block_types": ["text", "image"],
-            },
-        ]
-    },
-    {
-        "page_slug": "admission", "key": "admission-info-and-requirements", "name": "招生資訊與入學門檻（卡片版）", "type": "list", "order": 2.5,
+        "page_slug": "admission", "key": "admission-info-and-requirements", "name": "招生資訊與入學門檻", "type": "list", "order": 2.5,
         "fields": [
             {
                 "key": "info_items",
@@ -533,7 +505,8 @@ SECTIONS_DATA = [
                 "items": [
                     {"key": "title", "label": "卡片標題", "type": "text"},
                     {"key": "type", "label": "卡片類型", "type": "text"},
-                    {"key": "content", "label": "內容", "type": "textarea"},
+                    {"key": "content", "label": "完整內容", "type": "textarea"},
+                    {"key": "course_disclaimer", "label": "課程免責聲明", "type": "textarea"},
                     {"key": "image_url", "label": "配圖（選填）", "type": "image"},
                     {
                         "key": "courses",
@@ -546,8 +519,8 @@ SECTIONS_DATA = [
                     },
                     {"key": "is_active", "label": "狀態", "type": "boolean"}
                 ],
-                "zh": '[{"title": "招生資訊", "type": "info", "content": "本學程由國立中央大學與芬蘭阿爾托大學合作開辦，共計15門課程及一份個別論文專案，其中：\\n\\n(1) 9門課程由國立中央大學管理學院授課。\\n(2) 6門課程由阿爾托大學行政教育機構授課。其中5門課程將由大學教授在台灣授課，另1門課程為國際課程。", "image_url": "", "courses": [], "is_active": true}, {"title": "國立中央大學課程", "type": "ncu_courses", "content": "", "image_url": "", "courses": [], "is_active": true}, {"title": "阿爾托大學課程", "type": "aalto_courses", "content": "", "image_url": "", "courses": [], "is_active": true}]',
-                "en": '[{"title": "Admission Information", "type": "info", "content": "The program is jointly developed by National Central University and Aalto University, comprising 15 courses and an individual thesis project.\\n\\n(1) 9 courses taught by NCU College of Management\\n(2) 6 courses taught by Aalto University. 5 of these courses will be taught by Aalto faculty in Taiwan, and 1 course is an international program.", "image_url": "", "courses": [], "is_active": true}, {"title": "NCU Courses", "type": "ncu_courses", "content": "", "image_url": "", "courses": [], "is_active": true}, {"title": "Aalto Courses", "type": "aalto_courses", "content": "", "image_url": "", "courses": [], "is_active": true}]'
+                "zh": '[{"title": "招生資訊", "type": "info", "content": "本學程由國立中央大學與芬蘭阿爾托大學合作開辦，共計15門課程及一份個別論文專案，其中：\\n\\n(1) 9門課程由國立中央大學管理學院授課。\\n(2) 6門課程由阿爾托大學行政教育機構授課。其中5門課程將由大學教授在台灣授課，另1門課程為國際課程。", "course_disclaimer": "本校保留隨時變更課程內容、時程及提供方式的權利，如有疑問，請直接聯繫本校以確認最新資訊。", "image_url": "", "courses": [], "is_active": true}, {"title": "國立中央大學課程", "type": "ncu_courses", "content": "", "course_disclaimer": "", "image_url": "", "courses": [], "is_active": true}, {"title": "阿爾托大學課程", "type": "aalto_courses", "content": "", "course_disclaimer": "", "image_url": "", "courses": [], "is_active": true}]',
+                "en": '[{"title": "Admission Information", "type": "info", "content": "The program is jointly developed by National Central University and Aalto University, comprising 15 courses and an individual thesis project.\\n\\n(1) 9 courses taught by NCU College of Management\\n(2) 6 courses taught by Aalto University. 5 of these courses will be taught by Aalto faculty in Taiwan, and 1 course is an international program.", "course_disclaimer": "The school reserves the right to change course content, schedule, and delivery methods at any time. If you have any questions, please contact the school directly to confirm the latest information.", "image_url": "", "courses": [], "is_active": true}, {"title": "NCU Courses", "type": "ncu_courses", "content": "", "course_disclaimer": "", "image_url": "", "courses": [], "is_active": true}, {"title": "Aalto Courses", "type": "aalto_courses", "content": "", "course_disclaimer": "", "image_url": "", "courses": [], "is_active": true}]'
             },
             {
                 "key": "requirements_items",
@@ -561,13 +534,6 @@ SECTIONS_DATA = [
                 ],
                 "zh": '[{"title": "入學門檻", "content": "<ul><li>學士學位或同等資格</li><li>至少5年相關領域的工作經驗，具有管理階層或資深專業職位背景</li><li>個人面試</li><li>完整的申請文件<ul><li>履歷表（CV）</li><li>學位證書及成績單</li><li>4份論文</li></ul></li><li>2份推薦信</li></ul>", "image_url": "", "is_active": true}]',
                 "en": '[{"title": "Admission Requirements", "content": "<ul><li>Bachelor\'s degree or equivalent qualification</li><li>At least 5 years of professional experience in a relevant field with management level or senior professional position background</li><li>Personal interview</li><li>Complete application documents<ul><li>Resume (CV)</li><li>Degree certificate and transcripts</li><li>4 essays</li></ul></li><li>2 letters of recommendation</li></ul>", "image_url": "", "is_active": true}]'
-            },
-            {
-                "key": "course_disclaimer",
-                "label": "課程免責聲明",
-                "type": "text",
-                "zh": "本校保留隨時變更課程內容、時程及提供方式的權利，如有疑問，請直接聯繫本校以確認最新資訊。",
-                "en": "The school reserves the right to change course content, schedule, and delivery methods at any time. If you have any questions, please contact the school directly to confirm the latest information."
             }
         ]
     },
