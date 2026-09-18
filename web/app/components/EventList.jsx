@@ -194,7 +194,8 @@ function EventCard({ item, cardColor, detailPagePath, locale }) {
         basePath = `/en${basePath}`;
     }
 
-    const detailLink = `${basePath}?title=${encodeURIComponent(item.title)}`;
+    // ✅ 改為：直接用索引構建連結
+    const detailLink = `${basePath}?index=${item._index}`;
 
     return (
         <div

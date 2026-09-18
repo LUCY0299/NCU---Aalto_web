@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
@@ -15,64 +16,110 @@ const detectLocale = () => {
     return "zh-TW";
 };
 
-// 解析並淨化搜尋摘要的文字，過濾掉 JSON 符號與 HTML 標籤
+// 預設菜單 - 在 component 外定義
+function getDefaultMenu(locale) {
+    if (locale === "en-US") {
+        return [
+            { title: "Home", link_url: "/en", is_active: true },
+            {
+                title: "About Aalto EMBA",
+                link_url: "/en/about-emba",
+                is_active: true,
+                dropdown: [
+                    { title: "About Aalto EMBA", link_url: "/en/about-emba", is_active: true },
+                    { title: "About Aalto University", link_url: "/en/about-aalto", is_active: true },
+                    { title: "About NCU", link_url: "/en/about-ncu", is_active: true },
+                ],
+            },
+            {
+                title: "Learning Info",
+                link_url: "/en/eventlist-2",
+                is_active: true,
+                dropdown: [
+                    { title: "Events", link_url: "/en/eventlist-2", is_active: true },
+                    { title: "Alumni Sharing", link_url: "/en/all-alumni", is_active: true },
+                ],
+            },
+            {
+                title: "Programs",
+                link_url: "/en/information",
+                is_active: true,
+                dropdown: [
+                    { title: "Admission Info", link_url: "/en/information", is_active: true },
+                    { title: "Degree & Regulations", link_url: "/en/degree", is_active: true },
+                ],
+            },
+            { title: "Contact", link_url: "/en/contact", is_active: true },
+        ];
+    }
+    return [
+        { title: "首頁 Home", link_url: "/", is_active: true },
+        {
+            title: "關於 Aalto EMBA",
+            link_url: "/about-emba",
+            is_active: true,
+            dropdown: [
+                { title: "關於 Aalto EMBA", link_url: "/about-emba", is_active: true },
+                { title: "關於Aalto", link_url: "/about-aalto", is_active: true },
+                { title: "關於中央大學", link_url: "/about-ncu", is_active: true },
+            ],
+        },
+        {
+            title: "學習資訊",
+            link_url: "/eventlist-2",
+            is_active: true,
+            dropdown: [
+                { title: "活動訊息", link_url: "/eventlist-2", is_active: true },
+                { title: "校友分享", link_url: "/all-alumni", is_active: true },
+            ],
+        },
+        {
+            title: "課程相關",
+            link_url: "/information",
+            is_active: true,
+            dropdown: [
+                { title: "招生資訊", link_url: "/information", is_active: true },
+                { title: "修業與學位", link_url: "/degree", is_active: true },
+            ],
+        },
+        { title: "聯絡方式", link_url: "/contact", is_active: true },
+    ];
+}
+
 function cleanSnippetText(text) {
     if (!text) return "";
     let resultText = text;
-
     try {
-        // 判斷字串是否疑似為 JSON 陣列或物件 (以 [ 或 { 開頭)
         if (text.trim().startsWith("[") || text.trim().startsWith("{")) {
             const parsed = JSON.parse(text);
-
-            // 遞迴提取物件中所有的字串值
             const extractText = (val) => {
                 if (typeof val === "string") return val;
-                if (Array.isArray(val))
-                    return val.map(extractText).filter(Boolean).join(" - ");
+                if (Array.isArray(val)) return val.map(extractText).filter(Boolean).join(" - ");
                 if (typeof val === "object" && val !== null) {
-                    // 優先提取特定的內容欄位 (加入 content 欄位)
                     if (val.title || val.desc || val.content || val.text) {
                         return [val.title, val.desc, val.content, val.text]
                             .filter(Boolean)
                             .join(" ");
                     }
-                    return Object.values(val)
-                        .map(extractText)
-                        .filter(Boolean)
-                        .join(" ");
+                    return Object.values(val).map(extractText).filter(Boolean).join(" ");
                 }
                 return "";
             };
-
             resultText = extractText(parsed);
             return resultText.replace(/<[^>]*>?/gm, "").trim();
         }
     } catch (e) {
-        // 🚨 關鍵點：如果進到這裡，代表後端把 JSON 切斷了 (變成無效 JSON)
-        // 改用 Regex 強制脫掉 JSON 外衣
         resultText = text
-            .replace(/\[|\]|\{|\}/g, "") // 移除所有括號 [ ] { }
-            .replace(/"title"\s*:\s*"/g, "") // 移除 "title":"
-            .replace(/"desc"\s*:\s*"/g, " - ") // 移除 "desc":"
-            .replace(/"content"\s*:\s*"/g, " - ") // 移除 "content":"
-            .replace(/"text"\s*:\s*"/g, " - ") // 移除 "text":"
-            .replace(/"/g, "") // 移除剩餘的雙引號
-            .replace(/,/g, "，"); // 將半形逗號轉全形
+            .replace(/\[|\]|\{|\}/g, "")
+            .replace(/"title"\s*:\s*"/g, "")
+            .replace(/"desc"\s*:\s*"/g, " - ")
+            .replace(/"content"\s*:\s*"/g, " - ")
+            .replace(/"text"\s*:\s*"/g, " - ")
+            .replace(/"/g, "")
+            .replace(/,/g, "，");
     }
-
-    // 移除可能夾帶的 HTML 標籤
     return resultText.replace(/<[^>]*>?/gm, "").trim();
 }
-
-const headerStyle = {
-    width: "100%",
-    position: "sticky",
-    top: 0,
-    zIndex: 1000,
-    display: "flex",
-    justifyContent: "center",
-};
 
 export default function Navbar({
     logoImage,
@@ -81,32 +128,47 @@ export default function Navbar({
     bgColor = "#FAF9F5",
     locale: propLocale = "auto",
 }) {
+    const router = useRouter();
     const [currentLocale, setCurrentLocale] = useState("zh-TW");
-    const [menuItems, setMenuItems] = useState([]);
+    const [menuItems, setMenuItems] = useState([]);  // ✅ 改為空陣列，等待後端數據
     const [logoUrl, setLogoUrl] = useState("");
     const [loading, setLoading] = useState(true);
     const [mobileOpen, setMobileOpen] = useState(false);
-
-    // 手機版選單摺疊狀態
     const [activeAccordion, setActiveAccordion] = useState(null);
 
-    // 搜尋功能相關 State 與 Refs
+    // ✅ 新增：mounted 與 currentPath state
+    const [mounted, setMounted] = useState(false);
+    const [currentPath, setCurrentPath] = useState("");
+
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchKeyword, setSearchKeyword] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [searchLoading, setSearchLoading] = useState(false);
+    const [hoveredDropdown, setHoveredDropdown] = useState(null);
 
     const searchContainerRef = useRef(null);
     const searchDebounceTimer = useRef(null);
+    const dropdownHoverTimer = useRef(null);
 
-    // 關閉搜尋
+    // ✅ 初始化 mounted 與 currentPath（客戶端專用）
+    useEffect(() => {
+        setMounted(true);
+        setCurrentPath(window.location.pathname.toLowerCase());
+    }, []);
+
+    useEffect(() => {
+        const detectedLocale =
+            !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
+        setCurrentLocale(detectedLocale);
+        // ✅ 不再設置預設菜單，只設置語言即可
+    }, [propLocale]);
+
     const closeSearch = () => {
         setSearchOpen(false);
         setSearchKeyword("");
         setSearchResults([]);
     };
 
-    // 點擊搜尋結果的跳轉邏輯
     const handleItemClick = (url) => {
         if (typeof window === "undefined" || !url) return;
         let finalUrl = url;
@@ -117,10 +179,9 @@ export default function Navbar({
         ) {
             finalUrl = `/en${finalUrl}`;
         }
-        window.location.href = finalUrl;
+        router.push(finalUrl);
     };
 
-    // 點擊選單外部關閉搜尋
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (
@@ -136,7 +197,6 @@ export default function Navbar({
         };
     }, []);
 
-    // 防抖搜尋邏輯
     useEffect(() => {
         if (searchDebounceTimer.current) {
             clearTimeout(searchDebounceTimer.current);
@@ -177,9 +237,9 @@ export default function Navbar({
         };
     }, [searchKeyword, currentLocale]);
 
-    // 抓取 layout 頁面資料的函數
     const fetchLayoutData = async (locale) => {
         try {
+            // ✅ 不再立即設置預設菜單，等後端數據返回後才設置
             const res = await fetch(
                 `${BASE_URL}/api/v1/pages/layout?locale=${locale}&t=${new Date().getTime()}`,
                 {
@@ -192,14 +252,12 @@ export default function Navbar({
             );
 
             if (!res.ok) {
-                setMenuItems(getDefaultMenu(locale));
                 return;
             }
 
             const data = await res.json();
 
             if (data && data.sections) {
-                // 處理導覽列選單
                 const navSec = data.sections.find(
                     (s) => s.section_key === "navbar"
                 );
@@ -228,12 +286,10 @@ export default function Navbar({
                     setMenuItems(getDefaultMenu(locale));
                 }
 
-                // 處理 branding 區塊
                 const brandingSec = data.sections.find(
                     (s) => s.section_key === "branding"
                 );
                 if (brandingSec && brandingSec.content_fields) {
-                    // 1. 處理 navbar_logo
                     const logoFields = brandingSec.content_fields.filter(
                         (f) => f.field_key === "navbar_logo"
                     );
@@ -249,52 +305,6 @@ export default function Navbar({
                     if (logoField && logoField.field_value) {
                         setLogoUrl(logoField.field_value);
                     }
-
-                    // 2. 處理 favicon_title
-                    const faviconTitleField = brandingSec.content_fields.find(
-                        (f) =>
-                            f.field_key === "favicon_title" &&
-                            f.locale === locale
-                    );
-
-                    if (faviconTitleField && faviconTitleField.field_value) {
-                        document.title = faviconTitleField.field_value;
-                        const observer = new MutationObserver(() => {
-                            if (
-                                document.title !==
-                                faviconTitleField.field_value
-                            ) {
-                                document.title = faviconTitleField.field_value;
-                            }
-                        });
-                        const headNode = document.querySelector("head");
-                        if (headNode) {
-                            observer.observe(headNode, {
-                                childList: true,
-                                subtree: true,
-                            });
-                        }
-                    }
-
-                    // 3. 處理 favicon
-                    const faviconField = brandingSec.content_fields.find(
-                        (f) => f.field_key === "favicon" && f.locale === locale
-                    );
-
-                    if (faviconField && faviconField.field_value) {
-                        const fullFaviconUrl =
-                            faviconField.field_value.startsWith("http")
-                                ? faviconField.field_value
-                                : `${BASE_URL}${faviconField.field_value}`;
-
-                        let link = document.querySelector("link[rel~='icon']");
-                        if (!link) {
-                            link = document.createElement("link");
-                            link.rel = "icon";
-                            document.head.appendChild(link);
-                        }
-                        link.href = fullFaviconUrl;
-                    }
                 }
             } else {
                 setMenuItems(getDefaultMenu(locale));
@@ -308,20 +318,14 @@ export default function Navbar({
     };
 
     useEffect(() => {
-        const locale =
-            !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
-        setCurrentLocale(locale);
+        fetchLayoutData(currentLocale);
 
-        // 初次加載
-        fetchLayoutData(locale);
-
-        // 每 30 秒自動檢查一次
         const refreshInterval = setInterval(() => {
-            fetchLayoutData(locale);
+            fetchLayoutData(currentLocale);
         }, 30000);
 
         return () => clearInterval(refreshInterval);
-    }, [propLocale]);
+    }, [currentLocale]);
 
     const handleLanguageChange = (targetLang) => {
         if (typeof window === "undefined") return;
@@ -332,7 +336,7 @@ export default function Navbar({
             if (!currentPath.startsWith("/en/") && currentPath !== "/en") {
                 const newPath =
                     currentPath === "/" ? "/en" : `/en${currentPath}`;
-                window.location.href = newPath + currentSearch;
+                router.push(newPath + currentSearch);
             }
         } else {
             if (currentPath.startsWith("/en")) {
@@ -340,22 +344,21 @@ export default function Navbar({
                 if (!newPath.startsWith("/")) {
                     newPath = "/" + newPath;
                 }
-                window.location.href = newPath + currentSearch;
+                router.push(newPath + currentSearch);
             }
         }
     };
 
-    const isLinkActive = (path, index) => {
-        if (typeof window === "undefined") return false;
-        const currentPath = window.location.pathname.toLowerCase();
+    // ✅ 修正：改用 mounted + currentPath state，移除未使用的 index 參數
+    const isLinkActive = (path) => {
+        if (!mounted || !path) return false;
         const cleanPath = path.toLowerCase();
 
         if (cleanPath === "/" || cleanPath === "/en") {
             return (
                 currentPath === "/" ||
                 currentPath === "/en" ||
-                currentPath === "" ||
-                currentPath.endsWith("/index.html")
+                currentPath === ""
             );
         }
         return currentPath.startsWith(cleanPath);
@@ -371,354 +374,99 @@ export default function Navbar({
           "https://gumjociqcucdzfrrtxnt.supabase.co/storage/v1/object/public/uploads/about-ncu/5938d87b-ea28-4ad0-b88f-db1c5e62f6b8.png";
 
     return (
-        <header style={{ ...headerStyle, backgroundColor: bgColor }}>
-            <style>{`
-                /* 全域防反藍、防點擊高亮閃爍 */
-                a, button, input, [role="button"] {
-                    -webkit-tap-highlight-color: transparent !important;
-                    outline: none !important;
-                }
-
-                .nav-container {
-                    width: 100%;
-                    height: 100px;
-                    display: flex;
-                    flex-direction: row;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 0 24px;
-                    box-sizing: border-box;
-                    position: relative;
-                }
-
-                .logo-link {
-                    width: 251px;
-                    height: 74px;
-                    display: block;
-                    background-size: contain;
-                    background-repeat: no-repeat;
-                    background-position: left center;
-                    cursor: pointer;
-                    flex-shrink: 0;
-                }
-
-                .nav-right {
-                    display: flex;
-                    flex-direction: row;
-                    align-items: center;
-                    gap: 24px;
-                }
-
-                .nav-menu {
-                    display: flex;
-                    flex-direction: row;
-                    align-items: center;
-                    gap: 24px;
-                    list-style: none;
-                    margin: 0;
-                    padding: 0;
-                }
-
-                .nav-item {
-                    position: relative;
-                    display: flex;
-                    align-items: center;
-                    cursor: pointer;
-                }
-
-                .nav-link {
-                    font-family: "Inter", "PingFang TC", "Microsoft JhengHei", sans-serif !important;
-                    font-size: 16px !important;
-                    font-weight: 600 !important;
-                    line-height: 1.7 !important;
-                    color: ${textColor} !important;
-                    text-decoration: none !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    gap: 4px !important;
-                    transition: color 0.2s ease !important;
-                    white-space: nowrap;
-                }
-
-                .nav-link:hover {
-                    color: ${activeColor} !important;
-                }
-
-                .nav-link.active {
-                    color: ${activeColor} !important;
-                    font-weight: 600 !important;
-                }
-
-                .dropdown-menu {
-                    position: absolute;
-                    top: 50px !important;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    box-sizing: border-box;
-                    width: max-content;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: flex-start;
-                    padding: 17px 26px 22px 26px;
-                    box-shadow: 0px 10px 20px 0px rgba(0, 0, 0, 0.05);
-                    background-color: #ffffff;
-                    border-radius: 4px;
-                    gap: 15px;
-                    z-index: 999;
-                    opacity: 0;
-                    visibility: hidden;
-                    transition: all 0.2s ease-in-out;
-                }
-
-                .nav-item:hover .dropdown-menu {
-                    opacity: 1 !important;
-                    visibility: visible !important;
-                    top: 38px !important;
-                }
-
-                .dropdown-link {
-                    font-family: "Inter", "PingFang TC", "Microsoft JhengHei", sans-serif !important;
-                    font-size: 15px !important;
-                    font-weight: 500 !important;
-                    line-height: 1.7 !important;
-                    color: #111111 !important;
-                    text-decoration: none !important;
-                    transition: color 0.2s !important;
-                    display: block !important;
-                    width: 100% !important;
-                    text-align: left !important;
-                    white-space: nowrap;
-                }
-
-                .dropdown-link:hover {
-                    color: ${activeColor} !important;
-                }
-
-                .controls-group {
-                    display: flex;
-                    align-items: center;
-                    gap: 20px;
-                }
-
-                .search-btn {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: #111111 !important;
-                    background: none;
-                    border: none;
-                    cursor: pointer;
-                    padding: 4px;
-                    outline: none;
-                    transition: color 0.2s !important;
-                }
-                .search-btn:hover {
-                    color: ${activeColor} !important;
-                }
-
-                .lang-dropdown-container {
-                    position: relative;
-                }
-
-                .lang-btn {
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    background-color: #eeede8;
-                    border: none;
-                    border-radius: 99px;
-                    padding: 8px 18px;
-                    font-family: "Inter", "PingFang TC", sans-serif !important;
-                    font-size: 14px !important;
-                    font-weight: 600 !important;
-                    line-height: 1.7 !important;
-                    cursor: pointer;
-                    color: #111111 !important;
-                    transition: background 0.2s !important;
-                }
-                .lang-btn:hover {
-                    background-color: #e2e0d9;
-                }
-
-                .lang-dropdown-menu {
-                    position: absolute;
-                    top: 48px;
-                    right: 0;
-                    background-color: #ffffff;
-                    box-shadow: 0px 10px 20px 0px rgba(0, 0, 0, 0.05);
-                    border-radius: 6px;
-                    padding: 6px 0;
-                    min-width: 120px;
-                    display: flex;
-                    flex-direction: column;
-                    z-index: 1000;
-                    opacity: 0;
-                    visibility: hidden;
-                    transition: all 0.2s ease-in-out;
-                }
-
-                .lang-dropdown-container:hover .lang-dropdown-menu {
-                    opacity: 1;
-                    visibility: visible;
-                    top: 40px;
-                }
-
-                .lang-dropdown-item {
-                    background: none;
-                    border: none;
-                    padding: 8px 16px;
-                    font-family: "Inter", "PingFang TC", sans-serif !important;
-                    font-size: 14px !important;
-                    font-weight: 500 !important;
-                    line-height: 1.7 !important;
-                    text-align: left !important;
-                    width: 100% !important;
-                    cursor: pointer !important;
-                    color: #111111 !important;
-                    transition: background 0.2s, color 0.2s !important;
-                }
-
-                .lang-dropdown-item:hover {
-                    background-color: #f5f5f5;
-                    color: ${activeColor} !important;
-                }
-
-                .burger-btn {
-                    display: none;
-                    background: none;
-                    border: none;
-                    cursor: pointer;
-                    padding: 10px;
-                    z-index: 1000;
-                }
-
-                @media (max-width: 1199px) {
-                    .nav-container {
-                        padding: 0 24px;
-                        height: 80px;
-                    }
-                    .logo-link {
-                        width: 190px;
-                        height: 56px;
-                    }
-                    .nav-right {
-                        display: ${mobileOpen ? "flex" : "none"};
-                        flex-direction: column;
-                        position: absolute;
-                        top: 80px;
-                        left: 0;
-                        width: 100%;
-                        background: rgba(255, 255, 255, 0.98);
-                        backdrop-filter: blur(10px);
-                        box-shadow: 0px 15px 30px rgba(0, 0, 0, 0.08);
-                        padding: 24px 30px 40px 30px;
-                        gap: 24px;
-                        box-sizing: border-box;
-                        align-items: flex-start;
-                        border-bottom: 2px solid rgba(0, 0, 0, 0.03);
-                        transition: all 0.3s ease;
-                    }
-                    .nav-menu {
-                        flex-direction: column;
-                        width: 100%;
-                        gap: 8px;
-                    }
-                    .nav-item {
-                        flex-direction: column;
-                        align-items: flex-start;
-                        padding: 6px 0;
-                        width: 100%;
-                        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-                    }
-                    .nav-item:last-child {
-                        border-bottom: none;
-                    }
-                    .nav-link {
-                        width: 100%;
-                        justify-content: space-between;
-                        padding: 8px 0;
-                        font-size: 17px !important;
-                    }
-
-                    .dropdown-menu {
-                        position: static;
-                        transform: none;
-                        box-shadow: none;
-                        width: 100%;
-                        background-color: transparent;
-                        padding: 8px 0 8px 16px;
-                        margin: 4px 0 0 0;
-                        border-left: 2px solid ${activeColor};
-                        display: none;
-                        flex-direction: column;
-                        gap: 14px;
-                        opacity: 1;
-                        visibility: visible;
-                        box-sizing: border-box;
-                    }
-
-                    .dropdown-menu.open {
-                        display: flex !important;
-                    }
-
-                    .dropdown-link {
-                        font-size: 15px !important;
-                        padding: 4px 0;
-                        color: #555555 !important;
-                        width: 100% !important;
-                    }
-
-                    .controls-group {
-                        width: 100%;
-                        justify-content: space-between;
-                        padding-top: 20px;
-                        border-top: 1px solid rgba(0, 0, 0, 0.08);
-                        margin-top: 10px;
-                    }
-                    .burger-btn {
-                        display: block;
-                    }
-                }
-            `}</style>
-
-            <div className="nav-container">
-                {/* 1. LOGO */}
+        <header
+            style={{
+                width: "100%",
+                position: "sticky",
+                top: 0,
+                zIndex: 1000,
+                backgroundColor: bgColor,
+                boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
+            }}
+        >
+            <div
+                style={{
+                    width: "100%",
+                    height: 100,
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "0 24px",
+                    boxSizing: "border-box",
+                }}
+            >
+                {/* LOGO */}
                 <a
                     href={isEn ? "/en" : "/"}
-                    className="logo-link"
-                    style={{ backgroundImage: `url(${resolvedLogoUrl})` }}
+                    style={{
+                        width: 251,
+                        height: 74,
+                        backgroundSize: "contain",
+                        backgroundRepeat: "no-repeat",
+                        backgroundPosition: "left center",
+                        backgroundImage: `url(${resolvedLogoUrl})`,
+                        cursor: "pointer",
+                        flexShrink: 0,
+                        textDecoration: "none",
+                    }}
                 />
 
-                {/* 2. 右側選單與控制列 */}
-                <div className="nav-right">
-                    <ul className="nav-menu">
-                        {menuItems.map((item, index) => {
+                {/* MENU */}
+                <ul
+                    style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 24,
+                        listStyle: "none",
+                        margin: 0,
+                        padding: 0,
+                        flex: 1,
+                        justifyContent: "center",
+                    }}
+                >
+                    {menuItems && menuItems.length > 0 ? (
+                        menuItems.map((item, index) => {
                             const hasDropdown =
                                 item.dropdown && item.dropdown.length > 0;
-                            const active = isLinkActive(item.link_url, index);
-                            const isAccordionOpen = activeAccordion === index;
+                            // ✅ 移除第二個參數 index
+                            const active = isLinkActive(item.link_url);
+                            const isHovered = hoveredDropdown === index;
 
                             return (
-                                <li key={index} className="nav-item">
+                                <li
+                                    key={index}
+                                    style={{
+                                        position: "relative",
+                                    }}
+                                    onMouseEnter={() => {
+                                        clearTimeout(dropdownHoverTimer.current);
+                                        setHoveredDropdown(index);
+                                    }}
+                                    onMouseLeave={() => {
+                                        dropdownHoverTimer.current = setTimeout(() => {
+                                            setHoveredDropdown(null);
+                                        }, 200);
+                                    }}
+                                >
                                     <a
                                         href={item.link_url}
-                                        className={`nav-link ${
-                                            active ? "active" : ""
-                                        }`}
-                                        onClick={(e) => {
-                                            if (
-                                                hasDropdown &&
-                                                typeof window !== "undefined" &&
-                                                window.innerWidth <= 1199
-                                            ) {
-                                                e.preventDefault();
-                                                setActiveAccordion(
-                                                    isAccordionOpen
-                                                        ? null
-                                                        : index
-                                                );
-                                            }
+                                        style={{
+                                            fontFamily:
+                                                "Inter, PingFang TC, Microsoft JhengHei, sans-serif",
+                                            fontSize: 16,
+                                            fontWeight: 600,
+                                            lineHeight: 1.7,
+                                            color: active
+                                                ? activeColor
+                                                : textColor,
+                                            textDecoration: "none",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 6,
+                                            transition: "color 0.2s ease",
+                                            whiteSpace: "nowrap",
                                         }}
                                     >
                                         {item.title}
@@ -729,12 +477,11 @@ export default function Navbar({
                                                 viewBox="0 0 10 6"
                                                 fill="none"
                                                 style={{
-                                                    marginLeft: "6px",
-                                                    transform: isAccordionOpen
+                                                    transform: isHovered
                                                         ? "rotate(180deg)"
                                                         : "rotate(0deg)",
                                                     transition:
-                                                        "transform 0.25s ease",
+                                                        "transform 0.2s ease",
                                                 }}
                                             >
                                                 <path
@@ -748,429 +495,340 @@ export default function Navbar({
                                         )}
                                     </a>
 
-                                    {hasDropdown && (
+                                    {hasDropdown && isHovered && (
                                         <div
-                                            className={`dropdown-menu ${
-                                                isAccordionOpen ? "open" : ""
-                                            }`}
+                                            style={{
+                                                position: "absolute",
+                                                top: 50,
+                                                left: "50%",
+                                                transform: "translateX(-50%)",
+                                                backgroundColor: "#ffffff",
+                                                boxShadow:
+                                                    "0px 10px 20px rgba(0, 0, 0, 0.1)",
+                                                borderRadius: "4px",
+                                                padding: "16px 24px",
+                                                minWidth: 220,
+                                                zIndex: 1000,
+                                            }}
+                                            onMouseEnter={() => {
+                                                clearTimeout(dropdownHoverTimer.current);
+                                                setHoveredDropdown(index);
+                                            }}
+                                            onMouseLeave={() => {
+                                                dropdownHoverTimer.current = setTimeout(() => {
+                                                    setHoveredDropdown(null);
+                                                }, 200);
+                                            }}
                                         >
-                                            {item.dropdown.map((sub, sIdx) => (
-                                                <a
-                                                    key={sIdx}
-                                                    href={sub.link_url}
-                                                    className="dropdown-link"
-                                                >
-                                                    {sub.title}
-                                                </a>
-                                            ))}
+                                            {item.dropdown.map(
+                                                (sub, sIdx) => (
+                                                    <a
+                                                        key={sIdx}
+                                                        href={sub.link_url}
+                                                        style={{
+                                                            display: "block",
+                                                            padding: "10px 0",
+                                                            color: "#111111",
+                                                            textDecoration:
+                                                                "none",
+                                                            fontSize: 15,
+                                                            fontWeight: 500,
+                                                            transition:
+                                                                "color 0.2s ease",
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.color =
+                                                                activeColor;
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.color =
+                                                                "#111111";
+                                                        }}
+                                                    >
+                                                        {sub.title}
+                                                    </a>
+                                                )
+                                            )}
                                         </div>
                                     )}
                                 </li>
                             );
-                        })}
-                    </ul>
+                        })
+                    ) : (
+                        <li
+                            style={{
+                                color: "#999",
+                                fontSize: 14,
+                            }}
+                        >
+                            載入菜單中...
+                        </li>
+                    )}
+                </ul>
 
-                    {/* 3. 控制列 */}
-                    <div className="controls-group">
-                        <div
-                            ref={searchContainerRef}
+                {/* CONTROLS */}
+                <div
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 20,
+                    }}
+                >
+                    {/* SEARCH */}
+                    <div
+                        ref={searchContainerRef}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            position: "relative",
+                        }}
+                    >
+                        <input
+                            type="text"
+                            placeholder={isEn ? "Search..." : "搜尋..."}
+                            value={searchKeyword}
+                            onChange={(e) =>
+                                setSearchKeyword(e.target.value)
+                            }
+                            style={{
+                                width: searchOpen ? "150px" : "0px",
+                                padding: searchOpen ? "6px 12px" : "0px",
+                                opacity: searchOpen ? 1 : 0,
+                                border: searchOpen
+                                    ? "1px solid #ddd"
+                                    : "1px solid transparent",
+                                borderRadius: "16px",
+                                outline: "none",
+                                marginRight: "6px",
+                                fontSize: "14px",
+                                color: "#111111",
+                                backgroundColor: "#ffffff",
+                                transition:
+                                    "width 0.3s ease, opacity 0.2s ease",
+                            }}
+                        />
+
+                        <button
+                            onClick={() => {
+                                if (!searchOpen) {
+                                    setSearchOpen(true);
+                                } else {
+                                    if (!searchKeyword.trim()) {
+                                        closeSearch();
+                                    }
+                                }
+                            }}
                             style={{
                                 display: "flex",
                                 alignItems: "center",
-                                position: "relative",
+                                justifyContent: "center",
+                                color: "#111111",
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                padding: 4,
+                                outline: "none",
+                                transition: "color 0.2s",
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.color = activeColor;
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.color = "#111111";
                             }}
                         >
-                            <input
-                                type="text"
-                                placeholder={isEn ? "Search..." : "搜尋..."}
-                                value={searchKeyword}
-                                onChange={(e) =>
-                                    setSearchKeyword(e.target.value)
-                                }
-                                style={{
-                                    width: searchOpen
-                                        ? window.innerWidth <= 767
-                                            ? "130px"
-                                            : "180px"
-                                        : "0px",
-                                    padding: searchOpen ? "6px 12px" : "0px",
-                                    opacity: searchOpen ? 1 : 0,
-                                    border: searchOpen
-                                        ? "1px solid #ddd"
-                                        : "1px solid transparent",
-                                    borderRadius: "16px",
-                                    outline: "none",
-                                    marginRight: "6px",
-                                    fontSize: "14px",
-                                    color: "#111111",
-                                    backgroundColor: "#ffffff",
-                                    transition:
-                                        "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.3s ease",
-                                }}
-                            />
-
-                            <button
-                                onClick={() => {
-                                    if (!searchOpen) {
-                                        setSearchOpen(true);
-                                    } else {
-                                        if (!searchKeyword.trim()) {
-                                            closeSearch();
-                                        }
-                                    }
-                                }}
-                                className="search-btn"
+                            <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.0"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
                             >
-                                <svg
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.0"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                >
-                                    <circle cx="11" cy="11" r="8"></circle>
-                                    <line
-                                        x1="21"
-                                        y1="21"
-                                        x2="16.65"
-                                        y2="16.65"
-                                    ></line>
-                                </svg>
-                            </button>
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line
+                                    x1="21"
+                                    y1="21"
+                                    x2="16.65"
+                                    y2="16.65"
+                                ></line>
+                            </svg>
+                        </button>
 
-                            {/* 搜尋結果下拉面板 */}
-                            {searchOpen && searchKeyword.trim() && (
-                                <div
-                                    style={{
-                                        position: "absolute",
-                                        top: "40px",
-                                        right: 0,
-                                        width:
-                                            window.innerWidth <= 767
-                                                ? "calc(100vw - 70px)"
-                                                : "320px",
-                                        maxWidth: "340px",
-                                        maxHeight: "320px",
-                                        overflowY: "auto",
-                                        backgroundColor: "#ffffff",
-                                        borderRadius: "6px",
-                                        boxShadow:
-                                            "0px 10px 25px 0px rgba(0, 0, 0, 0.15)",
-                                        border: "1px solid rgba(0, 0, 0, 0.08)",
-                                        padding: "8px 0",
-                                        boxSizing: "border-box",
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: "2px",
-                                        zIndex: 99999,
-                                        textAlign: "left",
-                                    }}
-                                >
-                                    {searchLoading ? (
+                        {searchOpen && searchKeyword.trim() && (
+                            <div
+                                style={{
+                                    position: "absolute",
+                                    top: "40px",
+                                    right: 0,
+                                    width: "320px",
+                                    maxHeight: "320px",
+                                    overflowY: "auto",
+                                    backgroundColor: "#ffffff",
+                                    borderRadius: "6px",
+                                    boxShadow:
+                                        "0px 10px 25px rgba(0, 0, 0, 0.15)",
+                                    border: "1px solid rgba(0, 0, 0, 0.08)",
+                                    padding: "8px 0",
+                                    boxSizing: "border-box",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "2px",
+                                    zIndex: 99999,
+                                }}
+                            >
+                                {searchLoading ? (
+                                    <div
+                                        style={{
+                                            padding: "16px",
+                                            color: "#888",
+                                            fontSize: "14px",
+                                            textAlign: "center",
+                                        }}
+                                    >
+                                        {isEn ? "Searching..." : "搜尋中..."}
+                                    </div>
+                                ) : searchResults.length === 0 ? (
+                                    <div
+                                        style={{
+                                            padding: "16px",
+                                            color: "#888",
+                                            fontSize: "14px",
+                                            textAlign: "center",
+                                        }}
+                                    >
+                                        {isEn
+                                            ? "No results found"
+                                            : "找不到相關結果"}
+                                    </div>
+                                ) : (
+                                    searchResults.map((item, idx) => (
                                         <div
+                                            key={idx}
+                                            onClick={() =>
+                                                handleItemClick(item.url)
+                                            }
                                             style={{
-                                                padding: "16px",
-                                                color: "#888",
-                                                fontSize: "14px",
-                                                textAlign: "center",
+                                                padding: "10px 14px",
+                                                cursor: "pointer",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                gap: "4px",
+                                                transition:
+                                                    "background-color 0.15s ease",
+                                                backgroundColor:
+                                                    "transparent",
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.backgroundColor =
+                                                    "#f5f5f5";
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.backgroundColor =
+                                                    "transparent";
                                             }}
                                         >
-                                            {isEn
-                                                ? "Searching..."
-                                                : "搜尋中..."}
-                                        </div>
-                                    ) : searchResults.length === 0 ? (
-                                        <div
-                                            style={{
-                                                padding: "16px",
-                                                color: "#888",
-                                                fontSize: "14px",
-                                                textAlign: "center",
-                                            }}
-                                        >
-                                            {isEn
-                                                ? "No results found"
-                                                : "找不到相關結果"}
-                                        </div>
-                                    ) : (
-                                        searchResults.map((item, idx) => (
                                             <div
-                                                key={idx}
-                                                onClick={() =>
-                                                    handleItemClick(item.url)
-                                                }
                                                 style={{
-                                                    padding: "10px 14px",
-                                                    cursor: "pointer",
                                                     display: "flex",
-                                                    flexDirection: "column",
-                                                    gap: "4px",
-                                                    transition:
-                                                        "background-color 0.15s ease",
-                                                    backgroundColor:
-                                                        "transparent",
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                    e.currentTarget.style.backgroundColor =
-                                                        "#f5f5f5";
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    e.currentTarget.style.backgroundColor =
-                                                        "transparent";
+                                                    alignItems: "center",
+                                                    gap: "8px",
                                                 }}
                                             >
-                                                <div
+                                                <span
                                                     style={{
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        gap: "8px",
+                                                        fontSize: "11px",
+                                                        fontWeight: 600,
+                                                        padding: "1px 5px",
+                                                        backgroundColor:
+                                                            "rgba(93, 58, 155, 0.1)",
+                                                        color: "#5D3A9B",
+                                                        borderRadius: "4px",
+                                                        whiteSpace:
+                                                            "nowrap",
                                                     }}
                                                 >
-                                                    <span
-                                                        style={{
-                                                            fontSize: "11px",
-                                                            fontWeight: 600,
-                                                            padding: "1px 5px",
-                                                            backgroundColor:
-                                                                "rgba(93, 58, 155, 0.1)",
-                                                            color: "#5D3A9B",
-                                                            borderRadius: "4px",
-                                                            whiteSpace:
-                                                                "nowrap",
-                                                        }}
-                                                    >
-                                                        {item.type}
-                                                    </span>
-                                                    <span
-                                                        style={{
-                                                            fontSize: "13px",
-                                                            fontWeight: 600,
-                                                            color: "#111111",
-                                                            whiteSpace:
-                                                                "nowrap",
-                                                            overflow: "hidden",
-                                                            textOverflow:
-                                                                "ellipsis",
-                                                        }}
-                                                    >
-                                                        {item.title}
-                                                    </span>
-                                                </div>
-                                                {item.snippet && (
-                                                    <span
-                                                        style={{
-                                                            fontSize: "11px",
-                                                            color: "#666666",
-                                                            display:
-                                                                "-webkit-box",
-                                                            WebkitLineClamp: 2,
-                                                            WebkitBoxOrient:
-                                                                "vertical",
-                                                            overflow: "hidden",
-                                                            textOverflow:
-                                                                "ellipsis",
-                                                            lineHeight: 1.3,
-                                                        }}
-                                                    >
-                                                        {cleanSnippetText(item.snippet)}
-                                                    </span>
-                                                )}
+                                                    {item.type}
+                                                </span>
+                                                <span
+                                                    style={{
+                                                        fontSize: "13px",
+                                                        fontWeight: 600,
+                                                        color: "#111111",
+                                                        whiteSpace:
+                                                            "nowrap",
+                                                        overflow: "hidden",
+                                                        textOverflow:
+                                                            "ellipsis",
+                                                    }}
+                                                >
+                                                    {item.title}
+                                                </span>
                                             </div>
-                                        ))
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* 語系切換 */}
-                        <div className="lang-dropdown-container">
-                            <button className="lang-btn">
-                                🌐 {isEn ? "English" : "繁體中文"}
-                                <svg
-                                    width="10"
-                                    height="6"
-                                    viewBox="0 0 10 6"
-                                    fill="none"
-                                    style={{ marginLeft: "2px" }}
-                                >
-                                    <path
-                                        d="M1 1.5L5 4.5L9 1.5"
-                                        stroke="currentColor"
-                                        strokeWidth="1.8"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
-                                </svg>
-                            </button>
-                            <div className="lang-dropdown-menu">
-                                <button
-                                    className="lang-dropdown-item"
-                                    onClick={() =>
-                                        handleLanguageChange(
-                                            isEn ? "zh-TW" : "en-US"
-                                        )
-                                    }
-                                >
-                                    {isEn ? "繁體中文" : "English"}
-                                </button>
+                                            {item.snippet && (
+                                                <span
+                                                    style={{
+                                                        fontSize: "11px",
+                                                        color: "#666666",
+                                                        display:
+                                                            "-webkit-box",
+                                                        WebkitLineClamp: 2,
+                                                        WebkitBoxOrient:
+                                                            "vertical",
+                                                        overflow: "hidden",
+                                                        textOverflow:
+                                                            "ellipsis",
+                                                        lineHeight: 1.3,
+                                                    }}
+                                                >
+                                                    {cleanSnippetText(
+                                                        item.snippet
+                                                    )}
+                                                </span>
+                                            )}
+                                        </div>
+                                    ))
+                                )}
                             </div>
-                        </div>
+                        )}
                     </div>
-                </div>
 
-                {/* 手機版漢堡排 */}
-                <button
-                    className="burger-btn"
-                    onClick={() => setMobileOpen(!mobileOpen)}
-                >
-                    {mobileOpen ? (
-                        <svg
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                        >
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                    ) : (
-                        <svg
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                        >
-                            <line x1="3" y1="12" x2="21" y2="12"></line>
-                            <line x1="3" y1="6" x2="21" y2="6"></line>
-                            <line x1="3" y1="18" x2="21" y2="18"></line>
-                        </svg>
-                    )}
-                </button>
+                    {/* LANGUAGE BUTTON */}
+                    <button
+                        onClick={() =>
+                            handleLanguageChange(
+                                isEn ? "zh-TW" : "en-US"
+                            )
+                        }
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            backgroundColor: "#eeede8",
+                            border: "none",
+                            borderRadius: "99px",
+                            padding: "8px 18px",
+                            fontFamily: "Inter, PingFang TC, sans-serif",
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            lineHeight: 1.7,
+                            cursor: "pointer",
+                            color: "#111111",
+                            transition: "background 0.2s",
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "#e2e0d9";
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "#eeede8";
+                        }}
+                    >
+                        🌐 {isEn ? "English" : "繁體中文"}
+                    </button>
+                </div>
             </div>
         </header>
     );
-}
-
-function getDefaultMenu(locale) {
-    if (locale === "en-US") {
-        return [
-            { title: "Home", link_url: "/en", is_active: true },
-            {
-                title: "About Aalto EMBA",
-                link_url: "/en/about-emba",
-                is_active: true,
-                dropdown: [
-                    {
-                        title: "About Aalto EMBA",
-                        link_url: "/en/about-emba",
-                        is_active: true,
-                    },
-                    {
-                        title: "About Aalto University",
-                        link_url: "/en/about-aalto",
-                        is_active: true,
-                    },
-                    {
-                        title: "About NCU",
-                        link_url: "/en/about-ncu",
-                        is_active: true,
-                    },
-                ],
-            },
-            {
-                title: "Learning Info",
-                link_url: "/en/eventlist-2",
-                is_active: true,
-                dropdown: [
-                    {
-                        title: "Events",
-                        link_url: "/en/eventlist-2",
-                        is_active: true,
-                    },
-                    {
-                        title: "Alumni Sharing",
-                        link_url: "/en/all-alumni",
-                        is_active: true,
-                    },
-                ],
-            },
-            {
-                title: "Programs",
-                link_url: "/en/information",
-                is_active: true,
-                dropdown: [
-                    {
-                        title: "Admission Info",
-                        link_url: "/en/information",
-                        is_active: true,
-                    },
-                    {
-                        title: "Degree & Regulations",
-                        link_url: "/en/degree",
-                        is_active: true,
-                    },
-                ],
-            },
-            { title: "Contact", link_url: "/en/contact", is_active: true },
-        ];
-    }
-    return [
-        { title: "首頁 Home", link_url: "/", is_active: true },
-        {
-            title: "關於 Aalto EMBA",
-            link_url: "/about-emba",
-            is_active: true,
-            dropdown: [
-                {
-                    title: "關於 Aalto EMBA",
-                    link_url: "/about-emba",
-                    is_active: true,
-                },
-                {
-                    title: "關於Aalto",
-                    link_url: "/about-aalto",
-                    is_active: true,
-                },
-                {
-                    title: "關於中央大學",
-                    link_url: "/about-ncu",
-                    is_active: true,
-                },
-            ],
-        },
-        {
-            title: "學習資訊",
-            link_url: "/eventlist-2",
-            is_active: true,
-            dropdown: [
-                {
-                    title: "活動訊息",
-                    link_url: "/eventlist-2",
-                    is_active: true,
-                },
-                { title: "校友分享", link_url: "/all-alumni", is_active: true },
-            ],
-        },
-        {
-            title: "課程相關",
-            link_url: "/information",
-            is_active: true,
-            dropdown: [
-                {
-                    title: "招生資訊",
-                    link_url: "/information",
-                    is_active: true,
-                },
-                { title: "修業與學位", link_url: "/degree", is_active: true },
-            ],
-        },
-        { title: "聯絡方式", link_url: "/contact", is_active: true },
-    ];
 }

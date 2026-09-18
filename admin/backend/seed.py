@@ -39,7 +39,7 @@ ADMIN_EMAIL = "admin@example.com"
 PAGES = [
     {"slug": "home",            "title": "首頁",           "parent_slug": None,      "order": 1,  "active": True},
     {"slug": "about",           "title": "關於 Aalto EMBA","parent_slug": None,      "order": 2,  "active": True},
-    {"slug": "about-aalto-emba","title": "關於 Aalto EMBA（子頁）","parent_slug": "about","order": 1,"active": True},
+    {"slug": "about-emba","title": "關於 Aalto EMBA（子頁）","parent_slug": "about","order": 1,"active": True},
     {"slug": "about-aalto",     "title": "關於 Aalto",     "parent_slug": "about",   "order": 2,  "active": True},
     {"slug": "about-ncu",       "title": "關於中央大學",    "parent_slug": "about",   "order": 3,  "active": True},
     {"slug": "learning",        "title": "學習資訊",        "parent_slug": None,      "order": 3,  "active": True},
@@ -153,7 +153,7 @@ SECTIONS_DATA = [
     # 關於 Aalto EMBA (標題前言)
     # ════════════════════
     {
-        "page_slug": "about-aalto-emba",
+        "page_slug": "about-emba",
         "key": "about_header",
         "name": "關於Aalto EMBA(標題前言)",
         "type": "text", 
@@ -169,7 +169,7 @@ SECTIONS_DATA = [
     # 關於 Aalto EMBA (特色介紹)
     # ════════════════════
     {
-        "page_slug": "about-aalto-emba",
+        "page_slug": "about-emba",
         "key": "about_intro_sec",
         "name": "關於Aalto EMBA(特色介紹)",
         "type": "content", 
@@ -189,7 +189,7 @@ SECTIONS_DATA = [
     # 關於 Aalto EMBA (圖片連結)
     # ════════════════════
     {
-        "page_slug": "about-aalto-emba",
+        "page_slug": "about-emba",
         "key": "about_links_sec", 
         "name": "關於Aalto EMBA(圖片連結)",
         "type": "content", 
@@ -670,8 +670,8 @@ SECTIONS_DATA = [
                 "key": "navbar_links",
                 "label": "導覽選單項目",
                 "type": "list",
-                "zh": '[]',
-                "en": '[]'
+                "zh": '[{"title":"首頁","link_url":"/","is_active":true},{"title":"關於 Aalto EMBA","link_url":"/about-emba","is_active":true,"dropdown":[{"title":"關於 Aalto EMBA","link_url":"/about-emba"},{"title":"關於 Aalto","link_url":"/about-aalto"},{"title":"關於中央大學","link_url":"/about-ncu"}]},{"title":"學習資訊","link_url":"/eventlist-2","is_active":true,"dropdown":[{"title":"校友分享","link_url":"/all-alumni"},{"title":"活動訊息","link_url":"/event"}]},{"title":"課程相關","link_url":"/information","is_active":true,"dropdown":[{"title":"招生資訊","link_url":"/information"},{"title":"修業與學位","link_url":"/degree"}]},{"title":"聯絡方式","link_url":"/contact","is_active":true}]',
+                "en": '[{"title":"Home","link_url":"/en","is_active":true},{"title":"About Aalto EMBA","link_url":"/en/about-emba","is_active":true,"dropdown":[{"title":"About Aalto EMBA","link_url":"/en/about-emba"},{"title":"About Aalto","link_url":"/en/about-aalto"},{"title":"About NCU","link_url":"/en/about-ncu"}]},{"title":"Learning Info","link_url":"/en/eventlist-2","is_active":true,"dropdown":[{"title":"Alumni Stories","link_url":"/en/all-alumni"},{"title":"Events","link_url":"/en/event"}]},{"title":"Courses","link_url":"/en/information","is_active":true,"dropdown":[{"title":"Admission","link_url":"/en/information"},{"title":"Degree & Certification","link_url":"/en/degree"}]},{"title":"Contact","link_url":"/en/contact","is_active":true}]'
             }
         ]
     },

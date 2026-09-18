@@ -15,11 +15,11 @@ const detectLocale = () => {
     return "zh-TW";
 };
 
-// 從 URL 獲取 title 參數
-function getEventTitle() {
-    if (typeof window === "undefined") return "";
+// ✅ 改為：獲取索引參數
+function getEventIndex() {
+    if (typeof window === "undefined") return -1;
     const params = new URLSearchParams(window.location.search);
-    return params.get("title") || "";
+    return parseInt(params.get("index") || "-1");
 }
 
 export default function EventDetailBody({
@@ -43,13 +43,9 @@ export default function EventDetailBody({
         !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
 
     useEffect(() => {
-        const targetTitle = getEventTitle();
-        if (!targetTitle) {
-            setError(
-                currentLocale === "en-US"
-                    ? "URL is missing ?title= parameter"
-                    : "網址缺少 ?title= 參數"
-            );
+        // ✅ 改為：獲取索引
+        const targetIndex = getEventIndex();
+        if (targetIndex < 0) {
             setLoading(false);
             return;
         }
@@ -75,12 +71,13 @@ export default function EventDetailBody({
                         ? JSON.parse(fields.event_list)
                         : fields.event_list || [];
 
-                const item = list.find((x) => x.title === targetTitle);
+                // ✅ 改為：直接用索引獲取活動
+                const item = list[targetIndex];
                 if (!item || item.is_active === false) {
                     setError(
                         currentLocale === "en-US"
-                            ? `Could not find event with title: ${targetTitle}`
-                            : `找不到標題為 「${targetTitle}」 的活動資料`
+                            ? "Event not found"
+                            : "找不到活動資料"
                     );
                     return;
                 }

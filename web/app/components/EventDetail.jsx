@@ -15,11 +15,11 @@ const detectLocale = () => {
     return "zh-TW";
 };
 
-// 從 URL 獲取 title 參數
-function getEventTitle() {
-    if (typeof window === "undefined") return "";
+// ✅ 改為：獲取索引參數
+function getEventIndex() {
+    if (typeof window === "undefined") return -1;
     const params = new URLSearchParams(window.location.search);
-    return params.get("title") || "";
+    return parseInt(params.get("index") || "-1");
 }
 
 export default function EventDetail({ style }) {
@@ -38,9 +38,10 @@ export default function EventDetail({ style }) {
     });
 
     useEffect(() => {
-        const targetTitle = getEventTitle();
+        // ✅ 改為：獲取索引
+        const targetIndex = getEventIndex();
 
-        if (!targetTitle) {
+        if (targetIndex < 0) {
             setDetail((prev) => ({
                 ...prev,
                 notFound: true,
@@ -69,8 +70,8 @@ export default function EventDetail({ style }) {
                         ? JSON.parse(fields.event_list)
                         : fields.event_list || [];
 
-                // 使用標題比對來尋找正確的活動資料
-                const item = list.find((x) => x.title === targetTitle);
+                // ✅ 改為：直接用索引獲取活動
+                const item = list[targetIndex];
 
                 if (!item || item.is_active === false) {
                     setDetail({
