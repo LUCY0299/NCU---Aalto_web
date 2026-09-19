@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
@@ -129,6 +129,7 @@ export default function Navbar({
     locale: propLocale = "auto",
 }) {
     const router = useRouter();
+    const pathname = usePathname(); // ✅ 正確感知客戶端路由切換（layout 不會重新掛載）
     const [currentLocale, setCurrentLocale] = useState("zh-TW");
     const [menuItems, setMenuItems] = useState([]);  // ✅ 改為空陣列，等待後端數據
     const [logoUrl, setLogoUrl] = useState("");
@@ -151,17 +152,19 @@ export default function Navbar({
     const dropdownHoverTimer = useRef(null);
 
     // ✅ 初始化 mounted 與 currentPath（客戶端專用）
+    // 依賴 pathname：每次客戶端路由切換頁面時都會重新執行，
+    // 避免 Navbar（放在 layout 裡不會重新掛載）卡在舊的路徑判斷結果
     useEffect(() => {
         setMounted(true);
         setCurrentPath(window.location.pathname.toLowerCase());
-    }, []);
+    }, [pathname]);
 
     useEffect(() => {
         const detectedLocale =
             !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
         setCurrentLocale(detectedLocale);
         // ✅ 不再設置預設菜單，只設置語言即可
-    }, [propLocale]);
+    }, [propLocale, pathname]);
 
     const closeSearch = () => {
         setSearchOpen(false);
