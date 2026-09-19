@@ -1,0 +1,38 @@
+# 執行期產生的暫存檔案
+*.pid
+*.log
+
+# 備份檔案
+*.bak
+*.bak2
+*.bak3
+*.bak4
+
+# 異常/誤產生的檔案
+web/web@0.1.0
+
+# 一次性資料遷移與除錯腳本（已執行完畢，不影響網站運行）
+admin/backend/add_admission_info_image.py
+admin/backend/add_course_disclaimer.py
+admin/backend/add_requirements_image.py
+admin/backend/check_navbar_data.py
+admin/backend/cleanup_duplicate_disclaimer.py
+admin/backend/cleanup_event_titles.py
+admin/backend/cleanup_old_course_fields.py
+admin/backend/convert_regulations_to_html.py
+admin/backend/fix_regulations_format.py
+admin/backend/fix_requirements_format.py
+admin/backend/fix_requirements_nested_list.py
+admin/backend/generate_navbar.py
+admin/backend/migrate_disclaimer_to_info_items.py
+admin/backend/migrate_info_items_structure.py
+admin/backend/migrate_to_three_cards.py
+admin/backend/move_disclaimer_to_content.py
+admin/backend/test_api_response.py
+admin/backend/update_admission_courses.py
+admin/backend/update_admission_info_courses.py
+admin/backend/update_requirements_html.py
+admin/backend/update_requirements_with_nested_list.py
+
+# 雜項文字檔
+event_titles.txt
