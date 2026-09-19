@@ -1,6 +1,7 @@
 "use client"; // Next.js 標記為客戶端元件 (因為有使用 useState, useEffect, useRef 與 IntersectionObserver)
 
 import React, { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
@@ -23,8 +24,15 @@ export default function Footer({
     footerIconColor = "#d49b38",
     locale: propLocale = "auto",
 }) {
+    // ✅ 改用 usePathname 取代 detectLocale()，因為 Footer 放在 layout 裡
+    // 客戶端路由切換頁面時不會重新掛載，直接讀 window.location 會卡在舊路徑判斷結果
+    const pathname = usePathname();
     const currentLocale =
-        !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
+        !propLocale || propLocale === "auto"
+            ? pathname && pathname.toLowerCase().includes("/en")
+                ? "en-US"
+                : "zh-TW"
+            : propLocale;
 
     const [contact, setContact] = useState({
         phone:

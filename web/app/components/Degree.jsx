@@ -21,6 +21,11 @@ function useSection(sectionKey, currentLocale) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // ✅ 防止競態條件：語系判斷在 SSR/hydration 之間可能先算錯再修正，
+        // 導致舊語系（例如中文）的請求比新語系（英文）的請求更晚回來，
+        // 用 ignore 旗標確保只有「最新一次」的請求結果會被採用
+        let ignore = false;
+
         // 使用傳入的 currentLocale
         fetch(
             `${BASE_URL}/api/v1/content/degree/${sectionKey}?locale=${currentLocale}&t=${new Date().getTime()}`,
@@ -28,14 +33,22 @@ function useSection(sectionKey, currentLocale) {
         )
             .then((res) => res.json())
             .then((res) => {
+                if (ignore) return;
                 const fields = res.fields || {};
                 setData({ ...fields, isActive: res.is_active !== false });
             })
             .catch((err) => {
+                if (ignore) return;
                 console.error(`${sectionKey} API 連線失敗:`, err);
                 setData({ isActive: true, title: "連線中斷" });
             })
-            .finally(() => setLoading(false));
+            .finally(() => {
+                if (!ignore) setLoading(false);
+            });
+
+        return () => {
+            ignore = true;
+        };
     }, [sectionKey, currentLocale]); // 記得加入 dependencies
 
     return { data, loading };
