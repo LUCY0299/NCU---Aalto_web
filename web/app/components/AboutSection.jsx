@@ -116,7 +116,7 @@ export default function AboutSection({
                 width: "100%",
                 display: "flex",
                 justifyContent: "center",
-                padding: `clamp(${topPadding / 2}px, 8vw, ${topPadding}px) clamp(20px, 6vw, 80px) clamp(${bottomPadding / 2}px, 8vw, ${bottomPadding}px)`,
+                padding: `clamp(${topPadding / 2}px, 8vw, ${topPadding}px) clamp(16px, 4vw, 30px) clamp(${bottomPadding / 2}px, 8vw, ${bottomPadding}px)`,
                 boxSizing: "border-box",
                 backgroundColor: "#FFFFFF",
             }}

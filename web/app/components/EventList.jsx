@@ -1,6 +1,7 @@
 "use client"; // Next.js 標記為客戶端元件 (因為有使用 useState 和 useEffect)
 
 import React, { useState, useEffect } from "react";
+import SectionTitle from "./SectionTitle";
 
 const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
@@ -28,6 +29,10 @@ export default function EventList({
     titleLineHeight = 1.2,
     titleColor = "#160D03",
     locale: propLocale = "auto",
+    variant = "page", // "page"（獨立頁面）｜ "home"（首頁）－預設 page 確保現有頁面不受影響
+    showMoreButton = false, // 是否顯示「更多」按鈕－預設 false 確保現有頁面不受影響
+    moreButtonText,
+    moreButtonLink = "/event",
 }) {
     const [events, setEvents] = useState([]);
     const [sectionTitle, setSectionTitle] = useState("");
@@ -89,6 +94,19 @@ export default function EventList({
     // 如果整個區塊被停用，直接回傳 null 讓畫面徹底隱藏
     if (!isActive) return null;
 
+    // 「更多」按鈕文字與連結（英文版自動補上 /en 前綴）
+    const defaultMoreButtonText =
+        currentLocale === "en-US" ? "More Events" : "更多 活動訊息";
+    const finalMoreButtonText = moreButtonText || defaultMoreButtonText;
+    let finalMoreButtonLink = moreButtonLink;
+    if (
+        currentLocale === "en-US" &&
+        finalMoreButtonLink.startsWith("/") &&
+        !finalMoreButtonLink.startsWith("/en")
+    ) {
+        finalMoreButtonLink = `/en${finalMoreButtonLink}`;
+    }
+
     if (loading) {
         return (
             <div style={placeholderStyle}>
@@ -106,18 +124,66 @@ export default function EventList({
             {showTitle && (
                 <div
                     style={{
-                        fontFamily:
-                            '"Inter Display", "Inter Display Placeholder", sans-serif',
-                        fontSize: `${titleFontSize}px`,
-                        fontWeight: 500,
-                        letterSpacing: "-3px",
-                        lineHeight: titleLineHeight,
-                        color: titleColor,
-                        textAlign: titleAlign,
+                        display: "flex",
+                        flexDirection: "row",
+                        flexWrap: "wrap",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: "16px",
                         marginBottom: `${gap}px`,
                     }}
                 >
-                    {sectionTitle}
+                    <SectionTitle
+                        variant={variant}
+                        as="div"
+                        style={
+                            variant === "home"
+                                ? {
+                                      // home variant：不指定字級/對齊/字重，交給 SectionTitle 的 home 樣式決定
+                                      fontFamily:
+                                          '"Inter Display", "Inter Display Placeholder", sans-serif',
+                                      letterSpacing: "-3px",
+                                      margin: 0,
+                                      flex: "1 1 auto",
+                                      minWidth: 0,
+                                  }
+                                : {
+                                      // page variant（預設）：保留原本寫死的樣式，確保獨立頁面外觀不變
+                                      fontFamily:
+                                          '"Inter Display", "Inter Display Placeholder", sans-serif',
+                                      fontSize: `${titleFontSize}px`,
+                                      fontWeight: 500,
+                                      letterSpacing: "-3px",
+                                      lineHeight: titleLineHeight,
+                                      color: titleColor,
+                                      textAlign: titleAlign,
+                                      margin: 0,
+                                      flex: "1 1 auto",
+                                      minWidth: 0,
+                                  }
+                        }
+                    >
+                        {sectionTitle}
+                    </SectionTitle>
+
+                    {showMoreButton && (
+                        <a
+                            href={finalMoreButtonLink}
+                            style={{
+                                textDecoration: "none",
+                                color: "#000",
+                                fontSize: "14px",
+                                padding: "8px 24px",
+                                border: "1px solid #000",
+                                borderRadius: "999px",
+                                whiteSpace: "nowrap",
+                                transition: "all 0.2s ease-in-out",
+                                flexShrink: 0,
+                            }}
+                        >
+                            {finalMoreButtonText}
+                        </a>
+                    )}
                 </div>
             )}
 

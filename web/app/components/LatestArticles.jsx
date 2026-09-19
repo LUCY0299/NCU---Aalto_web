@@ -1,6 +1,7 @@
 "use client"; // Next.js 標記為客戶端元件 (因為有使用 useState 和 useEffect)
 
 import React, { useState, useEffect } from "react";
+import SectionTitle from "./SectionTitle";
 
 const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
@@ -28,6 +29,7 @@ export default function LatestArticles({
     titleTextColor = "#111111",
     metaTextColor = "#8B8B94",
     locale: propLocale = "auto",
+    variant = "page", // "page"（獨立頁面）｜ "home"（首頁）－預設 page 確保現有頁面不受影響
 }) {
     const [articles, setArticles] = useState([]);
     const [sectionTitle, setSectionTitle] = useState("");
@@ -115,22 +117,38 @@ export default function LatestArticles({
             }}
         >
             {showTitle && (
-                <div
-                    style={{
-                        fontFamily:
-                            '"Inter Display", "Inter Display Placeholder", sans-serif',
-                        fontSize: `${titleFontSize}px`,
-                        fontWeight: 500,
-                        letterSpacing: "-2px",
-                        lineHeight: titleLineHeight,
-                        color: titleColor,
-                        textAlign: titleAlign,
-                        width: "100%",
-                        marginBottom: "16px",
-                    }}
+                <SectionTitle
+                    variant={variant}
+                    as="div"
+                    style={
+                        variant === "home"
+                            ? {
+                                  // home variant：不指定字級/對齊/字重，交給 SectionTitle 的 home 樣式決定
+                                  fontFamily:
+                                      '"Inter Display", "Inter Display Placeholder", sans-serif',
+                                  letterSpacing: "-2px",
+                                  width: "100%",
+                                  margin: 0,
+                                  marginBottom: "16px",
+                              }
+                            : {
+                                  // page variant（預設）：保留原本寫死的樣式，確保獨立頁面外觀不變
+                                  fontFamily:
+                                      '"Inter Display", "Inter Display Placeholder", sans-serif',
+                                  fontSize: `${titleFontSize}px`,
+                                  fontWeight: 500,
+                                  letterSpacing: "-2px",
+                                  lineHeight: titleLineHeight,
+                                  color: titleColor,
+                                  textAlign: titleAlign,
+                                  width: "100%",
+                                  margin: 0,
+                                  marginBottom: "16px",
+                              }
+                    }
                 >
                     {sectionTitle}
-                </div>
+                </SectionTitle>
             )}
 
             {displayList.length === 0 ? (

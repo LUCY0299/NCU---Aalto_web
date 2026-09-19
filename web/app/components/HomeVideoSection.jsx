@@ -1,6 +1,7 @@
 "use client"; // Next.js 標記為客戶端元件 (因為有使用 useState 和 useEffect)
 
 import React, { useState, useEffect } from "react";
+import SectionTitle from "./SectionTitle";
 
 const BASE_URL = "https://ncu-aalto-web.onrender.com";
 // 1. 更新 API 網址，對應新的 section_key: home_yt_videos
@@ -42,6 +43,7 @@ export default function HomeVideoSection({
     bottomPadding = 60,
     style = {},
     locale: propLocale = "auto",
+    variant = "page", // "page"（獨立頁面）｜ "home"（首頁）－預設 page 確保現有頁面不受影響
 }) {
     // 2. 狀態改為存放一個影片陣列 (videos)
     const [data, setData] = useState({
@@ -111,6 +113,7 @@ export default function HomeVideoSection({
                 width: "100%",
                 backgroundColor: "#fff",
                 boxSizing: "border-box",
+                padding: `clamp(${topPadding / 2}px, 8vw, ${topPadding}px) clamp(16px, 4vw, 30px) clamp(${bottomPadding / 2}px, 8vw, ${bottomPadding}px) clamp(16px, 4vw, 30px)`,
             }}
         >
             <style>{`
@@ -120,7 +123,6 @@ export default function HomeVideoSection({
                     width: 100%;
                     max-width: 1200px; /* 對齊首頁其他區塊的寬度 */
                     margin: 0 auto;
-                    padding: clamp(${topPadding / 2}px, 8vw, ${topPadding}px) 20px clamp(${bottomPadding / 2}px, 8vw, ${bottomPadding}px) 20px;
                     font-family: 'Noto Sans TC', sans-serif;
                 }
 
@@ -186,9 +188,28 @@ export default function HomeVideoSection({
                         return (
                             <div className="single-video-block" key={index}>
                                 {video.title && (
-                                    <h2 className="home-video-title">
+                                    <SectionTitle
+                                        variant={variant}
+                                        as="h2"
+                                        style={
+                                            variant === "home"
+                                                ? {
+                                                      // home variant：不指定字級/對齊，交給 SectionTitle 的 home 樣式決定
+                                                      margin: "0 0 24px 0",
+                                                  }
+                                                : {
+                                                      // page variant（預設）：保留原本寫死的樣式，確保獨立頁面外觀不變
+                                                      fontSize: "clamp(24px, 3vw, 48px)",
+                                                      fontWeight: 500,
+                                                      color: "#111",
+                                                      margin: "0 0 24px 0",
+                                                      textAlign: "left",
+                                                      lineHeight: 1.3,
+                                                  }
+                                        }
+                                    >
                                         {video.title}
-                                    </h2>
+                                    </SectionTitle>
                                 )}
 
                                 <div className="video-wrapper">

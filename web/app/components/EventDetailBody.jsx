@@ -171,7 +171,7 @@ export default function EventDetailBody({
                         fontFamily:
                             '"PingFang TC", "Microsoft JhengHei", -apple-system, sans-serif',
                         fontWeight: 700,
-                        fontSize: `clamp(28px, 4vw, ${titleFontSize}px)`, // 加入自適應
+                        fontSize: `${titleFontSize}px`,
                         lineHeight: 1.4,
                         color: titleColor,
                         textAlign: "center",
@@ -181,7 +181,6 @@ export default function EventDetailBody({
                     {data.title}
                 </h1>
             )}
-
             {coverImgUrl && (
                 <img
                     src={coverImgUrl}

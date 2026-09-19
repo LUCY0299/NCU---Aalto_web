@@ -33,7 +33,7 @@ function getDefaultMenu(locale) {
             },
             {
                 title: "Learning Info",
-                link_url: "/en/eventlist-2",
+                link_url: "/en/learning",
                 is_active: true,
                 dropdown: [
                     { title: "Events", link_url: "/en/eventlist-2", is_active: true },
@@ -66,7 +66,7 @@ function getDefaultMenu(locale) {
         },
         {
             title: "學習資訊",
-            link_url: "/eventlist-2",
+            link_url: "/learning",
             is_active: true,
             dropdown: [
                 { title: "活動訊息", link_url: "/eventlist-2", is_active: true },

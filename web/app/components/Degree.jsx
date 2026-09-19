@@ -151,6 +151,22 @@ export default function Degree({
         padding: "10px",
     };
 
+    // 解析字串為陣列（後端回傳的是 JSON 字串，不是陣列）
+    const parseItems = (itemsString) => {
+        if (typeof itemsString === "string") {
+            try {
+                return JSON.parse(itemsString);
+            } catch (e) {
+                console.error("JSON parse error:", e);
+                return [];
+            }
+        }
+        return Array.isArray(itemsString) ? itemsString : [];
+    };
+
+    const regulationsItems = parseItems(combined.data?.regulations_items);
+    const certificationItems = parseItems(combined.data?.certification_items);
+
     return (
         <div
             style={{ display: "flex", flexDirection: "column", width: "100%" }}
@@ -200,7 +216,7 @@ export default function Degree({
             )}
 
             {/* 修業規定 */}
-            {combined.data?.isActive !== false && Array.isArray(combined.data?.regulations_items) && combined.data.regulations_items.length > 0 && (
+            {combined.data?.isActive !== false && regulationsItems.length > 0 && (
                 <div
                     style={{
                         padding: "20px",
@@ -216,31 +232,30 @@ export default function Degree({
                             margin: "0 0 16px 0",
                         }}
                     >
-                        {combined.data.regulations_items[0]?.title || (isEn ? "Academic Regulations" : "修業規定")}
+                        {regulationsItems[0]?.title || (isEn ? "Academic Regulations" : "修業規定")}
                     </h2>
                     <div style={grayFrameStyle}>
                         <div style={cardStyle}>
-                            {Array.isArray(combined.data?.regulations_items) &&
-                                combined.data.regulations_items.map((item, idx) => (
-                                    item.is_active !== false && (
-                                        <ItemBlock
-                                            key={idx}
-                                            heading={idx === 0 ? null : item.title}
-                                            content={item.content}
-                                            headingFontSize={headingFontSize}
-                                            headingColor={headingColor}
-                                            contentFontSize={contentFontSize}
-                                            contentColor={contentColor}
-                                        />
-                                    )
-                                ))}
+                            {regulationsItems.map((item, idx) => (
+                                item.is_active !== false && (
+                                    <ItemBlock
+                                        key={idx}
+                                        heading={idx === 0 ? null : item.title}
+                                        content={item.content}
+                                        headingFontSize={headingFontSize}
+                                        headingColor={headingColor}
+                                        contentFontSize={contentFontSize}
+                                        contentColor={contentColor}
+                                    />
+                                )
+                            ))}
                         </div>
                     </div>
                 </div>
             )}
 
             {/* 學位授予 */}
-            {combined.data?.isActive !== false && Array.isArray(combined.data?.certification_items) && combined.data.certification_items.length > 0 && (
+            {combined.data?.isActive !== false && certificationItems.length > 0 && (
                 <div
                     style={{
                         padding: "20px",
@@ -256,24 +271,23 @@ export default function Degree({
                             margin: "0 0 16px 0",
                         }}
                     >
-                        {combined.data.certification_items[0]?.title || (isEn ? "Degree Conferral" : "學位授予")}
+                        {certificationItems[0]?.title || (isEn ? "Degree Conferral" : "學位授予")}
                     </h2>
                     <div style={grayFrameStyle}>
                         <div style={cardStyle}>
-                            {Array.isArray(combined.data?.certification_items) &&
-                                combined.data.certification_items.map((item, idx) => (
-                                    item.is_active !== false && (
-                                        <ItemBlock
-                                            key={idx}
-                                            heading={idx === 0 ? null : item.title}
-                                            content={item.content}
-                                            headingFontSize={headingFontSize}
-                                            headingColor={headingColor}
-                                            contentFontSize={contentFontSize}
-                                            contentColor={contentColor}
-                                        />
-                                    )
-                                ))}
+                            {certificationItems.map((item, idx) => (
+                                item.is_active !== false && (
+                                    <ItemBlock
+                                        key={idx}
+                                        heading={idx === 0 ? null : item.title}
+                                        content={item.content}
+                                        headingFontSize={headingFontSize}
+                                        headingColor={headingColor}
+                                        contentFontSize={contentFontSize}
+                                        contentColor={contentColor}
+                                    />
+                                )
+                            ))}
                         </div>
                     </div>
                 </div>

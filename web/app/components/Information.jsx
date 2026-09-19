@@ -81,40 +81,6 @@ function resolveImage(url) {
     return url.startsWith("http") ? url : `${BASE_URL}${url}`;
 }
 
-function resolveUrl(url) {
-    if (!url) return "";
-    return url.startsWith("http") ? url : `${BASE_URL}${url}`;
-}
-
-const forceDownload = async (e, url, filename) => {
-    e.preventDefault();
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Network response was not ok");
-        const blob = await response.blob();
-
-        const blobUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = blobUrl;
-
-        let finalFilename = filename || "download";
-        const extensionMatch = url.match(/\.([0-9a-z]+)(?:[\?#]|$)/i);
-        if (extensionMatch && !filename.includes(".")) {
-            finalFilename += `.${extensionMatch[1]}`;
-        }
-
-        link.download = finalFilename;
-        document.body.appendChild(link);
-        link.click();
-
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-        console.error("強制下載失敗，改用新分頁開啟:", error);
-        window.open(url, "_blank");
-    }
-};
-
 export default function Information({
     titleFontSize = 64,
     titleColor = "#160D03",
@@ -288,34 +254,11 @@ export default function Information({
                                                 fontWeight: 400,
                                             }}
                                             className="content-html"
-                                            dangerouslySetInnerHTML={{ __html: combined.data.infoItems[1].content }}
+                                            dangerouslySetInnerHTML={{
+                                                __html: combined.data.infoItems[1].content,
+                                            }}
                                         />
                                     )}
-                                    <ul
-                                        style={{
-                                            margin: 0,
-                                            paddingLeft: "20px",
-                                            listStyle: "disc",
-                                            fontFamily: '"Open Sans", "Open Sans Placeholder", sans-serif',
-                                        }}
-                                    >
-                                        {Array.isArray(combined.data.infoItems[1].courses) && combined.data.infoItems[1].courses.map((course, idx) =>
-                                            course.is_active !== false ? (
-                                                <li
-                                                    key={idx}
-                                                    style={{
-                                                        fontSize: `${contentFontSize}px`,
-                                                        color: contentColor,
-                                                        lineHeight: 1.6,
-                                                        marginBottom: "8px",
-                                                        fontWeight: 400,
-                                                    }}
-                                                >
-                                                    {course.title}
-                                                </li>
-                                            ) : null
-                                        )}
-                                    </ul>
                                 </div>
 
                                 {/* 阿爾托大學課程 */}
@@ -342,34 +285,11 @@ export default function Information({
                                                     fontWeight: 400,
                                                 }}
                                                 className="content-html"
-                                                dangerouslySetInnerHTML={{ __html: combined.data.infoItems[2].content }}
+                                                dangerouslySetInnerHTML={{
+                                                    __html: combined.data.infoItems[2].content,
+                                                }}
                                             />
                                         )}
-                                        <ul
-                                            style={{
-                                                margin: 0,
-                                                paddingLeft: "20px",
-                                                listStyle: "disc",
-                                                fontFamily: '"Open Sans", "Open Sans Placeholder", sans-serif',
-                                            }}
-                                        >
-                                            {Array.isArray(combined.data.infoItems[2].courses) && combined.data.infoItems[2].courses.map((course, idx) =>
-                                                course.is_active !== false ? (
-                                                    <li
-                                                        key={idx}
-                                                        style={{
-                                                            fontSize: `${contentFontSize}px`,
-                                                            color: contentColor,
-                                                            lineHeight: 1.6,
-                                                            marginBottom: "8px",
-                                                            fontWeight: 400,
-                                                        }}
-                                                    >
-                                                        {course.title}
-                                                    </li>
-                                                ) : null
-                                            )}
-                                        </ul>
                                     </div>
                                 )}
 
@@ -422,35 +342,27 @@ export default function Information({
                             boxSizing: "border-box",
                         }}
                     >
-                        {combined.data.requirementsItems.map((item, idx) =>
-                            item.is_active !== false ? (
-                                <div key={idx}>
-                                    {item.title && (
-                                        <h3
-                                            style={{
-                                                margin: "0 0 12px 0",
-                                                fontSize: "20px",
-                                                fontWeight: 600,
-                                                lineHeight: 1,
-                                                color: headingColor,
-                                                fontFamily: '"Open Sans", "Open Sans Placeholder", sans-serif',
-                                            }}
-                                        >
-                                            {item.title}
-                                        </h3>
-                                    )}
-                                    {item.content && (
+                        {combined.data.requirementsItems.map((req, idx) =>
+                            req.is_active !== false ? (
+                                <div
+                                    key={idx}
+                                    style={{
+                                        marginBottom:
+                                            idx < combined.data.requirementsItems.length - 1 ? "24px" : 0,
+                                    }}
+                                >
+                                    {req.content && (
                                         <div
                                             style={{
-                                                margin: 0,
-                                                fontFamily: '"Open Sans", "Open Sans Placeholder", sans-serif',
                                                 fontSize: `${contentFontSize}px`,
-                                                fontWeight: 400,
-                                                lineHeight: 1.6,
                                                 color: contentColor,
+                                                lineHeight: 1.6,
+                                                fontWeight: 400,
                                             }}
                                             className="content-html"
-                                            dangerouslySetInnerHTML={{ __html: item.content }}
+                                            dangerouslySetInnerHTML={{
+                                                __html: req.content,
+                                            }}
                                         />
                                     )}
                                 </div>
@@ -479,7 +391,9 @@ export default function Information({
                         {(() => {
                             let fileList = [];
                             try {
-                                fileList = JSON.parse(downloads.data?.file_list || "[]");
+                                fileList = Array.isArray(downloads.data?.file_list)
+                                    ? downloads.data.file_list
+                                    : JSON.parse(downloads.data?.file_list || "[]");
                                 fileList = fileList.filter((f) => f.is_active !== false);
                             } catch (e) {}
 
@@ -492,14 +406,13 @@ export default function Information({
                             }
 
                             return fileList.map((file, idx) => {
-                                const fileUrl = resolveUrl(file.file_url);
                                 const fileName = file.title || (isEn ? "Unnamed File" : "未命名檔案");
+                                const fileUrl = file.file_url || file.url || "#";
 
                                 return (
                                     <a
                                         key={idx}
                                         href={fileUrl}
-                                        onClick={(e) => forceDownload(e, fileUrl, fileName)}
                                         style={{
                                             display: "flex",
                                             alignItems: "center",

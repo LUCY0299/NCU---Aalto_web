@@ -1,6 +1,7 @@
 "use client"; // Next.js 標記為客戶端元件 (因為有使用 useState 和 useEffect)
 
 import React, { useState, useEffect } from "react";
+import SectionTitle from "./SectionTitle";
 
 const BASE_URL = "https://ncu-aalto-web.onrender.com";
 
@@ -35,6 +36,7 @@ export default function AlumniList({
     cardColor = "transparent",
     forceHideButton = false,
     locale: propLocale = "auto",
+    variant = "page", // "page"（獨立頁面）｜ "home"（首頁）－預設 page 確保現有頁面不受影響
 }) {
     const [alumni, setAlumni] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -153,6 +155,9 @@ export default function AlumniList({
     }
 
     const displayList = limit && limit > 0 ? alumni.slice(0, limit) : alumni;
+
+    // 是否真的會顯示「更多」按鈕（後台設定要顯示，且沒有被強制隱藏）
+    const willShowButton = headerConfig.showButton && !forceHideButton;
 
     // 當前台為英文版時，自動將右上角的「更多」按鈕連結加上 /en 前綴
     let finalButtonLink = headerConfig.buttonLink;
@@ -295,9 +300,38 @@ export default function AlumniList({
             {/* 4-1. 渲染：標題與按鈕區塊 */}
             {isHeaderActive && (
                 <div className="alumni-header">
-                    <h2 className="alumni-title">{headerConfig.title}</h2>
+                    <SectionTitle
+                        variant={variant}
+                        as="h2"
+                        style={
+                            variant === "home"
+                                ? {
+                                      // home variant：不指定字級/字重/行高，交給 SectionTitle 的 home 樣式決定
+                                      margin: 0,
+                                      fontFamily: "'Noto Sans TC', sans-serif",
+                                      letterSpacing: "-1px",
+                                      wordBreak: "break-word",
+                                  }
+                                : {
+                                      // page variant（預設）：保留原本寫死的樣式；沒有按鈕時置中，有按鈕時靠左並排
+                                      margin: 0,
+                                      fontSize: "clamp(31px, 5vw, 48px)",
+                                      fontWeight: 500,
+                                      fontFamily: "'Noto Sans TC', sans-serif",
+                                      color: "#000",
+                                      letterSpacing: "-1px",
+                                      lineHeight: 1.3,
+                                      wordBreak: "break-word",
+                                      ...(willShowButton
+                                          ? {}
+                                          : { width: "100%", textAlign: "center" }),
+                                  }
+                        }
+                    >
+                        {headerConfig.title}
+                    </SectionTitle>
 
-                    {headerConfig.showButton && !forceHideButton && (
+                    {willShowButton && (
                         <a href={finalButtonLink} className="alumni-more-btn">
                             {headerConfig.buttonText}
                         </a>

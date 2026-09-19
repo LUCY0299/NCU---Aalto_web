@@ -106,8 +106,8 @@ export default function HeroSection({
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: alignY,
-                alignItems: alignX,
-                padding: `max(110px, ${topPadding}px) clamp(20px, 6vw, 80px) clamp(40px, 10vh, 120px)`,
+                alignItems: "center",
+                padding: `max(110px, ${topPadding}px) clamp(16px, 4vw, 30px) clamp(40px, 10vh, 120px)`,
                 boxSizing: "border-box",
                 overflow: "hidden",
                 backgroundColor: "#F8F9FA",
@@ -142,10 +142,21 @@ export default function HeroSection({
                 }}
             />
 
+            {/* 對齊其他首頁區塊：先限制在 1200px 內置中，內部再依 alignX 決定文字靠左/置中/靠右 */}
             <div
                 style={{
                     position: "relative",
                     zIndex: 2,
+                    width: "100%",
+                    maxWidth: "1200px",
+                    margin: "0 auto",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: alignX,
+                }}
+            >
+            <div
+                style={{
                     display: "flex",
                     flexDirection: "column",
                     gap: "clamp(12px, 2vw, 24px)",
@@ -205,6 +216,7 @@ export default function HeroSection({
                 >
                     {heroData.description}
                 </p>
+            </div>
             </div>
         </div>
     );
