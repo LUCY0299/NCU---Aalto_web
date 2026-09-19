@@ -341,26 +341,13 @@ export default function AboutNCU({
                 /* ─── Hero Section ─── */
                 .hero-section {
                     box-sizing: border-box; width: 100%; height: min-content; display: flex; flex-direction: column;
-                    justify-content: center; align-items: center; padding: clamp(${topPadding / 2}px, 8vw, ${topPadding}px) 30px 0px 30px;
+                    justify-content: center; align-items: center; padding: var(--page-padding-y-hero) var(--page-padding-x) 0px var(--page-padding-x);
                     background-color: #ffffff; gap: 20px; overflow: visible;
                 }
 
-                /* ─── Container ─── */
-                .container {
-                    width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start;
-                    max-width: 1348px; gap: 72px; padding: 0px; box-sizing: border-box; overflow: visible;
-                }
+                /* 保留原本標題的手動換行與長字換行（其餘樣式已改用共用的 .about-main-title） */
+                .ncu-title-wrap { white-space: pre-wrap; word-wrap: break-word; }
 
-                /* ─── Section Title ─── */
-                .section-title {
-                    box-sizing: border-box; width: 100%; height: min-content; display: flex; flex-direction: column;
-                    justify-content: center; align-items: flex-start; padding: 30px 20px 0px 20px; gap: 24px; overflow: hidden;
-                }
-                .main-title {
-                    width: 100%; color: var(--Neutral_04, #160d03); line-height: 1.2; letter-spacing: -1px;
-                    font-size: clamp(36px, 5vw, 64px);
-                    font-weight: 500; white-space: pre-wrap; word-wrap: break-word; margin: 0;
-                }
                 .intro-text {
                     width: 100%; color: var(--Neutral_03, #4a4949); text-align: left; line-height: 1.8;
                     font-size: clamp(16px, 1.5vw, 18px); white-space: pre-wrap; word-wrap: break-word; margin: 0;
@@ -411,7 +398,7 @@ export default function AboutNCU({
 
                 .team-section {
                     width: 100%; display: flex; flex-direction: column; align-items: center;
-                    padding: 120px 30px clamp(${bottomPadding / 2}px, 8vw, ${bottomPadding}px) 30px;
+                    padding: var(--page-padding-y) var(--page-padding-x);
                     background-color: #ffffff; gap: 40px;
                 }
 
@@ -439,15 +426,13 @@ export default function AboutNCU({
                 .youtube-card iframe { width: 100%; height: 100%; border: none; }
 
                 @media screen and (max-width: 768px) {
-                    .hero-section { padding: clamp(${topPadding / 2}px, 8vw, ${topPadding}px) 20px 0px 20px; }
-                    .container { gap: 48px; }
-                    .section-title { padding: 20px 10px 0px 10px; }
+                    .about-container { gap: 48px; }
+                    .about-section-title { padding: 20px 10px 0px 10px; }
                     .content-block { gap: 40px; }
                     .image-wrapper { height: 250px; gap: 16px; }
                     .feature-row { flex-direction: column; gap: 12px; }
                     .feature-title-col, .feature-desc-col { width: 100%; }
 
-                    .team-section { padding: 60px 20px clamp(${bottomPadding / 2}px, 8vw, ${bottomPadding}px) 20px; }
                     .image-link-card .overlay-text { font-size: 13px; bottom: 16px; left: 16px; }
                 }
             `}</style>
@@ -455,12 +440,12 @@ export default function AboutNCU({
             {/* 4. 如果頭部、簡介或特色介紹有啟用，才渲染上半部區塊 */}
             {(isHeaderActive || isCollegeActive || isFeaturesActive) && (
                 <div className="hero-section">
-                    <div className="container">
+                    <div className="about-container">
                         {/* 4-1. 渲染 Header (標題與大圖) */}
                         {isHeaderActive && (
-                            <div className="section-title">
+                            <div className="about-section-title">
                                 {header.title && (
-                                    <div className="main-title">
+                                    <div className="about-main-title ncu-title-wrap">
                                         {header.title}
                                     </div>
                                 )}

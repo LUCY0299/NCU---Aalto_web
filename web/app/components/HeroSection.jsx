@@ -107,7 +107,7 @@ export default function HeroSection({
                 flexDirection: "column",
                 justifyContent: alignY,
                 alignItems: "center",
-                padding: `max(110px, ${topPadding}px) clamp(16px, 4vw, 30px) clamp(40px, 10vh, 120px)`,
+                padding: `max(110px, var(--page-padding-y-hero)) var(--page-padding-x) var(--page-padding-y-hero)`,
                 boxSizing: "border-box",
                 overflow: "hidden",
                 backgroundColor: "#F8F9FA",

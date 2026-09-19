@@ -7,11 +7,16 @@ export const metadata = {
 
 export default function EventPage() {
   return (
-    <EventList
-      detailPagePath="/eventlist-2"
-      showTitle={true}
-      titleAlign="center"
-      limit={0}
-    />
+    <div className="page-padding-x" style={{ width: "100%", paddingTop: "var(--page-padding-y)", paddingBottom: "var(--page-padding-y)" }}>
+      <div className="page-content">
+        <EventList
+          detailPagePath="/eventlist-2"
+          showTitle={true}
+          titleAlign="center"
+          limit={0}
+          sidePadding={0}
+        />
+      </div>
+    </div>
   );
 }

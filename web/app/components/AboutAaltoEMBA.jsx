@@ -229,11 +229,8 @@ export default function AboutAaltoEMBA({
             }}
         >
             <style>{`
-                .hero-section { width: 100%; display: flex; flex-direction: column; align-items: center; padding: clamp(${topPadding / 2}px, 8vw, ${topPadding}px) 30px 0px 30px; background-color: #ffffff; }
-                .framer-container { width: 100%; display: flex; flex-direction: column; max-width: 1348px; gap: 72px; }
+                .hero-section { width: 100%; display: flex; flex-direction: column; align-items: center; padding: var(--page-padding-y-hero) var(--page-padding-x) 0px var(--page-padding-x); background-color: #ffffff; }
 
-                .section-title { width: 100%; display: flex; flex-direction: column; padding: 20px 30px 0px 30px; gap: 24px; }
-                .main-title { font-size: clamp(36px, 5vw, 64px); font-weight: 500; color: #1a1a1a; letter-spacing: -3px; line-height: 1.2; margin: 0; }
                 .intro-text { font-size: clamp(16px, 2vw, 22px); font-weight: 500; color: #4a4a4a; line-height: 1.7; margin: 0; white-space: pre-wrap; }
                 .hero-image { width: 100%; height: auto; object-fit: cover; border-radius: 4px; }
 
@@ -275,7 +272,7 @@ export default function AboutAaltoEMBA({
                     white-space: pre-wrap;
                 }
 
-                .team-section { width: 100%; display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; padding: 120px 30px clamp(${bottomPadding / 2}px, 8vw, ${bottomPadding}px) 30px; background-color: #ffffff; gap: 20px; }
+                .team-section { width: 100%; display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; padding: var(--page-padding-y) var(--page-padding-x); background-color: #ffffff; gap: 20px; }
                 .apply-card { position: relative; flex: 1 1 300px; max-width: 600px; height: clamp(220px, 30vw, 320px); border-radius: 4px; overflow: hidden; display: block; text-decoration: none; background-color: #e0e0e0; }
                 .apply-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
                 .apply-card:hover img { transform: scale(1.05); }
@@ -293,14 +290,14 @@ export default function AboutAaltoEMBA({
             {/* 如果頭部或特色介紹其中一個有啟用，就渲染上半部背景框 */}
             {(isHeaderActive || isIntroActive) && (
                 <div className="hero-section">
-                    <div className="framer-container">
+                    <div className="about-container">
                         {/* 4-1. 渲染：標題、前言、大圖 */}
                         {isHeaderActive && (
                             <>
                                 {(header.title || header.intro) && (
-                                    <div className="section-title">
+                                    <div className="about-section-title">
                                         {header.title && (
-                                            <h1 className="main-title">
+                                            <h1 className="about-main-title">
                                                 {header.title}
                                             </h1>
                                         )}

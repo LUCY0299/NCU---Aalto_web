@@ -58,7 +58,7 @@ function ItemBlock({
                         margin: "0 0 8px 0",
                         fontFamily:
                             '"Open Sans", "Open Sans Placeholder", sans-serif',
-                        fontSize: `${headingFontSize}px`,
+                        fontSize: `clamp(18px, 1.8vw, ${headingFontSize}px)`,
                         fontWeight: 600,
                         lineHeight: 1,
                         color: headingColor,
@@ -73,7 +73,7 @@ function ItemBlock({
                         margin: 0,
                         fontFamily:
                             '"Open Sans", "Open Sans Placeholder", sans-serif',
-                        fontSize: `${contentFontSize}px`,
+                        fontSize: `clamp(16px, 1.5vw, ${contentFontSize}px)`,
                         fontWeight: 400,
                         lineHeight: 1.6,
                         color: contentColor,
@@ -88,14 +88,14 @@ function ItemBlock({
 
 export default function Degree({
     // 將 Framer 的 Property Controls 轉為預設 Props
-    titleFontSize = 64,
+    titleFontSize = 48,
     titleColor = "#160D03",
     subtitleFontSize = 18,
     subtitleColor = "#160D03",
-    sectionTitleFontSize = 48,
-    headingFontSize = 20,
+    sectionTitleFontSize = 36,
+    headingFontSize = 22,
     headingColor = "#160D03",
-    contentFontSize = 23,
+    contentFontSize = 18,
     contentColor = "#3B3B3D",
     cardBg = "#ffffff",
     cardBorderColor = "#E8E8E8",
@@ -143,6 +143,7 @@ export default function Degree({
         gap: "23px",
         padding: "32px 50px",
         boxSizing: "border-box",
+        overflow: "hidden",
     };
 
     const grayFrameStyle = {
@@ -181,15 +182,16 @@ export default function Degree({
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
-                        gap: "24px",
+                        gap: "12px",
                         textAlign: "center",
-                        padding: "40px 20px",
+                        padding: "40px var(--page-padding-x)",
                     }}
                 >
                     <h1
                         style={{
                             margin: 0,
-                            fontSize: `${titleFontSize}px`,
+                            fontFamily: "'Noto Sans TC', sans-serif",
+                            fontSize: `clamp(31px, 5vw, ${titleFontSize}px)`,
                             fontWeight: 700,
                             lineHeight: 1.3,
                             color: titleColor,
@@ -202,7 +204,8 @@ export default function Degree({
                         <p
                             style={{
                                 margin: 0,
-                                fontSize: `${subtitleFontSize}px`,
+                                fontFamily: "'Noto Sans TC', sans-serif",
+                                fontSize: `clamp(16px, 1.5vw, ${subtitleFontSize}px)`,
                                 fontWeight: 500,
                                 lineHeight: 1.7,
                                 color: subtitleColor,
@@ -219,17 +222,17 @@ export default function Degree({
             {combined.data?.isActive !== false && regulationsItems.length > 0 && (
                 <div
                     style={{
-                        padding: "20px",
+                        padding: "0 var(--page-padding-x) var(--page-padding-y) var(--page-padding-x)",
                         width: "100%",
                         boxSizing: "border-box",
                     }}
                 >
                     <h2
                         style={{
-                            fontSize: `${sectionTitleFontSize}px`,
+                            fontSize: `clamp(24px, 3.5vw, ${sectionTitleFontSize}px)`,
                             fontWeight: 700,
                             lineHeight: 1.3,
-                            margin: "0 0 16px 0",
+                            margin: "0 0 var(--title-content-gap) 0",
                         }}
                     >
                         {regulationsItems[0]?.title || (isEn ? "Academic Regulations" : "修業規定")}
@@ -258,17 +261,18 @@ export default function Degree({
             {combined.data?.isActive !== false && certificationItems.length > 0 && (
                 <div
                     style={{
-                        padding: "20px",
+                        // 上方的間距已由「修業規定」區塊的 padding-bottom 提供，這裡去掉 padding-top 避免疊加成兩倍
+                        padding: "0 var(--page-padding-x) var(--page-padding-y) var(--page-padding-x)",
                         width: "100%",
                         boxSizing: "border-box",
                     }}
                 >
                     <h2
                         style={{
-                            fontSize: `${sectionTitleFontSize}px`,
+                            fontSize: `clamp(24px, 3.5vw, ${sectionTitleFontSize}px)`,
                             fontWeight: 700,
                             lineHeight: 1.3,
-                            margin: "0 0 16px 0",
+                            margin: "0 0 var(--title-content-gap) 0",
                         }}
                     >
                         {certificationItems[0]?.title || (isEn ? "Degree Conferral" : "學位授予")}

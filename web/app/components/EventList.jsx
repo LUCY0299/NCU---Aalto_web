@@ -130,7 +130,7 @@ export default function EventList({
                         justifyContent: "space-between",
                         alignItems: "center",
                         gap: "16px",
-                        marginBottom: `${gap}px`,
+                        marginBottom: "var(--title-content-gap)",
                     }}
                 >
                     <SectionTitle
@@ -148,10 +148,9 @@ export default function EventList({
                                       minWidth: 0,
                                   }
                                 : {
-                                      // page variant（預設）：保留原本寫死的樣式，確保獨立頁面外觀不變
-                                      fontFamily:
-                                          '"Inter Display", "Inter Display Placeholder", sans-serif',
-                                      fontSize: `${titleFontSize}px`,
+                                      // page variant（預設）：字級與字體改用響應式，跟 AlumniList 等獨立頁面標題一致
+                                      fontFamily: "'Noto Sans TC', sans-serif",
+                                      fontSize: "clamp(31px, 5vw, 48px)",
                                       fontWeight: 500,
                                       letterSpacing: "-3px",
                                       lineHeight: titleLineHeight,
@@ -263,6 +262,10 @@ function EventCard({ item, cardColor, detailPagePath, locale }) {
     // ✅ 改為：直接用索引構建連結
     const detailLink = `${basePath}?index=${item._index}`;
 
+    // 只在使用預設橘色時套用「白底邊框卡片」設計；若外部傳入自訂 cardColor，維持純色保留彈性
+    const isDefaultColor = !cardColor || cardColor === "#FADDCB";
+    const accentColor = "#E8A458"; // 強調色（分類標籤、邊框）
+
     return (
         <div
             onMouseEnter={() => setHover(true)}
@@ -271,29 +274,53 @@ function EventCard({ item, cardColor, detailPagePath, locale }) {
                 display: "flex",
                 alignItems: "center",
                 gap: "56px",
-                padding: "40px",
-                background: cardColor || "#FADDCB",
-                borderRadius: "4px",
+                padding: "28px 40px",
+                background: isDefaultColor ? "#ffffff" : cardColor,
+                borderRadius: "16px",
+                border: isDefaultColor ? "1.5px solid #F0D5BD" : "none",
+                borderTop: isDefaultColor ? `8px solid ${accentColor}` : undefined,
                 width: "100%",
                 boxSizing: "border-box",
                 transform: hover ? "translateY(-6px)" : "translateY(0)",
                 boxShadow: hover
-                    ? "0 12px 24px rgba(0,0,0,0.12)"
-                    : "0 0 0 rgba(0,0,0,0)",
+                    ? "0 16px 32px rgba(0,0,0,0.12)"
+                    : "0 2px 12px rgba(0,0,0,0.05)",
                 transition: "transform 0.25s ease, box-shadow 0.25s ease",
             }}
         >
             {imgUrl && (
-                <img
-                    src={imgUrl}
+                <div
                     style={{
                         width: "42%",
                         aspectRatio: "4 / 3",
-                        objectFit: "cover",
-                        borderRadius: "6px",
+                        padding: isDefaultColor ? "5px" : 0,
+                        background: isDefaultColor ? "#FADDCB" : "transparent",
+                        borderRadius: "14px",
+                        boxSizing: "border-box",
                         flexShrink: 0,
                     }}
-                />
+                >
+                    <div
+                        style={{
+                            width: "100%",
+                            height: "100%",
+                            borderRadius: "10px",
+                            overflow: "hidden",
+                        }}
+                    >
+                        <img
+                            src={imgUrl}
+                            style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                display: "block",
+                                transform: hover ? "scale(1.05)" : "scale(1)",
+                                transition: "transform 0.4s ease",
+                            }}
+                        />
+                    </div>
+                </div>
             )}
 
             <div
@@ -304,8 +331,25 @@ function EventCard({ item, cardColor, detailPagePath, locale }) {
                     flex: 1,
                 }}
             >
-                <div style={{ fontSize: "18px", color: "#333" }}>
-                    {formatDate(item.date, locale)}
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div
+                        style={{
+                            display: "inline-block",
+                            width: "fit-content",
+                            padding: "5px 14px",
+                            background: accentColor,
+                            color: "#ffffff",
+                            borderRadius: "999px",
+                            fontSize: "13px",
+                            fontWeight: 700,
+                            letterSpacing: "0.5px",
+                        }}
+                    >
+                        {locale === "en-US" ? "EVENT" : "活動"}
+                    </div>
+                    <div style={{ fontSize: "14px", color: "#999" }}>
+                        {formatDate(item.date, locale)}
+                    </div>
                 </div>
                 <div
                     style={{

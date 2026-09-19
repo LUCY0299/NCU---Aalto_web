@@ -128,13 +128,13 @@ export default function LearningInfo({
                     width: 100%;
                     max-width: 1200px;
                     margin: 0 auto;
-                    padding: clamp(${topPadding / 2}px, 8vw, ${topPadding}px) 20px clamp(${bottomPadding / 2}px, 8vw, ${bottomPadding}px) 20px;
+                    padding: clamp(${topPadding / 2}px, 8vw, ${topPadding}px) var(--page-padding-x) clamp(${bottomPadding / 2}px, 8vw, ${bottomPadding}px) var(--page-padding-x);
                     font-family: 'Noto Sans TC', sans-serif;
                 }
 
                 /* 標題樣式 */
                 .learning-title {
-                    font-size: clamp(36px, 5vw, 64px);
+                    font-size: clamp(31px, 5vw, 48px);
                     font-weight: 600;
                     color: #111;
                     margin-bottom: 40px;

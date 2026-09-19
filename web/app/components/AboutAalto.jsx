@@ -278,15 +278,11 @@ export default function AboutAalto({
             }}
         >
             <style>{`
-                .hero-section { width: 100%; display: flex; flex-direction: column; align-items: center; padding: clamp(${topPadding / 2}px, 8vw, ${topPadding}px) 30px 0px 30px; background-color: #ffffff; }
-                .framer-container { width: 100%; display: flex; flex-direction: column; max-width: 1348px; gap: 72px; }
-
-                .section-title { width: 100%; display: flex; flex-direction: column; padding: 20px 30px 0px 30px; gap: 24px; }
-                .main-title { font-size: clamp(36px, 5vw, 64px); font-weight: 500; color: #1a1a1a; letter-spacing: -3px; line-height: 1.2; margin: 0; }
+                .hero-section { width: 100%; display: flex; flex-direction: column; align-items: center; padding: var(--page-padding-y-hero) var(--page-padding-x) 0px var(--page-padding-x); background-color: #ffffff; }
 
                 .image-wrapper-split {
                     box-sizing: border-box; width: 100%; display: flex; flex-direction: row;
-                    justify-content: flex-start; align-items: flex-start; padding: 10px 30px;
+                    justify-content: flex-start; align-items: flex-start; padding: 10px var(--page-padding-x);
                     overflow: hidden; gap: 32px;
                 }
                 .split-image { width: 35%; max-width: 400px; object-fit: cover; border-radius: 8px; }
@@ -294,7 +290,7 @@ export default function AboutAalto({
 
                 .image-wrapper-text {
                     box-sizing: border-box; width: 100%; display: flex; flex-direction: row;
-                    justify-content: flex-start; align-items: flex-start; padding: 0px 30px;
+                    justify-content: flex-start; align-items: flex-start; padding: 0px var(--page-padding-x);
                     overflow: hidden; gap: 32px; font-size: clamp(16px, 1.5vw, 18px); color: #333; line-height: 1.8; white-space: pre-wrap;
                 }
 
@@ -317,7 +313,7 @@ export default function AboutAalto({
 
                 .team-section {
                     width: 100%; display: flex; flex-direction: column; align-items: center;
-                    padding: 120px 30px clamp(${bottomPadding / 2}px, 8vw, ${bottomPadding}px) 30px;
+                    padding: var(--page-padding-y) var(--page-padding-x);
                     background-color: #ffffff; gap: 40px;
                 }
 
@@ -347,9 +343,7 @@ export default function AboutAalto({
                 @media screen and (max-width: 768px) {
                     .image-wrapper-split { flex-direction: column; align-items: center; padding: 10px 20px; }
                     .split-image { width: 100%; max-width: 100%; margin-bottom: 20px; }
-                    .image-wrapper-text { padding: 0px 20px; }
                     .image-wrapper-large { height: 250px; }
-                    .team-section { padding: 60px 20px clamp(${bottomPadding / 2}px, 8vw, ${bottomPadding}px) 20px; }
                     .image-link-card .overlay-text { font-size: 13px; bottom: 16px; left: 16px; }
                 }
             `}</style>
@@ -357,12 +351,12 @@ export default function AboutAalto({
             {/* 如果頭部或特色介紹有任一個啟用，就顯示上半部區塊 */}
             {(isHeaderActive || isIntroActive) && (
                 <div className="hero-section">
-                    <div className="framer-container">
+                    <div className="about-container">
                         {/* 渲染：標題與圖文 */}
                         {isHeaderActive && (
                             <>
-                                <div className="section-title">
-                                    <h1 className="main-title">
+                                <div className="about-section-title">
+                                    <h1 className="about-main-title">
                                         {header.title}
                                     </h1>
                                 </div>

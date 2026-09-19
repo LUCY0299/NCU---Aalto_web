@@ -178,9 +178,9 @@ export default function AlumniList({
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    padding: 20px clamp(16px, 4vw, 30px) 60px clamp(16px, 4vw, 30px);
+                    padding: var(--page-padding-y) var(--page-padding-x);
                     background-color: #ffffff;
-                    gap: 56px;
+                    gap: var(--title-content-gap);
                 }
 
                 .alumni-header {
@@ -284,7 +284,7 @@ export default function AlumniList({
                 /* 📱【手機版】768px 以下：強制 1 欄網格 */
                 @media screen and (max-width: 768px) {
                     .alumni-wrapper {
-                        padding: 40px 20px;
+                        padding: 40px var(--page-padding-x);
                         gap: 32px;
                     }
                     .alumni-header {

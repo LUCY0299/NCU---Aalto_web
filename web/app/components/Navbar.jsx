@@ -421,9 +421,10 @@ export default function Navbar({
                         gap: 24,
                         listStyle: "none",
                         margin: 0,
+                        marginRight: 24,
                         padding: 0,
                         flex: 1,
-                        justifyContent: "center",
+                        justifyContent: "flex-end",
                     }}
                 >
                     {menuItems && menuItems.length > 0 ? (
@@ -507,7 +508,7 @@ export default function Navbar({
                                                     "0px 10px 20px rgba(0, 0, 0, 0.1)",
                                                 borderRadius: "4px",
                                                 padding: "16px 24px",
-                                                minWidth: 220,
+                                                width: "max-content",
                                                 zIndex: 1000,
                                             }}
                                             onMouseEnter={() => {
@@ -533,6 +534,7 @@ export default function Navbar({
                                                                 "none",
                                                             fontSize: 15,
                                                             fontWeight: 500,
+                                                            textAlign: "left",
                                                             transition:
                                                                 "color 0.2s ease",
                                                         }}
