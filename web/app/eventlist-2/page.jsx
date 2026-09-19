@@ -2,8 +2,10 @@
 
 import EventDetailBody from "../components/EventDetailBody";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function EventDetailPage() {
+// 將原本依賴 useSearchParams 的邏輯抽離成一個獨立元件
+function EventDetailContent() {
   const searchParams = useSearchParams();
   const hasIndex = searchParams.has("index");
 
@@ -27,4 +29,13 @@ export default function EventDetailPage() {
   }
 
   return <EventDetailBody />;
+}
+
+// 主頁面元件：使用 Suspense 將內容包裝起來
+export default function EventDetailPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <EventDetailContent />
+    </Suspense>
+  );
 }
