@@ -6,5 +6,9 @@ export const metadata = {
 };
 
 export default function InformationPage() {
-  return <Information />;
+  return (
+    <div className="page-content">
+      <Information />
+    </div>
+  );
 }

@@ -3,6 +3,17 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* 全站共用左右內距（目前首頁 6 個區塊已使用此數值） */
+  --page-padding-x: clamp(16px, 4vw, 30px);
+  --page-content-max-width: 1200px;
+
+  /* 全站共用上下留白：分兩級 */
+  --page-padding-y-hero: clamp(60px, 10vw, 120px); /* 頁面最頂部大標題區 */
+  --page-padding-y: clamp(30px, 6vw, 60px); /* 一般內容區塊 */
+
+  /* 全站共用：區塊標題與其下方內容之間的間距 */
+  --title-content-gap: 20px;
 }
 
 @theme inline {
@@ -31,6 +42,12 @@ body {
   line-height: inherit;
   word-wrap: break-word;
   overflow-wrap: break-word;
+}
+
+/* 內容第一個 <p>（常常是包住開頭圖片的段落）不需要額外上邊距，
+   避免跟外層卡片的 padding-top 疊加造成多餘空隙 */
+.content-html p:first-child {
+  margin-top: 0;
 }
 
 .content-html br {
@@ -70,12 +87,58 @@ body {
   font-style: italic;
 }
 
+/* 加上 !important 是因為後台編輯器寫入的圖片會帶有自己的 inline style
+   （例如 width:100%; border-radius:8px），優先權比一般 CSS 高，需要強制覆蓋 */
 .content-html img {
-  width: calc(100% + 80px);
-  max-width: none;
-  margin-left: -40px;
-  margin-right: -40px;
+  width: calc(100% + 100px) !important;
+  max-width: none !important;
+  margin-left: -50px !important;
+  margin-right: -50px !important;
   height: auto;
   display: block;
-  border-radius: 0;
+  border-radius: 0 !important;
+}
+
+/* 若圖片是內容的第一個元素，額外把它往上推，貼齊卡片頂部 */
+.content-html img:first-child {
+  margin-top: -32px !important;
+}
+
+/* 全站共用左右內距 class（尚未套用到任何組件，先建立備用） */
+.page-padding-x {
+  padding-left: var(--page-padding-x);
+  padding-right: var(--page-padding-x);
+  box-sizing: border-box;
+}
+
+.page-content {
+  width: 100%;
+  max-width: var(--page-content-max-width);
+  margin: 0 auto;
+}
+
+/* 「關於」系列頁面共用樣式（AboutAaltoEMBA / AboutAalto / AboutNCU） */
+.about-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  max-width: 1348px;
+  gap: 72px;
+}
+
+.about-section-title {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 30px 0px 30px;
+  gap: 24px;
+}
+
+.about-main-title {
+  font-size: clamp(36px, 5vw, 64px);
+  font-weight: 500;
+  color: #1a1a1a;
+  letter-spacing: -3px;
+  line-height: 1.2;
+  margin: 0;
 }

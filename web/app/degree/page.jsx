@@ -6,5 +6,9 @@ export const metadata = {
 };
 
 export default function DegreePage() {
-  return <Degree />;
+  return (
+    <div className="page-content">
+      <Degree />
+    </div>
+  );
 }

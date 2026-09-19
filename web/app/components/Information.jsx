@@ -82,15 +82,18 @@ function resolveImage(url) {
 }
 
 export default function Information({
-    titleFontSize = 64,
+    titleFontSize = 48,
     titleColor = "#160D03",
     subtitleFontSize = 18,
     subtitleColor = "#160D03",
-    sectionTitleFontSize = 48,
+    sectionTitleFontSize = 36,
+    headingFontSize = 22,
     headingColor = "#160D03",
     contentColor = "#3B3B3D",
-    contentFontSize = 23,
+    contentFontSize = 18,
     cardBg = "#ffffff",
+    cardBorderColor = "#E8E8E8",
+    sectionBg = "#F8F8F8",
     locale: propLocale = "auto",
 }) {
     const currentLocale = !propLocale || propLocale === "auto" ? detectLocale() : propLocale;
@@ -117,6 +120,21 @@ export default function Information({
         return null;
     }
 
+    // 卡片外觀統一為「灰框 + 邊框」風格（跟 Degree 頁面一致）
+    const cardStyle = {
+        background: cardBg,
+        border: `1px solid ${cardBorderColor}`,
+        borderRadius: "16px",
+        padding: "32px 50px",
+        boxSizing: "border-box",
+    };
+
+    const grayFrameStyle = {
+        background: sectionBg,
+        borderRadius: "20px",
+        padding: "10px",
+    };
+
     return (
         <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
             {/* Hero */}
@@ -129,15 +147,16 @@ export default function Information({
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
-                        gap: "24px",
+                        gap: "12px",
                         textAlign: "center",
-                        padding: "40px 20px",
+                        padding: "40px var(--page-padding-x)",
                     }}
                 >
                     <h1
                         style={{
                             margin: 0,
-                            fontSize: `${titleFontSize}px`,
+                            fontFamily: "'Noto Sans TC', sans-serif",
+                            fontSize: `clamp(31px, 5vw, ${titleFontSize}px)`,
                             fontWeight: 700,
                             lineHeight: 1.3,
                             color: titleColor,
@@ -149,7 +168,8 @@ export default function Information({
                         <p
                             style={{
                                 margin: 0,
-                                fontSize: `${subtitleFontSize}px`,
+                                fontFamily: "'Noto Sans TC', sans-serif",
+                                fontSize: `clamp(16px, 1.5vw, ${subtitleFontSize}px)`,
                                 fontWeight: 500,
                                 lineHeight: 1.7,
                                 color: subtitleColor,
@@ -164,42 +184,41 @@ export default function Information({
 
             {/* 招生資訊 - 介紹 + 兩列課程（同一個大框） */}
             {combined.data?.isActive !== false && Array.isArray(combined.data?.infoItems) && (
-                <div style={{ padding: "20px", width: "100%", boxSizing: "border-box" }}>
+                <div style={{ padding: "0 var(--page-padding-x) var(--page-padding-y) var(--page-padding-x)", width: "100%", boxSizing: "border-box" }}>
                     <h2
                         style={{
-                            fontSize: `${sectionTitleFontSize}px`,
+                            fontSize: `clamp(24px, 3.5vw, ${sectionTitleFontSize}px)`,
                             fontWeight: 700,
                             lineHeight: 1.3,
-                            margin: "0 0 16px 0",
+                            margin: "0 0 var(--title-content-gap) 0",
                         }}
                     >
                         {isEn ? "Admission Information" : "招生資訊"}
                     </h2>
 
+                    <div style={grayFrameStyle}>
                     <div
                         style={{
-                            background: cardBg,
-                            borderRadius: "16px",
+                            ...cardStyle,
+                            padding: 0,
                             overflow: "hidden",
-                            boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                            padding: "24px 40px",
-                            boxSizing: "border-box",
                         }}
                     >
-                        {/* 圖片 */}
+                        {/* 圖片：直接貼齊外框，不需要負 margin */}
                         {combined.data.infoItems[0]?.image_url && (
                             <img
                                 src={resolveImage(combined.data.infoItems[0].image_url)}
                                 alt={combined.data.infoItems[0].title}
                                 style={{
-                                    width: "calc(100% + 80px)",
-                                    margin: "-24px -40px 30px -40px",
+                                    width: "100%",
                                     height: "auto",
-                                    borderRadius: "0",
                                     display: "block",
                                 }}
                             />
                         )}
+
+                        {/* 文字內容區塊：獨立套用內距，跟圖片區分開 */}
+                        <div style={{ padding: "32px 50px" }}>
 
                         {/* 介紹文字 */}
                         {combined.data.infoItems[0] && combined.data.infoItems[0].is_active !== false && (
@@ -210,7 +229,7 @@ export default function Information({
                                             margin: 0,
                                             marginBottom: "30px",
                                             fontFamily: '"Open Sans", "Open Sans Placeholder", sans-serif',
-                                            fontSize: `${contentFontSize}px`,
+                                            fontSize: `clamp(16px, 1.5vw, ${contentFontSize}px)`,
                                             fontWeight: 400,
                                             lineHeight: 1.6,
                                             color: contentColor,
@@ -228,7 +247,8 @@ export default function Information({
                                 style={{
                                     display: "grid",
                                     gridTemplateColumns: "1fr 1fr",
-                                    gap: "40px",
+                                    columnGap: "40px",
+                                    rowGap: "16px",
                                 }}
                             >
                                 {/* 國立中央大學課程 */}
@@ -236,7 +256,7 @@ export default function Information({
                                     <h3
                                         style={{
                                             margin: "0 0 20px 0",
-                                            fontSize: `${contentFontSize * 1.2}px`,
+                                            fontSize: `clamp(18px, 1.8vw, ${headingFontSize}px)`,
                                             fontWeight: 600,
                                             color: headingColor,
                                             fontFamily: '"Open Sans", "Open Sans Placeholder", sans-serif',
@@ -248,7 +268,7 @@ export default function Information({
                                         <div
                                             style={{
                                                 marginBottom: "16px",
-                                                fontSize: `${contentFontSize}px`,
+                                                fontSize: `clamp(16px, 1.5vw, ${contentFontSize}px)`,
                                                 color: contentColor,
                                                 lineHeight: 1.6,
                                                 fontWeight: 400,
@@ -267,7 +287,7 @@ export default function Information({
                                         <h3
                                             style={{
                                                 margin: "0 0 20px 0",
-                                                fontSize: `${contentFontSize * 1.2}px`,
+                                                fontSize: `clamp(18px, 1.8vw, ${headingFontSize}px)`,
                                                 fontWeight: 600,
                                                 color: headingColor,
                                                 fontFamily: '"Open Sans", "Open Sans Placeholder", sans-serif',
@@ -279,7 +299,7 @@ export default function Information({
                                             <div
                                                 style={{
                                                     marginBottom: "16px",
-                                                    fontSize: `${contentFontSize}px`,
+                                                    fontSize: `clamp(16px, 1.5vw, ${contentFontSize}px)`,
                                                     color: contentColor,
                                                     lineHeight: 1.6,
                                                     fontWeight: 400,
@@ -297,11 +317,12 @@ export default function Information({
                                 {combined.data.infoItems[0]?.course_disclaimer && (
                                     <div
                                         style={{
-                                            marginTop: "30px",
+                                            gridColumn: "1 / -1",
+                                            marginTop: "10px",
                                             padding: "16px 20px",
                                             backgroundColor: "#f5f5f5",
                                             borderLeft: "4px solid #666",
-                                            fontSize: `${contentFontSize - 2}px`,
+                                            fontSize: `clamp(14px, 1.3vw, ${contentFontSize - 2}px)`,
                                             color: "#666",
                                             lineHeight: 1.6,
                                             fontFamily: '"Open Sans", "Open Sans Placeholder", sans-serif',
@@ -312,34 +333,33 @@ export default function Information({
                                 )}
                             </div>
                         )}
+                        </div>
+                    </div>
                     </div>
                 </div>
             )}
 
             {/* 入學門檻 */}
             {combined.data?.isActive !== false && Array.isArray(combined.data?.requirementsItems) && (
-                <div style={{ padding: "20px", width: "100%", boxSizing: "border-box" }}>
+                <div style={{ padding: "0 var(--page-padding-x) var(--page-padding-y) var(--page-padding-x)", width: "100%", boxSizing: "border-box" }}>
                     <h2
                         style={{
-                            fontSize: `${sectionTitleFontSize}px`,
+                            fontSize: `clamp(24px, 3.5vw, ${sectionTitleFontSize}px)`,
                             fontWeight: 700,
                             lineHeight: 1.3,
-                            margin: "0 0 16px 0",
+                            margin: "0 0 var(--title-content-gap) 0",
                         }}
                     >
                         {isEn ? "Admission Requirements" : "入學門檻"}
                     </h2>
+                    <div style={grayFrameStyle}>
                     <div
                         style={{
-                            background: cardBg,
-                            borderRadius: "16px",
-                            overflow: "hidden",
-                            boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                            ...cardStyle,
                             display: "flex",
                             flexDirection: "column",
                             gap: "23px",
-                            padding: "24px 40px",
-                            boxSizing: "border-box",
+                            overflow: "hidden",
                         }}
                     >
                         {combined.data.requirementsItems.map((req, idx) =>
@@ -354,7 +374,7 @@ export default function Information({
                                     {req.content && (
                                         <div
                                             style={{
-                                                fontSize: `${contentFontSize}px`,
+                                                fontSize: `clamp(16px, 1.5vw, ${contentFontSize}px)`,
                                                 color: contentColor,
                                                 lineHeight: 1.6,
                                                 fontWeight: 400,
@@ -369,18 +389,19 @@ export default function Information({
                             ) : null
                         )}
                     </div>
+                    </div>
                 </div>
             )}
 
             {/* 檔案下載專區 */}
             {downloads.data?.isActive !== false && (
-                <div style={{ padding: "20px", width: "100%", boxSizing: "border-box", marginTop: "20px" }}>
+                <div style={{ padding: "0 var(--page-padding-x) var(--page-padding-y) var(--page-padding-x)", width: "100%", boxSizing: "border-box" }}>
                     <h2
                         style={{
-                            fontSize: `${sectionTitleFontSize}px`,
+                            fontSize: `clamp(24px, 3.5vw, ${sectionTitleFontSize}px)`,
                             fontWeight: 700,
                             lineHeight: 1.3,
-                            margin: "0 0 16px 0",
+                            margin: "0 0 var(--title-content-gap) 0",
                             color: titleColor,
                         }}
                     >
@@ -428,7 +449,7 @@ export default function Information({
                                     >
                                         <span
                                             style={{
-                                                fontSize: `${contentFontSize}px`,
+                                                fontSize: `clamp(16px, 1.5vw, ${contentFontSize}px)`,
                                                 color: contentColor,
                                                 fontWeight: 500,
                                                 whiteSpace: "nowrap",

@@ -42,15 +42,33 @@ function useContactData(currentLocale) {
 }
 
 function InfoRow({ icon, text, link, textColor }) {
+    const [hover, setHover] = useState(false);
+
     if (!text) return null;
     const content = (
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <span style={{ fontSize: "20px" }}>{icon}</span>
+        <div
+            style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+                transform: hover && link ? "translateX(4px)" : "translateX(0)",
+                transition: "transform 0.2s ease",
+            }}
+        >
+            <span style={{ fontSize: "22px" }}>{icon}</span>
             <span
                 style={{
-                    fontSize: "20px",
+                    fontFamily: "'Noto Sans TC', sans-serif",
+                    fontSize: "19px",
+                    fontWeight: 500,
                     lineHeight: 1.7,
-                    color: textColor,
+                    letterSpacing: "0.3px",
+                    color: hover && link ? "#602A80" : textColor,
+                    borderBottom:
+                        link && hover
+                            ? "1.5px solid #602A80"
+                            : "1.5px solid transparent",
+                    transition: "color 0.2s ease, border-color 0.2s ease",
                 }}
             >
                 {text}
@@ -59,7 +77,12 @@ function InfoRow({ icon, text, link, textColor }) {
     );
     if (link) {
         return (
-            <a href={link} style={{ textDecoration: "none" }}>
+            <a
+                href={link}
+                onMouseEnter={() => setHover(true)}
+                onMouseLeave={() => setHover(false)}
+                style={{ textDecoration: "none", cursor: "pointer" }}
+            >
                 {content}
             </a>
         );
@@ -69,14 +92,14 @@ function InfoRow({ icon, text, link, textColor }) {
 
 export default function Contact({
     // 將 Framer 的 Property Controls 轉為預設 Props
-    titleFontSize = 64,
+    titleFontSize = 48,
     titleColor = "#160D03",
     subtitleFontSize = 18,
-    subtitleColor = "#4A4949",
+    subtitleColor = "#160D03",
     panelBg = "#eef2f7",
     infoTextColor = "#602A80",
     mapHeight = 419,
-    maxWidth = 1160,
+    maxWidth = 1200,
     locale: propLocale = "auto",
 }) {
     // 3. 判斷當前語系
@@ -124,7 +147,7 @@ export default function Contact({
                 width: "100%",
                 maxWidth: `${maxWidth}px`,
                 margin: "0 auto",
-                padding: "0 24px",
+                padding: "0 var(--page-padding-x)",
                 boxSizing: "border-box",
             }}
         >
@@ -132,7 +155,7 @@ export default function Contact({
             <div
                 style={{
                     textAlign: "center",
-                    padding: "40px 20px",
+                    padding: "40px 0",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
@@ -142,7 +165,8 @@ export default function Contact({
                 <h1
                     style={{
                         margin: 0,
-                        fontSize: `${titleFontSize}px`,
+                        fontFamily: "'Noto Sans TC', sans-serif",
+                        fontSize: `clamp(31px, 5vw, ${titleFontSize}px)`,
                         fontWeight: 700,
                         lineHeight: 1.2,
                         color: titleColor,
@@ -153,11 +177,12 @@ export default function Contact({
                 <p
                     style={{
                         margin: 0,
-                        fontSize: `${subtitleFontSize}px`,
+                        fontFamily: "'Noto Sans TC', sans-serif",
+                        fontSize: `clamp(16px, 1.5vw, ${subtitleFontSize}px)`,
+                        fontWeight: 500,
                         color: subtitleColor,
-                        maxWidth: "503px",
+                        maxWidth: "588px",
                         lineHeight: 1.7,
-                        textAlign: "center",
                     }}
                 >
                     {subtitle}

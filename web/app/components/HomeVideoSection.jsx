@@ -113,7 +113,7 @@ export default function HomeVideoSection({
                 width: "100%",
                 backgroundColor: "#fff",
                 boxSizing: "border-box",
-                padding: `clamp(${topPadding / 2}px, 8vw, ${topPadding}px) clamp(16px, 4vw, 30px) clamp(${bottomPadding / 2}px, 8vw, ${bottomPadding}px) clamp(16px, 4vw, 30px)`,
+                padding: `var(--page-padding-y) var(--page-padding-x) var(--page-padding-y) var(--page-padding-x)`,
             }}
         >
             <style>{`
