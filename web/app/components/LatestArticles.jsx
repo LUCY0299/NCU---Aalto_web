@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import SectionTitle from "./SectionTitle";
 
-const BASE_URL = "https://ncu-aalto-web.onrender.com";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://aalto-api.mgt.ncu.edu.tw";
 
 // 自動偵測網址是否為英文版頁面
 const detectLocale = () => {

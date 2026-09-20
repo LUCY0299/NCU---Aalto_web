@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import SectionTitle from "./SectionTitle";
 
-const BASE_URL = "https://ncu-aalto-web.onrender.com";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://aalto-api.mgt.ncu.edu.tw";
 // 1. 更新 API 網址，對應新的 section_key: home_yt_videos
 const API_URL = `${BASE_URL}/api/v1/content/home/home_yt_videos`;
 

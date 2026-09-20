@@ -52,7 +52,7 @@ Framer Component 自動讀取新資料（API call）
 |------|------|
 | **總數** | 16 個 Code Components |
 | **語言** | React (TypeScript) |
-| **API 基礎** | `https://ncu-aalto-web.onrender.com/api/v1/content/{slug}/{section_key}` |
+| **API 基礎** | `http://aalto-api.mgt.ncu.edu.tw/api/v1/content/{slug}/{section_key}` |
 | **多語系** | 支援 zh-TW（繁體中文）、en-US（英文） |
 
 ---
@@ -268,7 +268,7 @@ Framer Component 自動讀取新資料（API call）
 ```
 Framer Component
     ↓
-fetch(`https://ncu-aalto-web.onrender.com/api/v1/content/{slug}/{section_key}?locale=zh-TW`)
+fetch(`http://aalto-api.mgt.ncu.edu.tw/api/v1/content/{slug}/{section_key}?locale=zh-TW`)
     ↓
 後台 FastAPI
     ↓
@@ -317,7 +317,7 @@ fetch(`${API_URL}?locale=${currentLocale}`)
 後台 `image` 類型欄位存的是**相對路徑**，需要前端補全：
 
 ```typescript
-const BASE_URL = "https://ncu-aalto-web.onrender.com"
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://aalto-api.mgt.ncu.edu.tw";
 
 const getImageUrl = (url) => {
     if (!url) return ""

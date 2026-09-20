@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const BASE_URL = "https://ncu-aalto-web.onrender.com";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://aalto-api.mgt.ncu.edu.tw";
 
 const DEFAULT_METADATA = {
   title: "NCU × Aalto EMBA",
