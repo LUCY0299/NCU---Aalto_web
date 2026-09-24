@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react"
 import { addPropertyControls, ControlType, RenderTarget } from "framer"
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://aalto-api.mgt.ncu.edu.tw";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://aalto-api.mgt.ncu.edu.tw";
 
 // 自動偵測當前網址語系
 const detectLocale = () => {
