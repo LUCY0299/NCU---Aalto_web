@@ -89,6 +89,8 @@ ALLOWED_ORIGINS = [
     "http://localhost:5500",
     "https://*.framer.app",
     "https://*.framer.website",
+    "https://aalto.mgt.ncu.edu.tw",      # 前端正式網址
+    "https://aalto-api.mgt.ncu.edu.tw"
     # 如果你有自訂網域，加在這裡：
     # "https://your-domain.com",
 ]
