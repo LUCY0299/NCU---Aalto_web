@@ -72,7 +72,7 @@ app = FastAPI(
     docs_url="/docs",       # Swagger UI 路徑
     redoc_url="/redoc",     # ReDoc 路徑
 )
-
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 # ─────────────────────────────────────────
 # CORS 設定（非常重要！）
 # 讓 Framer 前台可以跨域呼叫這個 API
