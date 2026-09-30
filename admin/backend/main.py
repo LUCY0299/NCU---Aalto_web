@@ -145,39 +145,7 @@ async def startup_event():
     print("API Docs: http://localhost:8000/docs")
 
 # ─────────────────────────────────────────
-# 掛載路由器
-# ─────────────────────────────────────────
-# 認證相關 API（/api/v1/auth/...）
-app.include_router(auth.router)
-
-# 頁面管理 API（/api/v1/pages/...、/api/v1/sections/... 等）
-app.include_router(pages.router)
-
-# ─────────────────────────────────────────
-# 掛載後台靜態檔案（HTML/CSS/JS）
-# ─────────────────────────────────────────
-# 檢查 frontend 資料夾是否存在再掛載
-frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
-if os.path.exists(frontend_path):
-    app.mount("/admin", StaticFiles(directory=frontend_path, html=True), name="frontend")
-
-# ─────────────────────────────────────────
-# 根路徑：導向後台登入頁
-# ─────────────────────────────────────────
-@app.get("/", include_in_schema=False)
-async def root():
-    """根路徑，重導向到後台登入頁"""
-    from fastapi.responses import RedirectResponse
-    return RedirectResponse(url="/admin/index.html")
-
-# ─────────────────────────────────────────
-# 掛載上傳的圖片資料夾 (讓前端可以讀取圖片)
-# ─────────────────────────────────────────
-os.makedirs("uploads", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-
-# ─────────────────────────────────────────
-# 圖片上傳 API 端點 (防呆版)
+# 圖片上傳 API 端點
 # ─────────────────────────────────────────
 @app.post("/api/v1/upload", tags=["上傳"])
 async def upload_image(
@@ -220,6 +188,37 @@ async def upload_image(
         print("==============================")
         raise HTTPException(status_code=500, detail=str(e))
     
+# ─────────────────────────────────────────
+# 掛載路由器
+# ─────────────────────────────────────────
+# 認證相關 API（/api/v1/auth/...）
+app.include_router(auth.router)
+
+# 頁面管理 API（/api/v1/pages/...、/api/v1/sections/... 等）
+app.include_router(pages.router)
+
+# ─────────────────────────────────────────
+# 掛載後台靜態檔案（HTML/CSS/JS）
+# ─────────────────────────────────────────
+# 檢查 frontend 資料夾是否存在再掛載
+frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
+if os.path.exists(frontend_path):
+    app.mount("/admin", StaticFiles(directory=frontend_path, html=True), name="frontend")
+
+# ─────────────────────────────────────────
+# 根路徑：導向後台登入頁
+# ─────────────────────────────────────────
+@app.get("/", include_in_schema=False)
+async def root():
+    """根路徑，重導向到後台登入頁"""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/admin/index.html")
+
+# ─────────────────────────────────────────
+# 掛載上傳的圖片資料夾 (讓前端可以讀取圖片)
+# ─────────────────────────────────────────
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")  
 
 # ─────────────────────────────────────────
 # 翻譯 API（用 MyMemory，免費、不需金鑰）
