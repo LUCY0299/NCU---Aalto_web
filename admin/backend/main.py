@@ -181,30 +181,34 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 @app.post("/api/v1/upload", tags=["上傳"])
 async def upload_image(
     file: UploadFile = File(...),
-    page_slug: str = Form("misc"),  # 依照目前編輯的頁面自動分類到對應資料夾
+    page_slug: str = Form(default="misc"),  # 修改這裡：使用 default
     current_user: User = Depends(verify_token),  # 需要登入
 ):
     """接收後台上傳的圖片，存到本地伺服器，依頁面分資料夾，並回傳完整網址"""
-    
-    # 幫圖片產生一個獨一無二的檔名 (UUID)，避免檔名重複導致覆蓋
-    file_extension = file.filename.split(".")[-1]
-    unique_filename = f"{uuid.uuid4()}.{file_extension}"
-    
-    # 建立本地儲存路徑 (例如: uploads/misc/)
-    save_dir = os.path.join("uploads", page_slug)
-    os.makedirs(save_dir, exist_ok=True)
-    
-    file_path = os.path.join(save_dir, unique_filename)
-    
-    # 將檔案實體寫入本地硬碟
-    file_bytes = await file.read()
-    with open(file_path, "wb") as f:
-        f.write(file_bytes)
+    try:
+        # 確保檔名安全
+        original_filename = file.filename if file.filename else "image.jpg"
+        file_extension = original_filename.split(".")[-1]
+        unique_filename = f"{uuid.uuid4()}.{file_extension}"
+        
+        save_dir = os.path.join("uploads", page_slug)
+        os.makedirs(save_dir, exist_ok=True)
+        
+        file_path = os.path.join(save_dir, unique_filename)
+        
+        file_bytes = await file.read()
+        with open(file_path, "wb") as f:
+            f.write(file_bytes)
 
-    # 回傳完整的本地公開網址，讓資料庫和前台使用
-    public_url = f"https://aalto-api.mgt.ncu.edu.tw/uploads/{page_slug}/{unique_filename}"
-    return {"url": public_url}
-
+        public_url = f"https://aalto-api.mgt.ncu.edu.tw/uploads/{page_slug}/{unique_filename}"
+        return {"url": public_url}
+    except Exception as e:
+        import traceback
+        print("====== UPLOAD ERROR ======")
+        traceback.print_exc()
+        print("==========================")
+        raise HTTPException(status_code=500, detail=str(e))
+    
 
 # ─────────────────────────────────────────
 # 翻譯 API（用 MyMemory，免費、不需金鑰）
