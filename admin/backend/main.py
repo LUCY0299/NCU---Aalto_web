@@ -21,6 +21,7 @@ from fastapi import UploadFile, File, Form, HTTPException
 import shutil
 import uuid
 import httpx
+from fastapi import Request
 
 # ─────────────────────────────────────────
 # Supabase Storage 設定（圖片改存這裡，不再存 Render 本機硬碟）
@@ -176,37 +177,47 @@ os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # ─────────────────────────────────────────
-# 圖片上傳 API 端點
+# 圖片上傳 API 端點 (防呆版)
 # ─────────────────────────────────────────
 @app.post("/api/v1/upload", tags=["上傳"])
 async def upload_image(
-    file: UploadFile = File(...),
-    page_slug: str = Form(default="misc"),  # 修改這裡：使用 default
-    current_user: User = Depends(verify_token),  # 需要登入
+    request: Request,
+    current_user: User = Depends(verify_token),
 ):
     """接收後台上傳的圖片，存到本地伺服器，依頁面分資料夾，並回傳完整網址"""
     try:
+        # 直接從原始請求中解析表單
+        form = await request.form()
+        file = form.get("file")
+        page_slug = form.get("page_slug", "misc")
+        
+        if not file:
+             raise HTTPException(status_code=400, detail="沒有上傳檔案")
+
         # 確保檔名安全
         original_filename = file.filename if file.filename else "image.jpg"
         file_extension = original_filename.split(".")[-1]
         unique_filename = f"{uuid.uuid4()}.{file_extension}"
         
-        save_dir = os.path.join("uploads", page_slug)
+        save_dir = os.path.join("uploads", str(page_slug))
         os.makedirs(save_dir, exist_ok=True)
         
         file_path = os.path.join(save_dir, unique_filename)
         
+        # 將檔案實體寫入本地硬碟
         file_bytes = await file.read()
         with open(file_path, "wb") as f:
             f.write(file_bytes)
 
+        # 回傳完整的本地公開網址
         public_url = f"https://aalto-api.mgt.ncu.edu.tw/uploads/{page_slug}/{unique_filename}"
         return {"url": public_url}
+        
     except Exception as e:
         import traceback
-        print("====== UPLOAD ERROR ======")
+        print("====== 終極 UPLOAD ERROR ======")
         traceback.print_exc()
-        print("==========================")
+        print("==============================")
         raise HTTPException(status_code=500, detail=str(e))
     
 
