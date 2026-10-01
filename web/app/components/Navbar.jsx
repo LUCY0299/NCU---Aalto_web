@@ -157,6 +157,9 @@ export default function Navbar({
     useEffect(() => {
         setMounted(true);
         setCurrentPath(window.location.pathname.toLowerCase());
+        // ✅ 路由切換時自動收起手機版選單，避免切頁後選單還開著
+        setMobileOpen(false);
+        setActiveAccordion(null);
     }, [pathname]);
 
     useEffect(() => {
@@ -388,23 +391,21 @@ export default function Navbar({
             }}
         >
             <div
+                className="navbar-inner"
                 style={{
                     width: "100%",
-                    height: 100,
                     display: "flex",
                     flexDirection: "row",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    padding: "0 24px",
                     boxSizing: "border-box",
                 }}
             >
                 {/* LOGO */}
                 <a
                     href={isEn ? "/en" : "/"}
+                    className="navbar-logo"
                     style={{
-                        width: 251,
-                        height: 74,
                         backgroundSize: "contain",
                         backgroundRepeat: "no-repeat",
                         backgroundPosition: "left center",
@@ -415,8 +416,9 @@ export default function Navbar({
                     }}
                 />
 
-                {/* MENU */}
+                {/* MENU（桌機版橫向選單，≤1024px 隱藏改用漢堡選單） */}
                 <ul
+                    className="navbar-menu-desktop"
                     style={{
                         display: "flex",
                         flexDirection: "row",
@@ -830,10 +832,260 @@ export default function Navbar({
                             e.currentTarget.style.backgroundColor = "#eeede8";
                         }}
                     >
-                        🌐 {isEn ? "English" : "繁體中文"}
+                        🌐{" "}
+                        <span className="navbar-lang-text">
+                            {isEn ? "English" : "繁體中文"}
+                        </span>
+                    </button>
+
+                    {/* HAMBURGER（≤1024px 顯示，開關手機版選單） */}
+                    <button
+                        className="navbar-hamburger"
+                        aria-label={mobileOpen ? "關閉選單" : "開啟選單"}
+                        aria-expanded={mobileOpen}
+                        onClick={() => setMobileOpen((prev) => !prev)}
+                        style={{
+                            display: "none",
+                            flexDirection: "column",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            gap: 5,
+                            width: 36,
+                            height: 36,
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            padding: 0,
+                            flexShrink: 0,
+                        }}
+                    >
+                        <span
+                            style={{
+                                width: 22,
+                                height: 2,
+                                background: textColor,
+                                borderRadius: 2,
+                                transition: "transform 0.2s ease",
+                                transform: mobileOpen
+                                    ? "translateY(7px) rotate(45deg)"
+                                    : "none",
+                            }}
+                        />
+                        <span
+                            style={{
+                                width: 22,
+                                height: 2,
+                                background: textColor,
+                                borderRadius: 2,
+                                opacity: mobileOpen ? 0 : 1,
+                                transition: "opacity 0.2s ease",
+                            }}
+                        />
+                        <span
+                            style={{
+                                width: 22,
+                                height: 2,
+                                background: textColor,
+                                borderRadius: 2,
+                                transition: "transform 0.2s ease",
+                                transform: mobileOpen
+                                    ? "translateY(-7px) rotate(-45deg)"
+                                    : "none",
+                            }}
+                        />
                     </button>
                 </div>
             </div>
+
+            {/* MOBILE PANEL（≤1024px，點漢堡選單後展開） */}
+            {mobileOpen && (
+                <div
+                    className="navbar-mobile-panel"
+                    style={{
+                        position: "absolute",
+                        top: "100%",
+                        left: 0,
+                        width: "100%",
+                        maxHeight: "calc(100vh - 72px)",
+                        overflowY: "auto",
+                        backgroundColor: bgColor,
+                        boxShadow: "0px 8px 20px rgba(0, 0, 0, 0.1)",
+                        zIndex: 999,
+                    }}
+                >
+                    <ul style={{ listStyle: "none", margin: 0, padding: "8px 24px 24px" }}>
+                        {menuItems && menuItems.length > 0 ? (
+                            menuItems.map((item, index) => {
+                                const hasDropdown =
+                                    item.dropdown && item.dropdown.length > 0;
+                                const active = isLinkActive(item.link_url);
+                                const expanded = activeAccordion === index;
+
+                                return (
+                                    <li
+                                        key={index}
+                                        style={{
+                                            borderBottom:
+                                                "1px solid rgba(0,0,0,0.08)",
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "space-between",
+                                            }}
+                                        >
+                                            <a
+                                                href={item.link_url}
+                                                onClick={() =>
+                                                    setMobileOpen(false)
+                                                }
+                                                style={{
+                                                    flex: 1,
+                                                    padding: "14px 0",
+                                                    fontFamily:
+                                                        "Inter, PingFang TC, Microsoft JhengHei, sans-serif",
+                                                    fontSize: 16,
+                                                    fontWeight: 600,
+                                                    color: active
+                                                        ? activeColor
+                                                        : textColor,
+                                                    textDecoration: "none",
+                                                }}
+                                            >
+                                                {item.title}
+                                            </a>
+                                            {hasDropdown && (
+                                                <button
+                                                    aria-label="展開子選單"
+                                                    onClick={() =>
+                                                        setActiveAccordion(
+                                                            expanded
+                                                                ? null
+                                                                : index
+                                                        )
+                                                    }
+                                                    style={{
+                                                        background: "none",
+                                                        border: "none",
+                                                        padding: 10,
+                                                        cursor: "pointer",
+                                                        color: textColor,
+                                                    }}
+                                                >
+                                                    <svg
+                                                        width="12"
+                                                        height="8"
+                                                        viewBox="0 0 10 6"
+                                                        fill="none"
+                                                        style={{
+                                                            transform: expanded
+                                                                ? "rotate(180deg)"
+                                                                : "rotate(0deg)",
+                                                            transition:
+                                                                "transform 0.2s ease",
+                                                        }}
+                                                    >
+                                                        <path
+                                                            d="M1 1.5L5 4.5L9 1.5"
+                                                            stroke="currentColor"
+                                                            strokeWidth="1.8"
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                        />
+                                                    </svg>
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {hasDropdown && expanded && (
+                                            <ul
+                                                style={{
+                                                    listStyle: "none",
+                                                    margin: 0,
+                                                    padding: "0 0 12px 16px",
+                                                }}
+                                            >
+                                                {item.dropdown.map(
+                                                    (sub, sIdx) => (
+                                                        <li key={sIdx}>
+                                                            <a
+                                                                href={
+                                                                    sub.link_url
+                                                                }
+                                                                onClick={() =>
+                                                                    setMobileOpen(
+                                                                        false
+                                                                    )
+                                                                }
+                                                                style={{
+                                                                    display:
+                                                                        "block",
+                                                                    padding:
+                                                                        "10px 0",
+                                                                    color: "#555555",
+                                                                    textDecoration:
+                                                                        "none",
+                                                                    fontSize: 15,
+                                                                    fontWeight: 500,
+                                                                }}
+                                                            >
+                                                                {sub.title}
+                                                            </a>
+                                                        </li>
+                                                    )
+                                                )}
+                                            </ul>
+                                        )}
+                                    </li>
+                                );
+                            })
+                        ) : (
+                            <li style={{ color: "#999", fontSize: 14, padding: "14px 0" }}>
+                                載入菜單中...
+                            </li>
+                        )}
+                    </ul>
+                </div>
+            )}
+
+            <style jsx>{`
+                @media (max-width: 1024px) {
+                    .navbar-menu-desktop {
+                        display: none !important;
+                    }
+                    .navbar-hamburger {
+                        display: flex !important;
+                    }
+                }
+            `}</style>
+            <style jsx>{`
+                .navbar-inner {
+                    height: 100px;
+                    padding: 0 24px;
+                    gap: 12px;
+                }
+                .navbar-logo {
+                    width: 251px;
+                    height: 74px;
+                }
+                @media (max-width: 1024px) {
+                    .navbar-inner {
+                        height: 72px;
+                        padding: 0 16px;
+                    }
+                    .navbar-logo {
+                        width: 160px;
+                        height: 47px;
+                    }
+                }
+                @media (max-width: 480px) {
+                    .navbar-lang-text {
+                        display: none;
+                    }
+                }
+            `}</style>
         </header>
     );
 }

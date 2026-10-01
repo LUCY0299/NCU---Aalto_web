@@ -265,7 +265,7 @@ export default function Information({
                                 }}
                             >
                                 {/* 國立中央大學課程 */}
-                                <div>
+                                <div style={{ minWidth: 0 }}>
                                     <h3
                                         style={{
                                             margin: "0 0 20px 0",
@@ -296,7 +296,7 @@ export default function Information({
 
                                 {/* 阿爾托大學課程 */}
                                 {combined.data.infoItems[2] && combined.data.infoItems[2].is_active !== false && (
-                                    <div>
+                                    <div style={{ minWidth: 0 }}>
                                         <h3
                                             style={{
                                                 margin: "0 0 20px 0",

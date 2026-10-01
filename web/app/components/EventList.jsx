@@ -268,13 +268,10 @@ function EventCard({ item, cardColor, detailPagePath, locale }) {
 
     return (
         <div
+            className="event-card"
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}
             style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "56px",
-                padding: "28px 40px",
                 background: isDefaultColor ? "#ffffff" : cardColor,
                 borderRadius: "16px",
                 border: isDefaultColor ? "1.5px solid #F0D5BD" : "none",
@@ -290,8 +287,8 @@ function EventCard({ item, cardColor, detailPagePath, locale }) {
         >
             {imgUrl && (
                 <div
+                    className="event-card-image"
                     style={{
-                        width: "42%",
                         aspectRatio: "4 / 3",
                         padding: isDefaultColor ? "5px" : 0,
                         background: isDefaultColor ? "#FADDCB" : "transparent",
@@ -324,11 +321,13 @@ function EventCard({ item, cardColor, detailPagePath, locale }) {
             )}
 
             <div
+                className="event-card-body"
                 style={{
                     display: "flex",
                     flexDirection: "column",
                     gap: "16px",
                     flex: 1,
+                    minWidth: 0,
                 }}
             >
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -352,8 +351,8 @@ function EventCard({ item, cardColor, detailPagePath, locale }) {
                     </div>
                 </div>
                 <div
+                    className="event-card-title"
                     style={{
-                        fontSize: "30px",
                         fontWeight: 500,
                         lineHeight: 1.4,
                         color: "#111",
@@ -363,6 +362,35 @@ function EventCard({ item, cardColor, detailPagePath, locale }) {
                 </div>
                 <ReadMoreButton href={detailLink} locale={locale} />
             </div>
+
+            <style jsx>{`
+                .event-card {
+                    display: flex;
+                    align-items: center;
+                    gap: 56px;
+                    padding: 28px 40px;
+                }
+                .event-card-image {
+                    width: 42%;
+                }
+                .event-card-title {
+                    font-size: 30px;
+                }
+                @media (max-width: 768px) {
+                    .event-card {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 20px;
+                        padding: 20px;
+                    }
+                    .event-card-image {
+                        width: 100%;
+                    }
+                    .event-card-title {
+                        font-size: 22px;
+                    }
+                }
+            `}</style>
         </div>
     );
 }
