@@ -434,8 +434,11 @@ export default function Navbar({
                 >
                     {menuItems && menuItems.length > 0 ? (
                         menuItems.map((item, index) => {
-                            const hasDropdown =
-                                item.dropdown && item.dropdown.length > 0;
+                            // 子選單只顯示未被後台停用的項目
+                            const activeDropdown = (item.dropdown || []).filter(
+                                (sub) => sub.is_active !== false
+                            );
+                            const hasDropdown = activeDropdown.length > 0;
                             // ✅ 移除第二個參數 index
                             const active = isLinkActive(item.link_url);
                             const isHovered = hoveredDropdown === index;
@@ -526,7 +529,7 @@ export default function Navbar({
                                                 }, 200);
                                             }}
                                         >
-                                            {item.dropdown.map(
+                                            {activeDropdown.map(
                                                 (sub, sIdx) => (
                                                     <a
                                                         key={sIdx}
@@ -916,8 +919,11 @@ export default function Navbar({
                     <ul style={{ listStyle: "none", margin: 0, padding: "8px 24px 24px" }}>
                         {menuItems && menuItems.length > 0 ? (
                             menuItems.map((item, index) => {
-                                const hasDropdown =
-                                    item.dropdown && item.dropdown.length > 0;
+                                // 子選單只顯示未被後台停用的項目
+                                const activeDropdown = (item.dropdown || []).filter(
+                                    (sub) => sub.is_active !== false
+                                );
+                                const hasDropdown = activeDropdown.length > 0;
                                 const active = isLinkActive(item.link_url);
                                 const expanded = activeAccordion === index;
 
@@ -1007,7 +1013,7 @@ export default function Navbar({
                                                     padding: "0 0 12px 16px",
                                                 }}
                                             >
-                                                {item.dropdown.map(
+                                                {activeDropdown.map(
                                                     (sub, sIdx) => (
                                                         <li key={sIdx}>
                                                             <a

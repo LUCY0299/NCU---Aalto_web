@@ -870,12 +870,16 @@
       else if (field.field_key.includes('yt')) addBtnLabel = '➕ 新增影片';
       else if (field.field_key === 'file_list') addBtnLabel = '➕ 新增檔案';
 
-      inputHtml = `
-        <div id="list-container-${field.field_key}" style="background:#f8f9fa; padding:16px; border-radius:8px; border:1px solid #e9ecef; max-height: 600px; overflow-y: auto;">
-          </div>
+      // 導覽列選單項目固定由程式管理（對應網站實際頁面），後台不開放新增主選單項目
+      const addBtnHtml = field.field_key === 'navbar_links' ? '' : `
         <button type="button" class="btn btn-primary" style="margin-top:12px; font-size:13px;" onclick="addListItem('${field.field_key}')">
           ${addBtnLabel}
         </button>`;
+
+      inputHtml = `
+        <div id="list-container-${field.field_key}" style="background:#f8f9fa; padding:16px; border-radius:8px; border:1px solid #e9ecef; max-height: 600px; overflow-y: auto;">
+          </div>
+        ${addBtnHtml}`;
 
     } else if (field.field_type === 'blocks') {
       try {
@@ -1988,22 +1992,19 @@
               <label style="font-size:11px; font-weight:bold; display:block; margin-bottom:2px; color:#555;">連結網址 (Framer 路徑)</label>
               <input type="text" value="${escape(sub.link_url)}" oninput="updateSubListItem('${fieldKey}', ${index}, ${sIdx}, 'link_url', this.value)" style="width:100%; padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px;" placeholder="例如: /about-aalto">
             </div>
-            <div style="display:flex; gap:3px; margin-top:14px;">
-              <button type="button" class="btn btn-secondary" style="padding:2px 6px; font-size:11px;" onclick="moveSubListItem('${fieldKey}', ${index}, ${sIdx}, -1)" ${sIdx === 0 ? 'disabled' : ''}>▲</button>
-              <button type="button" class="btn btn-secondary" style="padding:2px 6px; font-size:11px;" onclick="moveSubListItem('${fieldKey}', ${index}, ${sIdx}, 1)" ${sIdx === subItems.length - 1 ? 'disabled' : ''}>▼</button>
-              <button type="button" class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="removeSubListItem('${fieldKey}', ${index}, ${sIdx})">🗑</button>
+            <div style="width:110px; margin-top:14px;">
+              <select onchange="updateSubListItem('${fieldKey}', ${index}, ${sIdx}, 'is_active', this.value === 'true')" style="width:100%; padding:4px 6px; font-size:12px; border:1px solid #ccc; border-radius:4px;">
+                <option value="true" ${sub.is_active !== false ? 'selected' : ''}>🟢 顯示</option>
+                <option value="false" ${sub.is_active === false ? 'selected' : ''}>🔴 隱藏</option>
+              </select>
             </div>
           </div>`;
         }).join('');
 
         return `
         <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div style="margin-bottom:16px;">
             <h4 style="margin:0; color:var(--color-primary); font-size:15px; font-weight:bold;">⚓ 主選單項目 #${index + 1}：${escape(item.title || '未命名')}</h4>
-            <div style="display:flex; gap:4px;">
-              <button class="btn btn-secondary" style="padding:2px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲</button>
-              <button class="btn btn-secondary" style="padding:2px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, 1)" ${index === items.length - 1 ? 'disabled' : ''}>▼</button>
-            </div>
           </div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
             <div>
@@ -2015,12 +2016,11 @@
               <input type="text" value="${escape(item.link_url)}" oninput="updateListItem('${fieldKey}', ${index}, 'link_url', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="例如: /about-aalto-emba">
             </div>
           </div>
-          
+
           <!-- 子選單編輯器區塊 -->
           <div style="background:#f1f3f5; padding:12px; border-radius:6px; margin-top:12px; border:1px dashed #ced4da;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="margin-bottom:8px;">
               <span style="font-size:12px; font-weight:bold; color:#495057;">📂 子選單項目 (${subItems.length} 個)</span>
-              <button type="button" class="btn btn-secondary" style="padding:3px 10px; font-size:12px;" onclick="addSubListItem('${fieldKey}', ${index})">＋ 新增子選單</button>
             </div>
             <div style="max-height: 300px; overflow-y: auto; margin-top: 8px;">
               ${subItemsHtml ? subItemsHtml : '<div style="text-align:center; font-size:12px; color:#adb5bd; padding:8px 0;">目前無子選單，此按鈕點擊後將作為一般單一連結</div>'}
@@ -2374,39 +2374,6 @@
     if (!parent.dropdown) parent.dropdown = [];
     parent.dropdown[subIndex][key] = value;
     saveListToPending(fieldKey);
-  }
-
-  /** 新增一個子選單項目 */
-  function addSubListItem(fieldKey, parentIndex) {
-    const parent = listFieldStates[fieldKey][parentIndex];
-    if (!parent.dropdown) parent.dropdown = [];
-    parent.dropdown.push({ title: '', link_url: '', is_active: true });
-    saveListToPending(fieldKey);
-    renderListItems(fieldKey);
-  }
-
-  /** 刪除一個子選單項目 */
-  function removeSubListItem(fieldKey, parentIndex, subIndex) {
-    if (!confirm('確定刪除此子選單項目？（需按下方儲存才會生效）')) return;
-    const parent = listFieldStates[fieldKey][parentIndex];
-    if (parent.dropdown) {
-      parent.dropdown.splice(subIndex, 1);
-    }
-    saveListToPending(fieldKey);
-    renderListItems(fieldKey);
-  }
-
-  /** 上下移動子選單項目 */
-  function moveSubListItem(fieldKey, parentIndex, subIndex, direction) {
-    const parent = listFieldStates[fieldKey][parentIndex];
-    if (!parent || !parent.dropdown) return;
-    const newIndex = subIndex + direction;
-    if (newIndex < 0 || newIndex >= parent.dropdown.length) return;
-    const tmp = parent.dropdown[subIndex];
-    parent.dropdown[subIndex] = parent.dropdown[newIndex];
-    parent.dropdown[newIndex] = tmp;
-    saveListToPending(fieldKey);
-    renderListItems(fieldKey);
   }
 
   /** 新增一張空卡片 */
