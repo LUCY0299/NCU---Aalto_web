@@ -147,7 +147,7 @@ export default function Contact({
                 width: "100%",
                 maxWidth: `${maxWidth}px`,
                 margin: "0 auto",
-                padding: "0 var(--page-padding-x)",
+                padding: "0 var(--page-padding-x) var(--page-padding-y) var(--page-padding-x)",
                 boxSizing: "border-box",
             }}
         >
