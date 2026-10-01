@@ -43,7 +43,13 @@ class Page(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # 關聯：一個 Page 有多個 Section
-    sections = relationship("Section", back_populates="page", cascade="all, delete-orphan")
+    # 固定依 display_order 排序，避免更新區塊後，資料庫回傳順序跟著跑掉
+    sections = relationship(
+        "Section",
+        back_populates="page",
+        cascade="all, delete-orphan",
+        order_by="Section.display_order",
+    )
 
 
 # ──────────────────────────────────────────────────────────
@@ -79,7 +85,13 @@ class Section(Base):
 
     # 關聯
     page = relationship("Page", back_populates="sections")
-    content_fields = relationship("ContentField", back_populates="section", cascade="all, delete-orphan")
+    # 固定依 display_order 排序，避免更新欄位內容後，資料庫回傳順序跟著跑掉
+    content_fields = relationship(
+        "ContentField",
+        back_populates="section",
+        cascade="all, delete-orphan",
+        order_by="ContentField.display_order",
+    )
 
 
 # ──────────────────────────────────────────────────────────
