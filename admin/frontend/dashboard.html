@@ -443,7 +443,8 @@
 </div>
 
 <script>
-  const API_BASE = 'https://aalto-api.mgt.ncu.edu.tw';  // Render 生產環境
+  // 本機測試（localhost）時連本機後端，其餘連學校 VM 正式環境
+  const API_BASE = ['localhost', '127.0.0.1'].includes(location.hostname) ? location.origin : 'https://aalto-api.mgt.ncu.edu.tw';
 
   // ─────────────────────────────────────────
   // 展示模式：不需後端即可瀏覽介面
