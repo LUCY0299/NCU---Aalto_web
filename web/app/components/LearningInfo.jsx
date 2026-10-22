@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://aalto-api.mgt.ncu.edu.tw";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://aalto-api.mgt.ncu.edu.tw";
 // 這裡已修正為正確的 page_slug "learning"
 const API_URL = `${BASE_URL}/api/v1/content/learning/learning_header`;
 
