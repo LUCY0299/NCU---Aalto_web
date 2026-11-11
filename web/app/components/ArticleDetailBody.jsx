@@ -25,10 +25,8 @@ function getArticleIndex() {
 export default function ArticleDetailBody({
     // 將 Framer 的 Property Controls 轉為預設 Props
     fontSize = 18,
-    captionFontSize = 14,
     lineHeight = 1.8,
     textColor = "#333333",
-    captionColor = "#888888",
     titleFontSize = 48,
     titleColor = "#111111",
     metaColor = "#333333",
@@ -114,8 +112,6 @@ export default function ArticleDetailBody({
             </div>
         );
 
-    const blocks = Array.isArray(data.blocks) ? data.blocks : [];
-
     let displayDate = data.date || "";
     if (data.date) {
         const d = new Date(data.date);
@@ -175,59 +171,22 @@ export default function ArticleDetailBody({
                 </h1>
             )}
 
-            {blocks.length === 0 ? (
+            {data.content ? (
+                <div
+                    className="article-content-html"
+                    style={{
+                        fontSize: `${fontSize}px`,
+                        lineHeight,
+                        color: textColor,
+                    }}
+                    dangerouslySetInnerHTML={{ __html: data.content }}
+                />
+            ) : (
                 <div style={{ padding: "20px 0", color: "#999" }}>
                     {currentLocale === "en-US"
                         ? "No details available."
                         : "此文章尚無詳細內容"}
                 </div>
-            ) : (
-                blocks.map((block, index) => (
-                    <div key={index} style={{ marginBottom: "16px" }}>
-                        {block.type === "text" && (
-                            <p
-                                style={{
-                                    margin: 0,
-                                    fontSize: `${fontSize}px`,
-                                    lineHeight,
-                                    color: textColor,
-                                    whiteSpace: "pre-wrap", // 確保斷行能正確顯示
-                                }}
-                            >
-                                {block.text}
-                            </p>
-                        )}
-                        {block.type === "image" && block.image_url && (
-                            <img
-                                src={
-                                    block.image_url.startsWith("http")
-                                        ? block.image_url
-                                        : `${BASE_URL}${block.image_url}`
-                                }
-                                style={{
-                                    width: "100%",
-                                    borderRadius: "8px",
-                                    display: "block",
-                                    margin: "20px 0 8px 0",
-                                }}
-                            />
-                        )}
-                        {block.type === "caption" && (
-                            <p
-                                style={{
-                                    margin: "0 0 20px 0",
-                                    fontSize: `${captionFontSize}px`,
-                                    fontStyle: "italic",
-                                    color: captionColor,
-                                    borderLeft: "3px solid #ccc",
-                                    paddingLeft: "12px",
-                                }}
-                            >
-                                {block.text}
-                            </p>
-                        )}
-                    </div>
-                ))
             )}
         </div>
     );

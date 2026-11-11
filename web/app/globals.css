@@ -97,6 +97,63 @@ body {
   margin-top: -32px !important;
 }
 
+/* 文章詳情頁的 Quill HTML 內容樣式（跟 .content-html 共用排版規則，但圖片走一般置中版面，不用卡片的滿版負邊距） */
+.article-content-html p {
+  margin: 0.8em 0;
+  line-height: inherit;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.article-content-html p:first-child {
+  margin-top: 0;
+}
+
+.article-content-html h1,
+.article-content-html h2,
+.article-content-html h3 {
+  margin: 1em 0 0.5em 0;
+  line-height: 1.4;
+}
+
+.article-content-html ul,
+.article-content-html ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.article-content-html ul {
+  list-style: disc;
+}
+
+.article-content-html ol {
+  list-style: decimal;
+}
+
+.article-content-html li {
+  margin: 0.2em 0;
+  line-height: 1.5;
+}
+
+.article-content-html strong,
+.article-content-html b {
+  font-weight: 600;
+}
+
+.article-content-html em,
+.article-content-html i {
+  font-style: italic;
+}
+
+.article-content-html img {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto;
+  display: block;
+  margin: 20px 0 !important;
+  border-radius: 8px !important;
+}
+
 /* 全站共用左右內距 class（尚未套用到任何組件，先建立備用） */
 .page-padding-x {
   padding-left: var(--page-padding-x);

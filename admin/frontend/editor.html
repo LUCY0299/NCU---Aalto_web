@@ -864,11 +864,6 @@
         listFieldStates[field.field_key] = [];
       }
 
-      // 舊版文章（Quill content/summary/image_url）自動轉換成新版內容區塊，避免舊內容在新介面裡看不到
-      if (field.field_key === 'article_list') {
-        listFieldStates[field.field_key].forEach(item => migrateLegacyArticleContent(item));
-      }
-
       let addBtnLabel = `➕ 新增 ${field.label || '項目'}`;
       if (field.field_key === 'event_list') addBtnLabel = '➕ 新增活動卡片';
       else if (field.field_key === 'alumni_list') addBtnLabel = '➕ 新增校友卡片';
@@ -2244,10 +2239,13 @@
             <div style="margin-bottom:12px;">
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">連結網址（選填，外部文章請填完整網址，例如 https://...）</label>
               <input type="text" value="${escape(item.link_url)}" oninput="updateListItem('${fieldKey}', ${index}, 'link_url', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="留空則點擊會開啟站內文章詳情頁">
-              <div style="font-size:11px; color:#888; margin-top:4px;">填了這裡，前台點擊標題會直接開啟外部連結；留空的話，會改用下方「內容區塊」在站內顯示文章詳情。</div>
+              <div style="font-size:11px; color:#888; margin-top:4px;">填了這裡，前台點擊標題會直接開啟外部連結；留空的話，會改用下方「內文」在站內顯示文章詳情。</div>
             </div>
 
-            ${renderContentBlocksSection(fieldKey, index, item)}
+            <div style="margin-top: 16px;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">內文（可設定粗體、標題、插入圖片）</label>
+              <div id="quill-editor-${fieldKey}-${index}" style="height: 250px; background: #fff; font-family: sans-serif;"></div>
+            </div>
           </div>
         </div>
         `;
@@ -2441,36 +2439,6 @@
     saveListToPending(fieldKey);
   }
 
-  /** 將舊版文章資料（Quill content + summary/image_url/image_caption）轉成新版內容區塊，只在尚未轉換過（沒有 blocks）時執行一次 */
-  function migrateLegacyArticleContent(item) {
-    if (Array.isArray(item.blocks) && item.blocks.length > 0) return; // 已經是新版資料，不重複轉換
-    if (!item.content && !item.image_url) return; // 沒有舊版內容可轉換
-
-    const blocks = [];
-
-    // 把 Quill 的 HTML 內容依區塊標籤拆成一段段純文字
-    if (item.content) {
-      const tmp = document.createElement('div');
-      tmp.innerHTML = item.content;
-      tmp.querySelectorAll('p, h1, h2, h3, div').forEach(el => {
-        const text = el.textContent.trim();
-        if (text) blocks.push({ type: 'text', text });
-      });
-      // 如果內容沒有用到上述標籤（純文字或其他格式），退而求其次取整體純文字
-      if (blocks.length === 0) {
-        const text = tmp.textContent.trim();
-        if (text) blocks.push({ type: 'text', text });
-      }
-    }
-
-    if (item.image_url) {
-      blocks.push({ type: 'image', image_url: item.image_url });
-      if (item.image_caption) blocks.push({ type: 'caption', text: item.image_caption });
-    }
-
-    item.blocks = blocks;
-  }
-
   /** 新增一張空卡片 */
   function addListItem(fieldKey) {
     if (!listFieldStates[fieldKey]) listFieldStates[fieldKey] = [];
@@ -2491,7 +2459,7 @@
       // 校友卡片極簡化：只有標題、連結、圖片、狀態
       newItem = { title: '', link: '', image_url: '', is_active: true };
     } else if (fieldKey === 'article_list') {
-      newItem = { title: '', link_url: '', author: '', date: '', is_active: true, blocks: [] };
+      newItem = { title: '', link_url: '', author: '', date: '', is_active: true, content: '' };
     } else {
       // 剩餘的(活動訊息)
       newItem = { title: '', summary: '', image_url: '', image_caption: '', content: '', date: '', is_active: true, blocks: [] };
