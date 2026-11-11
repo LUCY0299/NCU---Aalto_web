@@ -2293,10 +2293,7 @@
           <div style="margin-top: 16px;">
             <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">完整內容 (Content)</label>
             <div id="quill-editor-${fieldKey}-${index}" style="height: 250px; background: #fff; font-family: sans-serif;"></div>
-          </div>
-          <div style="margin-top: 16px;">
-            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">課程免責聲明</label>
-            <textarea rows="3" oninput="updateListItem('${fieldKey}', ${index}, 'course_disclaimer', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-family:monospace; font-size:13px; resize:vertical;" placeholder="例如：本校保留隨時變更課程內容、時程及提供方式的權利...">${escape(item.course_disclaimer || '')}</textarea>
+            <div style="font-size:11px; color:#888; margin-top:4px;">如果需要加類似免責聲明的提示文字，選取文字後點工具列的「引言」按鈕（” 圖示），前台會自動顯示成灰底提示框。</div>
           </div>`}
         </div>
       </div>

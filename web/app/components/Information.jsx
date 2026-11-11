@@ -325,25 +325,6 @@ export default function Information({
                                         )}
                                     </div>
                                 )}
-
-                                {/* 課程免責聲明 - 灰底 + 左邊 BAR */}
-                                {combined.data.infoItems[0]?.course_disclaimer && (
-                                    <div
-                                        style={{
-                                            gridColumn: "1 / -1",
-                                            marginTop: "10px",
-                                            padding: "16px 20px",
-                                            backgroundColor: "#f5f5f5",
-                                            borderLeft: "4px solid #666",
-                                            fontSize: `clamp(14px, 1.3vw, ${contentFontSize - 2}px)`,
-                                            color: "#666",
-                                            lineHeight: 1.6,
-                                            fontFamily: '"Open Sans", "Open Sans Placeholder", sans-serif',
-                                        }}
-                                    >
-                                        {combined.data.infoItems[0].course_disclaimer}
-                                    </div>
-                                )}
                             </div>
                         )}
                         </div>

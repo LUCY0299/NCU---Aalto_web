@@ -97,6 +97,16 @@ body {
   margin-top: -32px !important;
 }
 
+/* Quill 的「引言」格式：用來呈現提醒/免責聲明這類文字（取代原本獨立的 course_disclaimer 欄位） */
+.content-html blockquote {
+  margin: 10px 0 0 0;
+  padding: 16px 20px;
+  background-color: #f5f5f5;
+  border-left: 4px solid #666;
+  color: #666;
+  font-style: normal;
+}
+
 /* 文章詳情頁的 Quill HTML 內容樣式（跟 .content-html 共用排版規則，但圖片走一般置中版面，不用卡片的滿版負邊距） */
 .article-content-html p {
   margin: 0.8em 0;
