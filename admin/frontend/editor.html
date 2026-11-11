@@ -863,7 +863,12 @@
       } catch(e) {
         listFieldStates[field.field_key] = [];
       }
-      
+
+      // 舊版文章（Quill content/summary/image_url）自動轉換成新版內容區塊，避免舊內容在新介面裡看不到
+      if (field.field_key === 'article_list') {
+        listFieldStates[field.field_key].forEach(item => migrateLegacyArticleContent(item));
+      }
+
       let addBtnLabel = `➕ 新增 ${field.label || '項目'}`;
       if (field.field_key === 'event_list') addBtnLabel = '➕ 新增活動卡片';
       else if (field.field_key === 'alumni_list') addBtnLabel = '➕ 新增校友卡片';
@@ -2434,6 +2439,36 @@
     if (!parent.dropdown) parent.dropdown = [];
     parent.dropdown[subIndex][key] = value;
     saveListToPending(fieldKey);
+  }
+
+  /** 將舊版文章資料（Quill content + summary/image_url/image_caption）轉成新版內容區塊，只在尚未轉換過（沒有 blocks）時執行一次 */
+  function migrateLegacyArticleContent(item) {
+    if (Array.isArray(item.blocks) && item.blocks.length > 0) return; // 已經是新版資料，不重複轉換
+    if (!item.content && !item.image_url) return; // 沒有舊版內容可轉換
+
+    const blocks = [];
+
+    // 把 Quill 的 HTML 內容依區塊標籤拆成一段段純文字
+    if (item.content) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = item.content;
+      tmp.querySelectorAll('p, h1, h2, h3, div').forEach(el => {
+        const text = el.textContent.trim();
+        if (text) blocks.push({ type: 'text', text });
+      });
+      // 如果內容沒有用到上述標籤（純文字或其他格式），退而求其次取整體純文字
+      if (blocks.length === 0) {
+        const text = tmp.textContent.trim();
+        if (text) blocks.push({ type: 'text', text });
+      }
+    }
+
+    if (item.image_url) {
+      blocks.push({ type: 'image', image_url: item.image_url });
+      if (item.image_caption) blocks.push({ type: 'caption', text: item.image_caption });
+    }
+
+    item.blocks = blocks;
   }
 
   /** 新增一張空卡片 */
