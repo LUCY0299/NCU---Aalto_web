@@ -30,6 +30,7 @@ export default function LatestArticles({
     metaTextColor = "#8B8B94",
     locale: propLocale = "auto",
     variant = "page", // "page"（獨立頁面）｜ "home"（首頁）－預設 page 確保現有頁面不受影響
+    detailPagePath = "/article", // 文章沒填外部連結時，點擊導向的站內詳情頁
 }) {
     const [articles, setArticles] = useState([]);
     const [sectionTitle, setSectionTitle] = useState("");
@@ -76,8 +77,10 @@ export default function LatestArticles({
 
                 if (Array.isArray(parsedList)) {
                     setArticles(
-                        // 這裡保留你原本寫得很好的「單篇文章」過濾邏輯
-                        parsedList.filter((item) => item.is_active !== false)
+                        // _index 記錄原始（未過濾）陣列中的位置，讓詳情頁能用同一個索引撈回正確文章
+                        parsedList
+                            .map((item, index) => ({ ...item, _index: index }))
+                            .filter((item) => item.is_active !== false)
                     );
                 }
             })
@@ -166,6 +169,7 @@ export default function LatestArticles({
                         titleColor={titleTextColor}
                         metaColor={metaTextColor}
                         locale={currentLocale}
+                        detailPagePath={detailPagePath}
                     />
                 ))
             )}
@@ -173,13 +177,19 @@ export default function LatestArticles({
     );
 }
 
-function ArticleRow({ item, borderColor, titleColor, metaColor, locale }) {
+function ArticleRow({ item, borderColor, titleColor, metaColor, locale, detailPagePath }) {
     const [hover, setHover] = useState(false);
     const meta = [item.author, formatDate(item.date)].filter(Boolean).join(", ");
 
+    // 有填外部連結就連出去；沒填就導向站內的文章詳情頁（用原始索引撈資料）
+    const isExternal = Boolean(item.link_url);
+    let finalLink = isExternal
+        ? item.link_url
+        : `${detailPagePath}?index=${item._index}`;
+
     // 當前台為英文版且為站內相對連結時，自動補上 /en 前綴
-    let finalLink = item.link_url || "#";
     if (
+        !isExternal &&
         locale === "en-US" &&
         finalLink.startsWith("/") &&
         !finalLink.startsWith("/en")
@@ -190,8 +200,8 @@ function ArticleRow({ item, borderColor, titleColor, metaColor, locale }) {
     return (
         <a
             href={finalLink}
-            target="_blank"
-            rel="noopener noreferrer"
+            target={isExternal ? "_blank" : "_self"}
+            rel={isExternal ? "noopener noreferrer" : undefined}
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}
             style={{
