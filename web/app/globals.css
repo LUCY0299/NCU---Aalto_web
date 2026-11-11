@@ -114,6 +114,19 @@ body {
 .article-content-html h3 {
   margin: 1em 0 0.5em 0;
   line-height: 1.4;
+  font-weight: 700;
+}
+
+.article-content-html h1 {
+  font-size: 1.6em;
+}
+
+.article-content-html h2 {
+  font-size: 1.35em;
+}
+
+.article-content-html h3 {
+  font-size: 1.15em;
 }
 
 .article-content-html ul,
