@@ -864,6 +864,11 @@
         listFieldStates[field.field_key] = [];
       }
 
+      // 清掉文章改版過程中殘留的舊版 blocks 欄位（現在內文一律用 content），下次儲存時就不會再寫回去
+      if (field.field_key === 'article_list') {
+        listFieldStates[field.field_key].forEach(item => { delete item.blocks; });
+      }
+
       let addBtnLabel = `➕ 新增 ${field.label || '項目'}`;
       if (field.field_key === 'event_list') addBtnLabel = '➕ 新增活動卡片';
       else if (field.field_key === 'alumni_list') addBtnLabel = '➕ 新增校友卡片';
