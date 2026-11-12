@@ -83,6 +83,17 @@ body {
   font-weight: 600;
 }
 
+/* 連結：Tailwind 的 preflight 預設會清掉瀏覽器內建的藍色底線樣式，
+   加上前面 color:inherit 的規則，連結會完全跟內文混在一起、看不出可以點擊，
+   所以這裡明確補回連結該有的顏色與底線 */
+.content-html a {
+  color: #1a56db !important;
+  text-decoration: underline !important;
+}
+.content-html a:hover {
+  color: #15409e !important;
+}
+
 .content-html em,
 .content-html i {
   font-style: italic;
@@ -113,6 +124,32 @@ body {
   border-left: 4px solid #666;
   color: #666;
   font-style: normal;
+}
+
+/* Quill 插入的 YouTube 影片：原本是瀏覽器預設的 iframe 尺寸（300x150），
+   用 16:9 比例框讓影片依照內容寬度等比例縮放 */
+.content-html .ql-video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  margin: 10px 0 0 0;
+  border-radius: 4px;
+  border: none;
+}
+
+/* Quill 的「程式碼區塊」格式 */
+.content-html pre {
+  margin: 0.5em 0;
+  padding: 16px 20px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* 文章詳情頁的 Quill HTML 內容樣式（跟活動訊息閱讀更多的排版對齊：固定行距、圖片陰影、引言當圖說用） */
@@ -174,6 +211,17 @@ body {
   font-weight: 600;
 }
 
+/* 連結：Tailwind 的 preflight 預設會清掉瀏覽器內建的藍色底線樣式，
+   加上前面 color:inherit 的規則，連結會完全跟內文混在一起、看不出可以點擊，
+   所以這裡明確補回連結該有的顏色與底線 */
+.article-content-html a {
+  color: #1a56db !important;
+  text-decoration: underline !important;
+}
+.article-content-html a:hover {
+  color: #15409e !important;
+}
+
 .article-content-html em,
 .article-content-html i {
   font-style: italic;
@@ -197,6 +245,32 @@ body {
   font-style: italic;
   color: #888888;
   font-size: 14px;
+}
+
+/* Quill 插入的 YouTube 影片：原本是瀏覽器預設的 iframe 尺寸（300x150），
+   用 16:9 比例框讓影片依照內容寬度等比例縮放 */
+.article-content-html .ql-video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  margin: 20px 0;
+  border-radius: 8px;
+  border: none;
+}
+
+/* Quill 的「程式碼區塊」格式 */
+.article-content-html pre {
+  margin: 0 0 20px 0;
+  padding: 16px 20px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* 全站共用左右內距 class（尚未套用到任何組件，先建立備用） */

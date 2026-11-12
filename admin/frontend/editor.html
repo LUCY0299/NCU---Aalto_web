@@ -186,6 +186,10 @@
     .quill-style-card .ql-editor em {
       font-style: italic;
     }
+    .quill-style-card .ql-editor a {
+      color: #1a56db !important;
+      text-decoration: underline !important;
+    }
     .quill-style-card .ql-editor blockquote {
       margin: 10px 0 0 0;
       padding: 16px 20px;
@@ -193,6 +197,21 @@
       border-left: 4px solid #666;
       color: #666;
       font-style: normal;
+    }
+    .quill-style-card .ql-editor .ql-video {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      height: auto;
+      border-radius: 4px;
+    }
+    .quill-style-card .ql-editor pre {
+      margin: 0.5em 0;
+      padding: 16px 20px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 14px;
     }
     /* 注意：前台這個版型的圖片是「滿版出血」（超出卡片左右邊界），
        在編輯框這種小尺寸容器裡做同樣效果只會讓圖片被裁切、看起來像壞掉，
@@ -224,6 +243,10 @@
     .quill-style-detail .ql-editor em {
       font-style: italic;
     }
+    .quill-style-detail .ql-editor a {
+      color: #1a56db !important;
+      text-decoration: underline !important;
+    }
     .quill-style-detail .ql-editor img {
       width: 100%;
       border-radius: 8px;
@@ -236,6 +259,21 @@
       border-left: 3px solid #ccc;
       font-style: italic;
       color: #888888;
+      font-size: 14px;
+    }
+    .quill-style-detail .ql-editor .ql-video {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      height: auto;
+      border-radius: 8px;
+    }
+    .quill-style-detail .ql-editor pre {
+      margin: 0 0 20px 0;
+      padding: 16px 20px;
+      background-color: #f5f5f5;
+      border-radius: 8px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
       font-size: 14px;
     }
   </style>
@@ -944,6 +982,14 @@
       if (field.field_key === 'article_list') {
         listFieldStates[field.field_key].forEach(item => { delete item.blocks; });
       }
+      // 活動訊息改版：blocks/summary/image_caption 已經改放進 content，清掉殘留舊欄位
+      if (field.field_key === 'event_list') {
+        listFieldStates[field.field_key].forEach(item => {
+          delete item.blocks;
+          delete item.summary;
+          delete item.image_caption;
+        });
+      }
 
       let addBtnLabel = `➕ 新增 ${field.label || '項目'}`;
       if (field.field_key === 'event_list') addBtnLabel = '➕ 新增活動卡片';
@@ -1105,8 +1151,14 @@
 
           if (res.ok) {
             const data = await res.json();
-            // 後端回傳的是 Supabase Storage 的完整網址，直接插入即可
-            quill.insertEmbed(range.index, 'image', data.url);
+            // 後端回傳的是相對路徑，這裡要補成完整網址再插入——
+            // 因為內文是直接存成 HTML 字串，前台用 dangerouslySetInnerHTML 原封不動輸出，
+            // 沒有像封面圖欄位那樣會自動補網域的邏輯，插入時沒補好之後就永遠是錯的網址
+            const absoluteUrl = data.url.startsWith('http') ? data.url : `${API_BASE}${data.url}`;
+            // 第四個參數要帶 'user'：insertEmbed 預設視為程式呼叫（source='api'），
+            // 但 text-change 監聽器只在 source==='user' 時才會同步存檔，
+            // 不帶這個參數的話，插入圖片後若沒有再打字就直接按儲存，圖片就會silently遺失
+            quill.insertEmbed(range.index, 'image', absoluteUrl, 'user');
             quill.setSelection(range.index + 1);
           } else {
             showToast('❌ 圖片上傳失敗', 'error');
@@ -1647,122 +1699,6 @@
       }
       const titleSeparator = (fieldKey.includes('alumni') || fieldKey.includes('sharing')) ? '：' : ' ';
       header.innerHTML = `<span id="card-icon-${fieldKey}-${index}" style="display:inline-block; width:20px;">${icon}</span> ${prefix}${titleSeparator}${newTitle || '未命名'}`;
-    }
-  }
-
-  /** 渲染「內容區塊」編輯器（活動詳情頁用：文字／圖片／圖說三種可新增、刪除、排序的區塊） */
-  function renderContentBlocksSection(fieldKey, itemIndex, item) {
-    const escape = (str) => escapeHtml(str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    const blocks = item.blocks || [];
-    const typeLabel = { text: '📝 文字', image: '🖼️ 圖片', caption: '💬 圖說' };
-
-    const blocksHtml = blocks.length === 0
-      ? '<div style="text-align:center; color:#adb5bd; padding:12px; font-size:13px;">尚無內容區塊，用下方按鈕新增</div>'
-      : blocks.map((block, bi) => {
-          const imgUrl = block.image_url ? (block.image_url.startsWith('http') ? block.image_url : `${API_BASE}${block.image_url}`) : '';
-          let bodyHtml = '';
-          if (block.type === 'image') {
-            bodyHtml = `
-              <input type="file" accept="image/*" onchange="uploadBlockImage(this, '${fieldKey}', ${itemIndex}, ${bi})" style="margin-bottom:8px; font-size:12px;">
-              ${imgUrl ? `<img src="${imgUrl}" style="max-height:80px; border-radius:4px; border:1px solid #ccc; display:block;">` : ''}
-            `;
-          } else {
-            bodyHtml = `<textarea rows="3" oninput="updateContentBlockText('${fieldKey}', ${itemIndex}, ${bi}, this.value)" style="width:100%;" placeholder="${block.type === 'caption' ? '輸入圖說文字...' : '輸入段落文字...'}">${escape(block.text)}</textarea>`;
-          }
-
-          return `
-          <div style="background:#fff; border:1px solid #e0e0e0; border-radius:6px; padding:10px; margin-bottom:8px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <span style="font-size:12px; font-weight:bold; color:var(--color-primary);">${typeLabel[block.type] || block.type}</span>
-              <div style="display:flex; gap:4px;">
-                <button type="button" class="btn btn-secondary" style="padding:2px 8px; font-size:12px;" onclick="moveContentBlock('${fieldKey}', ${itemIndex}, ${bi}, -1)" ${bi === 0 ? 'disabled' : ''}>▲</button>
-                <button type="button" class="btn btn-secondary" style="padding:2px 8px; font-size:12px;" onclick="moveContentBlock('${fieldKey}', ${itemIndex}, ${bi}, 1)" ${bi === blocks.length - 1 ? 'disabled' : ''}>▼</button>
-                <button type="button" class="btn btn-danger" style="padding:2px 8px; font-size:12px;" onclick="removeContentBlock('${fieldKey}', ${itemIndex}, ${bi})">刪除</button>
-              </div>
-            </div>
-            ${bodyHtml}
-          </div>`;
-        }).join('');
-
-    return `
-      <div style="margin-top: 16px;">
-        <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">內容區塊（詳情頁用，可自由新增／刪除／排序）</label>
-        <div style="background:#f8f9fa; padding:12px; border-radius:8px; border:1px solid #e9ecef;">
-          ${blocksHtml}
-          <div style="display:flex; gap:8px; margin-top:8px;">
-            <button type="button" class="btn btn-secondary" style="font-size:12px;" onclick="addContentBlock('${fieldKey}', ${itemIndex}, 'text')">＋ 文字</button>
-            <button type="button" class="btn btn-secondary" style="font-size:12px;" onclick="addContentBlock('${fieldKey}', ${itemIndex}, 'image')">＋ 圖片</button>
-            <button type="button" class="btn btn-secondary" style="font-size:12px;" onclick="addContentBlock('${fieldKey}', ${itemIndex}, 'caption')">＋ 圖說</button>
-          </div>
-        </div>
-      </div>`;
-  }
-
-  /** 新增一個內容區塊 */
-  function addContentBlock(fieldKey, itemIndex, type) {
-    const item = listFieldStates[fieldKey][itemIndex];
-    if (!item.blocks) item.blocks = [];
-    item.blocks.push(type === 'image' ? { type, image_url: '' } : { type, text: '' });
-    saveListToPending(fieldKey);
-    renderListItems(fieldKey);
-  }
-
-  /** 刪除一個內容區塊 */
-  function removeContentBlock(fieldKey, itemIndex, blockIndex) {
-    listFieldStates[fieldKey][itemIndex].blocks.splice(blockIndex, 1);
-    saveListToPending(fieldKey);
-    renderListItems(fieldKey);
-  }
-
-  /** 上下移動一個內容區塊 */
-  function moveContentBlock(fieldKey, itemIndex, blockIndex, direction) {
-    const blocks = listFieldStates[fieldKey][itemIndex].blocks;
-    const newIndex = blockIndex + direction;
-    if (newIndex < 0 || newIndex >= blocks.length) return;
-    const tmp = blocks[blockIndex];
-    blocks[blockIndex] = blocks[newIndex];
-    blocks[newIndex] = tmp;
-    saveListToPending(fieldKey);
-    renderListItems(fieldKey);
-  }
-
-  /** 更新文字／圖說區塊的內容（不用重新渲染，避免打字時失焦） */
-  function updateContentBlockText(fieldKey, itemIndex, blockIndex, value) {
-    listFieldStates[fieldKey][itemIndex].blocks[blockIndex].text = value;
-    saveListToPending(fieldKey);
-  }
-
-  /** 上傳圖片區塊的圖片 */
-  function uploadBlockImage(fileInput, fieldKey, itemIndex, blockIndex) {
-    const file = fileInput.files[0];
-    if (!file) return;
-    openCropModal(file, (croppedBlob, originalFile) => doUploadBlockImage(croppedBlob, originalFile, fieldKey, itemIndex, blockIndex));
-    fileInput.value = '';
-  }
-
-  async function doUploadBlockImage(blob, originalFile, fieldKey, itemIndex, blockIndex) {
-    showToast('⏳ 圖片上傳中...', '');
-    const formData = new FormData();
-    formData.append('file', blob, originalFile.name);
-    formData.append('page_slug', currentPageSlug);
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/upload`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` },
-        body: formData
-      });
-      if (res.ok) {
-        const data = await res.json();
-        listFieldStates[fieldKey][itemIndex].blocks[blockIndex].image_url = data.url;
-        saveListToPending(fieldKey);
-        renderListItems(fieldKey);
-        showToast('✅ 圖片上傳成功！請記得按下方儲存。', 'success');
-      } else {
-        showToast('❌ 上傳失敗', 'error');
-      }
-    } catch (e) {
-      showToast('❌ 無法連線到上傳伺服器', 'error');
-      console.error(e);
     }
   }
 
@@ -2340,7 +2276,61 @@
       }
 
       // ==========================================
-      // 預設 UI：只剩下「活動卡片 (Event)」會用到這個最複雜的介面
+      // 專屬 UI：活動訊息 (event_list)
+      // ==========================================
+      if (fieldKey === 'event_list') {
+        return `
+        <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#f8f9fa; border-radius:6px; cursor:pointer;" onclick="toggleCard('${fieldKey}', ${index})">
+            <h4 style="margin:0; color:var(--color-primary); font-size:14px; user-select:none;">
+              <span id="card-icon-${fieldKey}-${index}" style="display:inline-block; width:20px;">${iconText}</span>
+              📰 ${item.title || `新項目 #${index + 1}`}
+            </h4>
+            <div style="display:flex; gap:4px;" onclick="event.stopPropagation();">
+              <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲ 上移</button>
+              <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, 1)" ${index === items.length - 1 ? 'disabled' : ''}>▼ 下移</button>
+              <button class="btn btn-danger" style="padding:4px 8px; font-size:12px; margin-left: 12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
+            </div>
+          </div>
+
+          <div id="card-body-${fieldKey}-${index}" style="padding:16px; border-top:1px solid #eee; display:${displayStyle};">
+            <div style="margin-bottom:12px;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">標題</label>
+              <textarea rows="2" oninput="updateListItem('${fieldKey}', ${index}, 'title', this.value); updateCardTitle('${fieldKey}', ${index}, this.value)" style="width:100%; resize:vertical;">${escape(item.title)}</textarea>
+            </div>
+
+            <div style="margin-bottom:12px;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">封面圖片（顯示在標題下方）</label>
+              <input type="file" accept="image/*" onchange="uploadListImage(this, '${fieldKey}', ${index})" style="margin-bottom:8px; font-size:12px;">
+              ${imgUrl ? `<img src="${imgUrl}" style="max-height:120px; border-radius:4px; border:1px solid #ccc; display:block;">` : ''}
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom:12px;">
+              <div>
+                <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">日期</label>
+                <input type="date" value="${escape(item.date)}" onchange="updateListItem('${fieldKey}', ${index}, 'date', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+              </div>
+              <div>
+                <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">狀態</label>
+                <select onchange="updateListItem('${fieldKey}', ${index}, 'is_active', this.value === 'true')" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                  <option value="true" ${item.is_active !== false ? 'selected' : ''}>🟢 顯示</option>
+                  <option value="false" ${item.is_active === false ? 'selected' : ''}>🔴 隱藏</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="margin-top: 16px;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">內文（可設定粗體、標題、插入圖片）</label>
+              <div id="quill-editor-${fieldKey}-${index}" class="quill-style-detail" style="height: 250px; background: #fff; font-family: sans-serif;"></div>
+              <div style="font-size:11px; color:#888; margin-top:4px;">如果想幫圖片加圖說文字，選取文字後點工具列的「引言」按鈕（” 圖示），前台會自動顯示成圖說樣式。</div>
+            </div>
+          </div>
+        </div>
+        `;
+      }
+
+      // ==========================================
+      // 預設 UI：招生資訊／入學門檻／修業規定／學位授予等卡片清單
       // ==========================================
       return `
       <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
@@ -2371,13 +2361,11 @@
             </div>
           </div>
 
-
-          ${fieldKey === 'event_list' ? renderContentBlocksSection(fieldKey, index, item) : `
           <div style="margin-top: 16px;">
             <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">完整內容 (Content)</label>
             <div id="quill-editor-${fieldKey}-${index}" class="quill-style-card" style="height: 250px; background: #fff; font-family: sans-serif;"></div>
             <div style="font-size:11px; color:#888; margin-top:4px;">如果需要加類似免責聲明的提示文字，選取文字後點工具列的「引言」按鈕（” 圖示），前台會自動顯示成灰底提示框。</div>
-          </div>`}
+          </div>
         </div>
       </div>
       `;
@@ -2545,9 +2533,11 @@
       newItem = { title: '', link: '', image_url: '', is_active: true };
     } else if (fieldKey === 'article_list') {
       newItem = { title: '', image_url: '', link_url: '', author: '', date: '', is_active: true, content: '' };
+    } else if (fieldKey === 'event_list') {
+      newItem = { title: '', image_url: '', date: '', is_active: true, content: '' };
     } else {
-      // 剩餘的(活動訊息)
-      newItem = { title: '', summary: '', image_url: '', image_caption: '', content: '', date: '', is_active: true, blocks: [] };
+      // 剩餘的（招生資訊／入學門檻／修業規定／學位授予等）
+      newItem = { title: '', content: '', is_active: true };
     }
 
     // 2. 新增位置：一律加在最下面，再用上移/下移手動調整順序

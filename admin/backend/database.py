@@ -22,6 +22,29 @@ load_dotenv()
 # ─────────────────────────────────────────
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./admin.db")
 
+# 啟動時明顯印出目前連線的資料庫，避免本機不小心接到正式站
+# （.env 的 DATABASE_URL 若被切換到 postgres/supabase，之前曾經發生過
+#  本機測試時沒注意到、直接寫資料到正式站的情況）
+def _masked_db_url(url: str) -> str:
+    if "@" in url and "://" in url:
+        scheme, rest = url.split("://", 1)
+        creds_host = rest.split("@", 1)
+        if len(creds_host) == 2:
+            return f"{scheme}://***:***@{creds_host[1]}"
+    return url
+
+try:
+    if "sqlite" in DATABASE_URL:
+        print(f"[DB] 本機 SQLite（{DATABASE_URL}）")
+    else:
+        print(f"[DB][WARNING] 遠端/正式站資料庫（{_masked_db_url(DATABASE_URL)}）—— 如果你以為現在在測本機，這裡接的其實是正式站，請檢查 .env 的 DATABASE_URL！")
+except UnicodeEncodeError:
+    # Windows 終端機預設編碼（cp950）印不出某些符號時，退回純 ASCII，絕不能讓這行卡住伺服器啟動
+    if "sqlite" in DATABASE_URL:
+        print("[DB] using local sqlite")
+    else:
+        print("[DB][WARNING] using remote/production database - check .env DATABASE_URL")
+
 # 建立資料庫引擎
 # check_same_thread=False 是 SQLite 特有設定，允許多執行緒存取
 engine = create_engine(

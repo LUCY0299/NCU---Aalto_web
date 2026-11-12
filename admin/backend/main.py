@@ -11,6 +11,16 @@ main.py — FastAPI 主程式（入口點）
   uvicorn main:app --reload --port 8000
 """
 
+import sys
+try:
+    # Windows 終端機預設編碼常常是 cp950，印不出 emoji（例如 seed.py 的 ✅❌⏭️）
+    # 會直接讓整段程式 UnicodeEncodeError 中斷。這裡統一把 stdout/stderr 轉成 UTF-8，
+    # 避免任何地方的 print 因為編碼問題悄悄中斷、吃掉後面沒執行到的程式碼。
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -177,8 +187,8 @@ async def upload_image(
         with open(file_path, "wb") as f:
             f.write(file_bytes)
 
-        # 回傳完整的本地公開網址
-        public_url = f"https://aalto-api.mgt.ncu.edu.tw/uploads/{page_slug}/{unique_filename}"
+        # 回傳相對路徑，前端會依目前網域自行組合完整網址（本機測試、正式站都適用）
+        public_url = f"/uploads/{page_slug}/{unique_filename}"
         return {"url": public_url}
         
     except Exception as e:

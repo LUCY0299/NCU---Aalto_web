@@ -861,7 +861,12 @@ def seed_database():
         print(f"   啟動伺服器後到 http://localhost:8000/docs 測試")
 
     except Exception as e:
-        print(f"❌ 發生錯誤：{e}")
+        try:
+            print(f"❌ 發生錯誤：{e}")
+        except UnicodeEncodeError:
+            # Windows 終端機預設編碼（cp950）印不出 emoji 時，退回純 ASCII，
+            # 不然這裡本身噴錯會蓋掉上面真正的錯誤訊息，變成永遠看不到是什麼錯
+            print(f"[SEED ERROR] {e}")
         db.rollback()
         raise
     finally:
