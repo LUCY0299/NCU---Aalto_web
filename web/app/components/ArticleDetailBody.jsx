@@ -112,6 +112,12 @@ export default function ArticleDetailBody({
             </div>
         );
 
+    const coverImgUrl = data.image_url
+        ? data.image_url.startsWith("http")
+            ? data.image_url
+            : `${BASE_URL}${data.image_url}`
+        : "";
+
     let displayDate = data.date || "";
     if (data.date) {
         const d = new Date(data.date);
@@ -145,7 +151,7 @@ export default function ArticleDetailBody({
             {meta && (
                 <div
                     style={{
-                        fontSize: "16px",
+                        fontSize: "20px",
                         color: metaColor,
                         textAlign: "center",
                     }}
@@ -169,6 +175,18 @@ export default function ArticleDetailBody({
                 >
                     {data.title}
                 </h1>
+            )}
+            {coverImgUrl && (
+                <img
+                    src={coverImgUrl}
+                    style={{
+                        width: "100%",
+                        borderRadius: "8px",
+                        display: "block",
+                        marginTop: "20px",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    }}
+                />
             )}
 
             {data.content ? (

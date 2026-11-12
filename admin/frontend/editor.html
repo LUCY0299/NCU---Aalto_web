@@ -162,6 +162,82 @@
     .ql-container.ql-snow ul li.ql-indent-3 {
       margin-left: 6em;
     }
+
+    /* ==========================================
+       讓編輯框內的樣子盡量跟前台實際顯示一致（所見即所得）
+       這兩組規則要跟 web/app/globals.css 的 .content-html / .article-content-html 保持同步，
+       那邊改了記得回來這裡也一起改
+       ========================================== */
+
+    /* 卡片出血版：招生資訊、入學門檻、學位與修業規定共用（對應前台 .content-html） */
+    /* 從外部貼上的文字常帶著自己的 color，這裡強制跟著編輯框的預設顏色走，避免跟前台顯示不一致 */
+    .quill-style-card .ql-editor * {
+      color: inherit !important;
+    }
+    .quill-style-card .ql-editor p {
+      margin: 0.3em 0;
+    }
+    .quill-style-card .ql-editor p:first-child {
+      margin-top: 0;
+    }
+    .quill-style-card .ql-editor strong {
+      font-weight: 600;
+    }
+    .quill-style-card .ql-editor em {
+      font-style: italic;
+    }
+    .quill-style-card .ql-editor blockquote {
+      margin: 10px 0 0 0;
+      padding: 16px 20px;
+      background-color: #f5f5f5;
+      border-left: 4px solid #666;
+      color: #666;
+      font-style: normal;
+    }
+    /* 注意：前台這個版型的圖片是「滿版出血」（超出卡片左右邊界），
+       在編輯框這種小尺寸容器裡做同樣效果只會讓圖片被裁切、看起來像壞掉，
+       所以圖片維持 Quill 原本的樣子，不特別模仿滿版出血 */
+
+    /* 詳情頁置中版：目前只有「最新文章」在用，以後活動訊息轉過來也會併入這組（對應前台 .article-content-html） */
+    /* 從外部貼上的文字常帶著自己的 color，這裡強制跟著編輯框的預設顏色走，避免跟前台顯示不一致 */
+    .quill-style-detail .ql-editor * {
+      color: inherit !important;
+    }
+    .quill-style-detail .ql-editor p {
+      margin: 0 0 16px 0;
+    }
+    .quill-style-detail .ql-editor h1 {
+      font-size: 1.6em;
+      font-weight: 700;
+    }
+    .quill-style-detail .ql-editor h2 {
+      font-size: 1.35em;
+      font-weight: 700;
+    }
+    .quill-style-detail .ql-editor h3 {
+      font-size: 1.15em;
+      font-weight: 700;
+    }
+    .quill-style-detail .ql-editor strong {
+      font-weight: 600;
+    }
+    .quill-style-detail .ql-editor em {
+      font-style: italic;
+    }
+    .quill-style-detail .ql-editor img {
+      width: 100%;
+      border-radius: 8px;
+      margin: 20px 0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .quill-style-detail .ql-editor blockquote {
+      margin: 0 0 20px 0;
+      padding-left: 12px;
+      border-left: 3px solid #ccc;
+      font-style: italic;
+      color: #888888;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -2223,6 +2299,12 @@
               <textarea rows="2" oninput="updateListItem('${fieldKey}', ${index}, 'title', this.value); updateCardTitle('${fieldKey}', ${index}, this.value)" style="width:100%; resize:vertical;">${escape(item.title)}</textarea>
             </div>
 
+            <div style="margin-bottom:12px;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">封面圖片（顯示在標題下方，選填）</label>
+              <input type="file" accept="image/*" onchange="uploadListImage(this, '${fieldKey}', ${index})" style="margin-bottom:8px; font-size:12px;">
+              ${imgUrl ? `<img src="${imgUrl}" style="max-height:120px; border-radius:4px; border:1px solid #ccc; display:block;">` : ''}
+            </div>
+
             <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom:12px;">
               <div>
                 <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">作者</label>
@@ -2249,7 +2331,8 @@
 
             <div style="margin-top: 16px;">
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">內文（可設定粗體、標題、插入圖片）</label>
-              <div id="quill-editor-${fieldKey}-${index}" style="height: 250px; background: #fff; font-family: sans-serif;"></div>
+              <div id="quill-editor-${fieldKey}-${index}" class="quill-style-detail" style="height: 250px; background: #fff; font-family: sans-serif;"></div>
+              <div style="font-size:11px; color:#888; margin-top:4px;">如果想幫圖片加圖說文字，選取文字後點工具列的「引言」按鈕（” 圖示），前台會自動顯示成圖說樣式。</div>
             </div>
           </div>
         </div>
@@ -2292,7 +2375,7 @@
           ${fieldKey === 'event_list' ? renderContentBlocksSection(fieldKey, index, item) : `
           <div style="margin-top: 16px;">
             <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">完整內容 (Content)</label>
-            <div id="quill-editor-${fieldKey}-${index}" style="height: 250px; background: #fff; font-family: sans-serif;"></div>
+            <div id="quill-editor-${fieldKey}-${index}" class="quill-style-card" style="height: 250px; background: #fff; font-family: sans-serif;"></div>
             <div style="font-size:11px; color:#888; margin-top:4px;">如果需要加類似免責聲明的提示文字，選取文字後點工具列的「引言」按鈕（” 圖示），前台會自動顯示成灰底提示框。</div>
           </div>`}
         </div>
@@ -2461,7 +2544,7 @@
       // 校友卡片極簡化：只有標題、連結、圖片、狀態
       newItem = { title: '', link: '', image_url: '', is_active: true };
     } else if (fieldKey === 'article_list') {
-      newItem = { title: '', link_url: '', author: '', date: '', is_active: true, content: '' };
+      newItem = { title: '', image_url: '', link_url: '', author: '', date: '', is_active: true, content: '' };
     } else {
       // 剩餘的(活動訊息)
       newItem = { title: '', summary: '', image_url: '', image_caption: '', content: '', date: '', is_active: true, blocks: [] };

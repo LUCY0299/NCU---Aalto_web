@@ -29,7 +29,15 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* 動態 HTML 內容樣式 (dangerouslySetInnerHTML) */
+/* 動態 HTML 內容樣式 (dangerouslySetInnerHTML)
+   admin/frontend/editor.html 的 .quill-style-card / .quill-style-detail 有複製一份對應規則，
+   讓後台編輯框看起來跟這裡一致，這裡改了記得回去那邊也一起改 */
+/* 從外部（Word/網頁等）貼上的文字常常帶著自己的 color 行內樣式，權重比 CSS 高，
+   會蓋掉下面設定的文字顏色，所以這裡強制讓所有子元素的顏色都跟著外層容器走 */
+.content-html * {
+  color: inherit !important;
+}
+
 .content-html p {
   margin: 0.3em 0;
   line-height: inherit;
@@ -107,16 +115,19 @@ body {
   font-style: normal;
 }
 
-/* 文章詳情頁的 Quill HTML 內容樣式（跟 .content-html 共用排版規則，但圖片走一般置中版面，不用卡片的滿版負邊距） */
+/* 文章詳情頁的 Quill HTML 內容樣式（跟活動訊息閱讀更多的排版對齊：固定行距、圖片陰影、引言當圖說用） */
+
+/* 從外部（Word/網頁等）貼上的文字常常帶著自己的 color 行內樣式，權重比 CSS 高，
+   會蓋掉下面設定的文字顏色，所以這裡強制讓所有子元素的顏色都跟著外層容器走 */
+.article-content-html * {
+  color: inherit !important;
+}
+
 .article-content-html p {
-  margin: 0.8em 0;
+  margin: 0 0 16px 0;
   line-height: inherit;
   word-wrap: break-word;
   overflow-wrap: break-word;
-}
-
-.article-content-html p:first-child {
-  margin-top: 0;
 }
 
 .article-content-html h1,
@@ -175,6 +186,17 @@ body {
   display: block;
   margin: 20px 0 !important;
   border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Quill 的「引言」格式：當圖說用，比照活動訊息原本的圖說樣式 */
+.article-content-html blockquote {
+  margin: 0 0 20px 0;
+  padding-left: 12px;
+  border-left: 3px solid #ccc;
+  font-style: italic;
+  color: #888888;
+  font-size: 14px;
 }
 
 /* 全站共用左右內距 class（尚未套用到任何組件，先建立備用） */
