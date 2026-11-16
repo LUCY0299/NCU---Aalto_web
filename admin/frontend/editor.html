@@ -1033,7 +1033,7 @@
         placeholder='[{"key":"value"}]（雙擊放大編輯）'
         oninput="markChanged('${field.field_key}', this.value)"
         title="雙擊放大編輯">${val}</textarea>
-        <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px;">⚠️ JSON 格式，請確保語法正確</div>`;
+        <div style="font-size:14px;color:var(--color-text-muted);margin-top:4px;">⚠️ JSON 格式，請確保語法正確</div>`;
     } else if (field.field_type === 'image') {
       const fullImageUrl = val ? (val.startsWith('http') ? val : `${API_BASE}${val}`) : '';
       
@@ -1041,10 +1041,11 @@
         <div class="image-upload-wrapper">
           <input type="hidden" id="field-${field.id}" value="${val}">
           
-          <input type="file" accept="image/*" 
-            onchange="uploadImage(this, '${field.field_key}', 'field-${field.id}')" 
+          <input type="file" accept="image/*"
+            onchange="uploadImage(this, '${field.field_key}', 'field-${field.id}')"
             style="margin-bottom: 10px; display: block;">
-            
+          <div style="font-size:14px; color:#888; margin-bottom:8px;">💡 圖片檔案大小上限 20MB</div>
+
           <img id="preview-${field.field_key}" src="${fullImageUrl}" 
             style="max-width:100%; max-height:120px; margin-top:8px; border-radius:6px; border:1px solid #e0e0e0; display: ${val ? 'block' : 'none'};" 
             onerror="this.style.display='none'">
@@ -1723,6 +1724,7 @@
           if (block.type === 'image') {
             bodyHtml = `
               <input type="file" accept="image/*" onchange="uploadStandaloneBlockImage(this, '${fieldKey}', ${bi})" style="margin-bottom:8px; font-size:12px;">
+              <div style="font-size:14px; color:#888; margin-bottom:8px;">💡 圖片檔案大小上限 20MB</div>
               ${imgUrl ? `<img src="${imgUrl}" style="max-height:100px; border-radius:4px; border:1px solid #ccc; display:block;">` : ''}
             `;
           } else if (block.type === 'two-columns') {
@@ -1964,6 +1966,7 @@
             <div>
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">卡片封面照 (建議 16:9)</label>
               <input type="file" accept="image/*" onchange="uploadListImage(this, '${fieldKey}', ${index})" style="margin-bottom:8px; font-size:12px;">
+              <div style="font-size:14px; color:#888; margin-bottom:8px;">💡 圖片檔案大小上限 20MB</div>
               ${imgUrl ? `<img src="${imgUrl}" style="max-height:100px; border-radius:4px; border:1px solid #ccc; display:block;">` : ''}
             </div>
           </div>
@@ -2059,50 +2062,6 @@
 
 
       // ==========================================
-      // 專屬 UI：修業規定與學位授予的卡片清單 (degree-regulations/degree-certification items)
-      // ==========================================
-      if (fieldKey === 'items' && (sectionKey === 'degree-regulations' || sectionKey === 'degree-certification')) {
-        return `
-        <div style="background:#fff; border:1px solid #ced4da; margin-bottom:12px; border-radius:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <h4 style="margin:0; color:var(--color-primary); font-size:15px; font-weight:bold;">📋 卡片 #${index + 1}：${escape(item.title || '未命名')}</h4>
-            <div style="display:flex; gap:4px;">
-              <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲ 上移</button>
-              <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="moveListItem('${fieldKey}', ${index}, 1)" ${index === items.length - 1 ? 'disabled' : ''}>▼ 下移</button>
-              <button class="btn btn-danger" style="padding:4px 8px; font-size:12px;" onclick="removeListItem('${fieldKey}', ${index})">刪除</button>
-            </div>
-          </div>
-
-          <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:12px;">
-            <div>
-              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">卡片標題</label>
-              <input type="text" value="${escape(item.title)}" oninput="updateListItem('${fieldKey}', ${index}, 'title', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="例如: 修業規定">
-            </div>
-
-            <div>
-              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">卡片內容</label>
-              <textarea oninput="updateListItem('${fieldKey}', ${index}, 'content', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-family:var(--font-main); font-size:13px; line-height:1.5; min-height:120px;" placeholder="輸入詳細內容...">${escape(item.content || '')}</textarea>
-            </div>
-
-            <div>
-              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">配圖（選填）</label>
-              <div style="display:flex; gap:8px; align-items:center;">
-                ${item.image_url ? `<img src="${item.image_url}" style="width:60px; height:60px; object-fit:cover; border-radius:4px; border:1px solid #ddd;">` : '<div style="width:60px; height:60px; background:#f0f0f0; border:1px solid #ddd; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#999; font-size:24px;">📸</div>'}
-                <input type="text" value="${escape(item.image_url || '')}" oninput="updateListItem('${fieldKey}', ${index}, 'image_url', this.value)" style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="輸入圖片 URL 或上傳">
-              </div>
-            </div>
-          </div>
-
-          <div style="display:flex; justify-content:flex-end; align-items:center; padding-top:8px; border-top:1px solid #eee;">
-            <select onchange="updateListItem('${fieldKey}', ${index}, 'is_active', this.value === 'true')" style="width:100px; padding:4px 8px; font-size:12px; border:1px solid #ccc; border-radius:4px;">
-              <option value="true" ${item.is_active !== false ? 'selected' : ''}>🟢 顯示</option>
-              <option value="false" ${item.is_active === false ? 'selected' : ''}>🔴 隱藏</option>
-            </select>
-          </div>
-        </div>`;
-      }
-
-      // ==========================================
       // 專屬 UI：圖片連結 (包含 about_links, ncu_links)
       // ==========================================
       if (fieldKey.includes('links')) {
@@ -2129,6 +2088,7 @@
           <div>
             <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">背景圖片</label>
             <input type="file" accept="image/*" onchange="uploadListImage(this, '${fieldKey}', ${index})" style="margin-bottom:8px; font-size:12px;">
+            <div style="font-size:14px; color:#888; margin-bottom:8px;">💡 圖片檔案大小上限 20MB</div>
             ${imgUrl ? `<img src="${imgUrl}" style="max-height:100px; border-radius:4px; border:1px solid #ccc; display:block;">` : ''}
           </div>
         </div>`;
@@ -2238,6 +2198,7 @@
             <div style="margin-bottom:12px;">
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">封面圖片（顯示在標題下方，選填）</label>
               <input type="file" accept="image/*" onchange="uploadListImage(this, '${fieldKey}', ${index})" style="margin-bottom:8px; font-size:12px;">
+              <div style="font-size:14px; color:#888; margin-bottom:8px;">💡 圖片檔案大小上限 20MB</div>
               ${imgUrl ? `<img src="${imgUrl}" style="max-height:120px; border-radius:4px; border:1px solid #ccc; display:block;">` : ''}
             </div>
 
@@ -2262,13 +2223,14 @@
             <div style="margin-bottom:12px;">
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">連結網址（選填，外部文章請填完整網址，例如 https://...）</label>
               <input type="text" value="${escape(item.link_url)}" oninput="updateListItem('${fieldKey}', ${index}, 'link_url', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="留空則點擊會開啟站內文章詳情頁">
-              <div style="font-size:11px; color:#888; margin-top:4px;">填了這裡，前台點擊標題會直接開啟外部連結；留空的話，會改用下方「內文」在站內顯示文章詳情。</div>
+              <div style="font-size:14px; color:#888; margin-top:4px;">填了這裡，前台點擊標題會直接開啟外部連結；留空的話，會改用下方「內文」在站內顯示文章詳情。</div>
             </div>
 
             <div style="margin-top: 16px;">
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">內文（可設定粗體、標題、插入圖片）</label>
-              <div id="quill-editor-${fieldKey}-${index}" class="quill-style-detail" style="height: 250px; background: #fff; font-family: sans-serif;"></div>
-              <div style="font-size:11px; color:#888; margin-top:4px;">如果想幫圖片加圖說文字，選取文字後點工具列的「引言」按鈕（” 圖示），前台會自動顯示成圖說樣式。</div>
+              <div id="quill-editor-${fieldKey}-${index}" class="quill-style-detail" style="min-height: 300px; background: #fff; font-family: sans-serif;"></div>
+              <div style="font-size:14px; color:#888; margin-top:4px;">如果想幫圖片加圖說文字，選取文字後點工具列的「引言」按鈕（” 圖示），前台會自動顯示成圖說樣式。</div>
+              <div style="font-size:14px; color:#888; margin-top:2px;">💡 插入圖片檔案大小上限 20MB</div>
             </div>
           </div>
         </div>
@@ -2302,6 +2264,7 @@
             <div style="margin-bottom:12px;">
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">封面圖片（顯示在標題下方）</label>
               <input type="file" accept="image/*" onchange="uploadListImage(this, '${fieldKey}', ${index})" style="margin-bottom:8px; font-size:12px;">
+              <div style="font-size:14px; color:#888; margin-bottom:8px;">💡 圖片檔案大小上限 20MB</div>
               ${imgUrl ? `<img src="${imgUrl}" style="max-height:120px; border-radius:4px; border:1px solid #ccc; display:block;">` : ''}
             </div>
 
@@ -2321,8 +2284,9 @@
 
             <div style="margin-top: 16px;">
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">內文（可設定粗體、標題、插入圖片）</label>
-              <div id="quill-editor-${fieldKey}-${index}" class="quill-style-detail" style="height: 250px; background: #fff; font-family: sans-serif;"></div>
-              <div style="font-size:11px; color:#888; margin-top:4px;">如果想幫圖片加圖說文字，選取文字後點工具列的「引言」按鈕（” 圖示），前台會自動顯示成圖說樣式。</div>
+              <div id="quill-editor-${fieldKey}-${index}" class="quill-style-detail" style="min-height: 300px; background: #fff; font-family: sans-serif;"></div>
+              <div style="font-size:14px; color:#888; margin-top:4px;">如果想幫圖片加圖說文字，選取文字後點工具列的「引言」按鈕（” 圖示），前台會自動顯示成圖說樣式。</div>
+              <div style="font-size:14px; color:#888; margin-top:2px;">💡 插入圖片檔案大小上限 20MB</div>
             </div>
           </div>
         </div>
@@ -2363,8 +2327,9 @@
 
           <div style="margin-top: 16px;">
             <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">完整內容 (Content)</label>
-            <div id="quill-editor-${fieldKey}-${index}" class="quill-style-card" style="height: 250px; background: #fff; font-family: sans-serif;"></div>
-            <div style="font-size:11px; color:#888; margin-top:4px;">如果需要加類似免責聲明的提示文字，選取文字後點工具列的「引言」按鈕（” 圖示），前台會自動顯示成灰底提示框。</div>
+            <div id="quill-editor-${fieldKey}-${index}" class="quill-style-card" style="min-height: 300px; background: #fff; font-family: sans-serif;"></div>
+            <div style="font-size:14px; color:#888; margin-top:4px;">如果需要加類似免責聲明的提示文字，選取文字後點工具列的「引言」按鈕（” 圖示），前台會自動顯示成灰底提示框。</div>
+            <div style="font-size:14px; color:#888; margin-top:2px;">💡 插入圖片檔案大小上限 20MB</div>
           </div>
         </div>
       </div>

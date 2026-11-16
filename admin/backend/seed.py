@@ -462,19 +462,16 @@ SECTIONS_DATA = [
             {
                 "key": "event_list",
                 "label": "活動清單",
-                "type": "list",  # 巢狀列表結構（跟校友分享共用同一套後台介面）
+                "type": "list",  # 每個項目一張卡片，內文用 Quill 富文本編輯（跟最新文章同一套邏輯）
                 "items": [
                     {"key": "title", "label": "標題", "type": "text"},
-                    {"key": "summary", "label": "列表摘要", "type": "text"},
                     {"key": "is_active", "label": "狀態", "type": "boolean"},
                     {"key": "image_url", "label": "封面圖", "type": "image"},
-                    {"key": "image_caption", "label": "圖說（選填，封面圖用）", "type": "text"},
                     {"key": "date", "label": "日期", "type": "date"},
                     {
-                        "key": "blocks",
-                        "label": "詳情頁內容區塊（可新增/刪除/排序，文字、圖片、圖說各自獨立）",
-                        "type": "blocks",
-                        "block_types": ["text", "image", "caption"],
+                        "key": "content",
+                        "label": "內文（Quill 富文本 HTML，可設定粗體、標題、清單、連結、插入圖片/影片、引言當圖說用）",
+                        "type": "richtext",
                     },
                 ]
             }
