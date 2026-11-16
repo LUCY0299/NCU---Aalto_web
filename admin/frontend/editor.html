@@ -152,6 +152,22 @@
       border-color: var(--color-primary) !important;
     }
 
+    /* 圖片上傳欄位：拖著檔案移到上面時的提示效果 */
+    .image-drop-active {
+      outline: 2px dashed var(--color-primary);
+      outline-offset: 2px;
+      background: rgba(90, 43, 140, 0.05);
+      border-radius: 6px;
+    }
+
+    /* Quill 編輯器工具列固定在捲動區塊頂端，往下滑編輯時不用再滑回去按工具 */
+    .ql-toolbar.ql-snow {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: #fff;
+    }
+
     /* Quill 編輯器列表縮進樣式 */
     .ql-container.ql-snow ul li.ql-indent-1 {
       margin-left: 2em;
@@ -216,6 +232,11 @@
     /* 注意：前台這個版型的圖片是「滿版出血」（超出卡片左右邊界），
        在編輯框這種小尺寸容器裡做同樣效果只會讓圖片被裁切、看起來像壞掉，
        所以圖片維持 Quill 原本的樣子，不特別模仿滿版出血 */
+    .quill-style-card .ql-editor img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
 
     /* 詳情頁置中版：目前只有「最新文章」在用，以後活動訊息轉過來也會併入這組（對應前台 .article-content-html） */
     /* 從外部貼上的文字常帶著自己的 color，這裡強制跟著編輯框的預設顏色走，避免跟前台顯示不一致 */
@@ -248,9 +269,12 @@
       text-decoration: underline !important;
     }
     .quill-style-detail .ql-editor img {
-      width: 100%;
+      display: block;
+      max-width: 100%;
+      max-height: 320px;
+      height: auto;
       border-radius: 8px;
-      margin: 20px 0;
+      margin: 20px auto;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
     .quill-style-detail .ql-editor blockquote {
@@ -666,6 +690,7 @@
   let blocksFieldStates = {}; // { [fieldKey]: [block, block, ...] }，非清單型、可自由編輯的內容區塊
   let hasUnsavedChanges = false;
   let isRendering = false;
+  let draftSaveTimer = null;
 
   // ─── 圖片裁切共用邏輯 ───
   let cropperInstance = null;
@@ -909,6 +934,7 @@
   function selectSection(section) {
     if (hasUnsavedChanges && !confirm('有未儲存的變更，確定切換嗎？')) return;
 
+    clearTimeout(draftSaveTimer);
     currentSectionId = section.id;
     pendingChanges = {};
     listFieldStates = {};
@@ -923,10 +949,10 @@
     document.getElementById('editorMeta').textContent = `類型：${section.section_type} · 識別碼：${section.section_key}`;
     document.getElementById('currentSection').textContent = `正在編輯：${section.name}`;
 
-    renderFieldEditor(section);
+    renderFieldEditorWithDraftCheck(section);
 
     document.getElementById('saveBar').style.display = 'flex';
-    updateSaveStatus(false);
+    updateSaveStatus(hasUnsavedChanges);
   }
 
   /** 渲染欄位編輯器 */
@@ -1136,40 +1162,126 @@
     input.onchange = () => {
       const file = input.files[0];
       if (!file) return;
-      const range = quill.getSelection(true);
-
-      openCropModal(file, async (croppedBlob, originalFile) => {
-        const formData = new FormData();
-        formData.append('file', croppedBlob, originalFile.name);
-        formData.append('page_slug', currentPageSlug);
-
-        try {
-          const res = await fetch(`${API_BASE}/api/v1/upload`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` },
-            body: formData
-          });
-
-          if (res.ok) {
-            const data = await res.json();
-            // 後端回傳的是相對路徑，這裡要補成完整網址再插入——
-            // 因為內文是直接存成 HTML 字串，前台用 dangerouslySetInnerHTML 原封不動輸出，
-            // 沒有像封面圖欄位那樣會自動補網域的邏輯，插入時沒補好之後就永遠是錯的網址
-            const absoluteUrl = data.url.startsWith('http') ? data.url : `${API_BASE}${data.url}`;
-            // 第四個參數要帶 'user'：insertEmbed 預設視為程式呼叫（source='api'），
-            // 但 text-change 監聽器只在 source==='user' 時才會同步存檔，
-            // 不帶這個參數的話，插入圖片後若沒有再打字就直接按儲存，圖片就會silently遺失
-            quill.insertEmbed(range.index, 'image', absoluteUrl, 'user');
-            quill.setSelection(range.index + 1);
-          } else {
-            showToast('❌ 圖片上傳失敗', 'error');
-          }
-        } catch (e) {
-          showToast('❌ 無法連線到上傳伺服器', 'error');
-          console.error(e);
-        }
-      });
+      insertImageIntoQuill(quill, file);
     };
+  }
+
+  /** 共用：裁切、上傳圖片，再插入到 Quill 游標處（工具列按鈕、拖放圖片都走這裡） */
+  function insertImageIntoQuill(quill, file) {
+    const range = quill.getSelection(true) || { index: quill.getLength() };
+
+    openCropModal(file, async (croppedBlob, originalFile) => {
+      showToast('⏳ 圖片上傳中...', '');
+      const formData = new FormData();
+      formData.append('file', croppedBlob, originalFile.name);
+      formData.append('page_slug', currentPageSlug);
+
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/upload`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` },
+          body: formData
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          // 後端回傳的是相對路徑，這裡要補成完整網址再插入——
+          // 因為內文是直接存成 HTML 字串，前台用 dangerouslySetInnerHTML 原封不動輸出，
+          // 沒有像封面圖欄位那樣會自動補網域的邏輯，插入時沒補好之後就永遠是錯的網址
+          const absoluteUrl = data.url.startsWith('http') ? data.url : `${API_BASE}${data.url}`;
+          // 第四個參數要帶 'user'：insertEmbed 預設視為程式呼叫（source='api'），
+          // 但 text-change 監聽器只在 source==='user' 時才會同步存檔，
+          // 不帶這個參數的話，插入圖片後若沒有再打字就直接按儲存，圖片就會silently遺失
+          quill.insertEmbed(range.index, 'image', absoluteUrl, 'user');
+          quill.setSelection(range.index + 1);
+          showToast('✅ 圖片上傳成功！', 'success');
+        } else {
+          showToast('❌ 圖片上傳失敗', 'error');
+        }
+      } catch (e) {
+        showToast('❌ 無法連線到上傳伺服器', 'error');
+        console.error(e);
+      }
+    });
+  }
+
+  /** 讓 Quill 編輯區可以直接拖放圖片進來上傳插入，不用再點工具列選檔 */
+  function enableQuillImageDrop(quill) {
+    const root = quill.root;
+    root.addEventListener('dragover', (e) => { e.preventDefault(); });
+    root.addEventListener('drop', (e) => {
+      const file = e.dataTransfer?.files?.[0];
+      if (!file || !file.type.startsWith('image/')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      insertImageIntoQuill(quill, file);
+    });
+  }
+
+  // ════════════════════════════════════════
+  // 封面圖等「選擇檔案」欄位：讓圖片可以直接拖進來，不用每次都點選檔案
+  // 做法是把拖進來的檔案塞進那個 <input type="file">，再觸發原本的 onchange，
+  // 這樣完全重用現有的上傳邏輯，不用另外寫一套
+  // ════════════════════════════════════════
+
+  function wireImageDropZone(input) {
+    if (input.dataset.dropWired) return; // 同一顆 input 不重複綁定
+    input.dataset.dropWired = '1';
+
+    const zone = input.closest('div') || input.parentElement;
+    if (!zone) return;
+
+    zone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      zone.classList.add('image-drop-active');
+    });
+    zone.addEventListener('dragleave', () => {
+      zone.classList.remove('image-drop-active');
+    });
+    zone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      zone.classList.remove('image-drop-active');
+      const file = e.dataTransfer?.files?.[0];
+      if (!file || !file.type.startsWith('image/')) return;
+
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+
+  /** 每次畫面重新渲染後，幫新出現的圖片上傳欄位都補上拖放功能 */
+  function wireAllImageDropZones() {
+    document.querySelectorAll('input[type="file"][accept="image/*"]').forEach(wireImageDropZone);
+  }
+
+  // 內容編輯區只要有 DOM 變動（切換區塊、展開卡片、新增項目…）就重新掃一次，
+  // 不用在每個 render 函式裡個別呼叫，比較不會漏掉
+  document.addEventListener('DOMContentLoaded', () => {
+    const editorBody = document.getElementById('editorBody');
+    if (!editorBody) return;
+    const observer = new MutationObserver(() => wireAllImageDropZones());
+    observer.observe(editorBody, { childList: true, subtree: true });
+    wireAllImageDropZones();
+  });
+
+  // Quill 內建的影片輸入浮動框，是以「編輯器本身就是唯一捲動容器」去算位置，
+  // 但我們的編輯器外面還包了一層會捲動的清單容器，導致浮動框位置算錯、疊到奇怪的地方（破圖）。
+  // 改用一般的輸入視窗問網址，直接插入，不會有這個定位問題。
+  function quillVideoHandler(quill) {
+    const range = quill.getSelection(true);
+    const url = window.prompt('請輸入影片網址（例如 YouTube 分享連結）：');
+    if (!url) return;
+
+    let embedUrl = url.trim();
+    const ytMatch = embedUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([a-zA-Z0-9_-]{11})/);
+    if (ytMatch) {
+      embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
+    }
+
+    quill.insertEmbed(range.index, 'video', embedUrl, 'user');
+    quill.setSelection(range.index + 1);
   }
 
   /** 標記有變更 */
@@ -1178,6 +1290,80 @@
     pendingChanges[fieldKey] = value;
     hasUnsavedChanges = true;
     updateSaveStatus(true);
+    scheduleDraftSave();
+  }
+
+  // ════════════════════════════════════════
+  // 編輯草稿自動保存（防止瀏覽器當掉/誤關分頁導致內容遺失）
+  // 只存在使用者自己瀏覽器的 localStorage，不會送到後端或影響正式資料
+  // ════════════════════════════════════════
+
+  function getDraftKey() {
+    return `editor_draft:${currentPageSlug}:${currentSectionId}:${currentLocale}`;
+  }
+
+  /** 變更後 1.5 秒沒有新動作才真的寫入，避免每打一個字就存一次 */
+  function scheduleDraftSave() {
+    clearTimeout(draftSaveTimer);
+    draftSaveTimer = setTimeout(saveDraftNow, 1500);
+  }
+
+  function saveDraftNow() {
+    if (!currentSectionId || !Object.keys(pendingChanges).length) return;
+    try {
+      localStorage.setItem(getDraftKey(), JSON.stringify({
+        savedAt: Date.now(),
+        changes: pendingChanges
+      }));
+    } catch (e) {
+      // localStorage 滿了或被瀏覽器封鎖時靜默失敗，不影響正常編輯
+    }
+  }
+
+  function clearDraft() {
+    clearTimeout(draftSaveTimer);
+    try { localStorage.removeItem(getDraftKey()); } catch (e) {}
+  }
+
+  function formatDraftTime(ts) {
+    const d = new Date(ts);
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  /** 渲染欄位前先檢查是否有上次沒存到的草稿，有的話詢問要不要恢復 */
+  function renderFieldEditorWithDraftCheck(section) {
+    let draft = null;
+    try {
+      const raw = localStorage.getItem(getDraftKey());
+      if (raw) draft = JSON.parse(raw);
+    } catch (e) { draft = null; }
+
+    const hasDraft = draft && draft.changes && Object.keys(draft.changes).length;
+    let restored = false;
+
+    if (hasDraft) {
+      const wantRestore = confirm(`偵測到上次有未儲存完成的編輯內容（${formatDraftTime(draft.savedAt)}），要恢復嗎？\n\n按「取消」會捨棄這份草稿，改顯示目前已儲存的內容。`);
+      if (!wantRestore) {
+        clearDraft();
+      } else {
+        // 把草稿值蓋到欄位資料上，renderFieldEditor 依此渲染就會顯示草稿內容
+        for (const [key, value] of Object.entries(draft.changes)) {
+          const field = section.content_fields.find(f => f.field_key === key && f.locale === currentLocale);
+          if (field) field.field_value = value;
+        }
+        restored = true;
+      }
+    }
+
+    renderFieldEditor(section);
+
+    if (restored) {
+      pendingChanges = { ...draft.changes };
+      hasUnsavedChanges = true;
+      updateSaveStatus(true);
+      showToast('已還原上次未儲存完成的內容，記得確認後按儲存', '');
+    }
   }
 
   /** 更新儲存狀態提示 */
@@ -1219,8 +1405,9 @@
       }
       pendingChanges = {};
       hasUnsavedChanges = false;
+      clearDraft();
       updateSaveStatus(false);
-      
+
       // 套用動態提示訊息（展示模式）
       showToast(`${successMsg}（展示模式）`, 'success');
       
@@ -1264,6 +1451,7 @@
 
         pendingChanges = {};
         hasUnsavedChanges = false;
+        clearDraft();
         updateSaveStatus(false);
 
         // 🚀 套用動態提示訊息（正式連線）
@@ -1350,6 +1538,7 @@
     if (!confirm('確定放棄所有未儲存的變更？')) return;
     pendingChanges = {};
     hasUnsavedChanges = false;
+    clearDraft();
     const sec = window._pageData?.sections?.find(s => s.id === currentSectionId);
     if (sec) { renderFieldEditor(sec); updateSaveStatus(false); }
   }
@@ -1357,6 +1546,7 @@
   /** 切換語系 */
   function switchLocale(locale) {
     if (hasUnsavedChanges && !confirm('切換語系前請先儲存。確定切換嗎？')) return;
+    clearTimeout(draftSaveTimer);
     currentLocale = locale;
     pendingChanges = {};
     listFieldStates = {};
@@ -1372,7 +1562,7 @@
     }
 
     const sec = window._pageData?.sections?.find(s => s.id === currentSectionId);
-    if (sec) { renderFieldEditor(sec); updateSaveStatus(false); }
+    if (sec) { renderFieldEditorWithDraftCheck(sec); updateSaveStatus(hasUnsavedChanges); }
   }
 
   // ⚠️ 翻譯功能已停用：MyMemory API 在 Render 共享 IP 導致額度快速用盡
@@ -2349,11 +2539,16 @@
               modules: {
                 toolbar: {
                   container: quillToolbarOptions,
-                  handlers: { 'image': function() { quillImageHandler(this.quill); } }
+                  handlers: {
+                    'image': function() { quillImageHandler(this.quill); },
+                    'video': function() { quillVideoHandler(this.quill); }
+                  }
                 }
               },
               placeholder: '在此輸入完整內容...'
             });
+
+            enableQuillImageDrop(quill);
 
             if (item.content) {
               // 加載內容時轉換為可編輯的縮進格式
