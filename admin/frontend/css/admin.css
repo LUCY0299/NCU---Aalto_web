@@ -640,6 +640,7 @@ textarea { resize: vertical; min-height: 100px; }
 .save-bar {
   position: sticky;
   bottom: 0;
+  z-index: 20; /* 要比內文編輯器固定在頂端的工具列（z-index:5）高，避免兩個固定元素捲動時疊字 */
   background: var(--color-bg-card);
   border-top: 1.5px solid var(--color-border);
   padding: 16px 32px;
